@@ -1,0 +1,41 @@
+#######################################
+# Syntax Coloring Map For IRLremote
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ir_size_t	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+IRLremote	KEYWORD3
+
+enable	KEYWORD2
+enableRAW	KEYWORD2
+disable	KEYWORD2
+read	KEYWORD2
+CIRLremote	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+IR_PULSE	LITERAL2
+IR_BLOCKS	LITERAL2
+IR_LEAD	LITERAL2
+IR_SPACE	LITERAL2
+IR_SPACE_HOLDING	LITERAL2
+IR_LOW_0	LITERAL2
+IR_LOW_1	LITERAL2
+IR_HIGH_0	LITERAL2
+IR_HIGH_1	LITERAL2
+IR_LENGTH	LITERAL2
+IR_TIMEOUT	LITERAL2
