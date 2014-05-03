@@ -1,4 +1,4 @@
-IRLremote2
+IRLremote3
 ==========
 
 New lightweight IR library with different implementation

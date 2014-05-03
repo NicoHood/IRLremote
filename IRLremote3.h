@@ -74,7 +74,7 @@ private:
 	uint8_t mInterrupt;
 	static void (*user_onReceive)(uint32_t);
 	static inline void defaultReceive(uint32_t command){
-		mCommand=command};
+		mCommand=command;};
 
 	// variables to save the last reading and count the readings
 	static unsigned long  mLastTime;

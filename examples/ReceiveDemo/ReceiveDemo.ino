@@ -1,5 +1,5 @@
 /*
-  IRLremote2 Demo
+  IRLremote3 Demo
  Copyright (c) 2014 NicoHood.  All right reserved.
  
  This is a simple Demo to show you how to read and print values received from the library.
@@ -21,6 +21,7 @@ void setup(){
   Serial.begin(9600);
   Serial.println("Booting!");
 
+  //IRLremote.enable(interruptIR);
   IRLremote.enable(interruptIR, irEvent);
   
   // raw, direct output
