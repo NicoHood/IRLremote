@@ -21,11 +21,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTEALLC_H
-#define IRLREMOTEALL_H
+#include <IRLprotocolAll.h>
 
-#include <CIRLremote.h>
-#include <CIRLremoteNEC.h>
+void IRLprotocolAll::reset(void){
+	_IRLprotocolNEC.reset();
+	_IRLprotocolPanasonic.reset();
+}
 
+bool IRLprotocolAll::decodeIR(unsigned long duration){
+	// go through all Protocols and stop if a valid input was found
+	// this shouldnt take too long, otherwise it will miss values
+	if (_IRLprotocolNEC.decodeIR(duration))
+		IRData = _IRLprotocolNEC.IRData;
+	else if (_IRLprotocolPanasonic.decodeIR(duration))
+		IRData = _IRLprotocolPanasonic.IRData;
+	else
+		return false;
 
-#endif
+	// for any new input: reset all protocols and return true
+	reset();
+	return true;
+}

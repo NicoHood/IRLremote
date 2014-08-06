@@ -21,13 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <IRLremotePanasonic.h>
+#include <IRLprotocolPanasonic.h>
 
-void IRLremotePanasonic::reset(void){
+void IRLprotocolPanasonic::reset(void){
 	mCount = 0;
 }
 
-bool IRLremotePanasonic::decodeIR(unsigned long duration){
+bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 
 	// if timeout(start next value)
 	if (duration >= IR_TIMEOUT)

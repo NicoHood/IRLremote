@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
+// typedef for ir signal types
 typedef union{
 	uint8_t whole[6];
 	struct{
@@ -34,14 +35,32 @@ typedef union{
 	};
 } IR_Remote_Data_t;
 
+
+// decoding class definition
+class CIRLprotocol{
+public:
+	CIRLprotocol(void){ }
+
+	// decode function and its reset call needs to be implemented
+	virtual bool decodeIR(unsigned long duration) = 0;
+	virtual void reset(void) = 0;
+
+	//virtual void write(void* data, uint8_t length); //TODO = 0;
+
+	// variables for ir processing
+	IR_Remote_Data_t IRData;
+};
+
+
+// ir management class
 class CIRLremote{
 public:
 	CIRLremote(void);
 
 	// set userfunction to access new input directly
-	void begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t) = NULL);
+	void begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function)(IR_Remote_Data_t) = NULL);
 	void end(void);
-	
+
 	// functions if no user function was set
 	bool available(void);
 	IR_Remote_Data_t read(void);
@@ -52,10 +71,6 @@ private:
 	static void interruptIR_wrapper(void);
 	void interruptIR(void);
 
-	// decode function and its reset call needs to be implemented
-	virtual bool decodeIR(unsigned long duration) = 0;
-	virtual void reset(void) = 0;
-
 	// function called on a valid IR event
 	void(*user_onReceive)(IR_Remote_Data_t);
 
@@ -64,9 +79,9 @@ private:
 	bool pauseIR;
 	unsigned long  mLastTime;
 
-protected:
-	// variables for ir processing from child class
-	IR_Remote_Data_t IRData;
+	CIRLprotocol* IRprotocol;
 };
+
+extern CIRLremote IRLremote;
 
 #endif

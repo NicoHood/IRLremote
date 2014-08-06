@@ -7,6 +7,11 @@
 #######################################
 
 IR_Remote_Data_t	KEYWORD1
+CIRLremote	KEYWORD1
+CIRLprotocol	KEYWORD1
+IRLprotocolNEC	KEYWORD1
+IRLprotocolPanasonic	KEYWORD1
+IRLprotocolAll	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -18,6 +23,9 @@ begin	KEYWORD2
 end	KEYWORD2
 available	KEYWORD2
 read	KEYWORD2
+write	KEYWORD2
+decodeIR	KEYWORD2
+reset	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

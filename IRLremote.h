@@ -24,26 +24,12 @@ THE SOFTWARE.
 #ifndef IRLREMOTE_H
 #define IRLREMOTE_H
 
+// include the main remote
+#include <CIRLremote.h>
+
 // include all protocols here
-//#include <IRLremoteAll.h>
-#include <IRLremoteNEC.h>
-#include <IRLremotePanasonic.h>
-
-
-#define NEC
-
-class IRLremoteAll :  public IRLremoteNEC{
-public:
-	inline IRLremoteAll(void){ ; }
-
-private:
-	//using CRILremote::begin;
-	using IRLremoteNEC::decodeIR;
-
-	// virtual functions that needs to be implemented:
-	bool decodeIR(unsigned long duration);
-	void reset(void);
-	uint8_t mCount;
-};
+#include <IRLprotocolNEC.h>
+#include <IRLprotocolPanasonic.h>
+#include <IRLprotocolAll.h>
 
 #endif

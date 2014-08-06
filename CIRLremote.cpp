@@ -21,7 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "CIRLremote.h"
+#include <CIRLremote.h>
+
+CIRLremote IRLremote;
 
 // points to the class itself later, needed for the wrapper
 CIRLremote * CIRLremote::active_object = NULL;
@@ -31,7 +33,7 @@ CIRLremote::CIRLremote(void){
 	pauseIR = false;
 }
 
-void CIRLremote::begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t)){
+void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function)(IR_Remote_Data_t)){
 	// check if we already set an Interrupt (by this or another class), do not set it twice!
 	if (active_object != NULL) return;
 
@@ -42,16 +44,17 @@ void CIRLremote::begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t)){
 	pauseIR = false;
 	mLastTime = 0;
 
-	// do whatever is necessary to reset the decode function
-	reset();
-
 	// save new values
 	mInterrupt = interrupt;
+	IRprotocol = &protocol;
 	user_onReceive = function;
 
 	// TODO pullup? only for 1.5.7 with pin to interrupt define possible
 	// however the IR receiver chips normally have built in pullups
 	//pinMode(2, INPUT_PULLUP);
+
+	// do whatever is necessary to reset the decode function
+	IRprotocol->reset();
 
 	// attach the wrapper function that calls our main function on an interrupt
 	attachInterrupt(mInterrupt, interruptIR_wrapper, CHANGE);
@@ -80,7 +83,7 @@ IR_Remote_Data_t CIRLremote::read(void){
 
 	// reset remote and return data. Copy before unpausing!
 	if (pauseIR){
-		IRReport = IRData;
+		IRReport = IRprotocol->IRData;
 		pauseIR = false;
 	}
 	// return empty report
@@ -92,7 +95,7 @@ IR_Remote_Data_t CIRLremote::read(void){
 
 void CIRLremote::interruptIR_wrapper(void){ //called interrupt CHANGE
 	// call the instance. Needed for non static functions
-	//if (active_object)
+	if (active_object)
 		active_object->interruptIR();
 }
 
@@ -108,9 +111,9 @@ void CIRLremote::interruptIR(void){ //called interrupt CHANGE
 
 	// check if we have a new input and call the userfunction
 	// if no userfunction is set, flag a newinput signal.
-	if (decodeIR(duration)){
+	if (IRprotocol->decodeIR(duration)){
 		if (user_onReceive != NULL)
-			user_onReceive(IRData);
+			user_onReceive(IRprotocol->IRData);
 		else
 			pauseIR = true;
 	}

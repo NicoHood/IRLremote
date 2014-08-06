@@ -21,13 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <IRLremoteNEC.h>
+#include <IRLprotocolNEC.h>
 
-void IRLremoteNEC::reset(void){
+void IRLprotocolNEC::reset(void){
 	mCount = 0;
 }
 
-bool IRLremoteNEC::decodeIR(unsigned long duration){
+bool IRLprotocolNEC::decodeIR(unsigned long duration){
 
 	// if timeout(start next value)
 	if (duration >= IR_TIMEOUT)
@@ -44,7 +44,7 @@ bool IRLremoteNEC::decodeIR(unsigned long duration){
 
 	//check Space/Space Holding
 	else if (mCount == 1){
-#if (IR_SPACE != IR_SPACE_HOLDING)
+
 		// normal Space
 		if (duration > (IR_SPACE + IR_SPACE_HOLDING) / 2)
 			// next reading
@@ -57,10 +57,7 @@ bool IRLremoteNEC::decodeIR(unsigned long duration){
 			mCount = 0;
 			return true;
 		}
-#else //no Space Holding
-		// normal Space
-		if (duration > (IR_SPACE + IR_HIGH_1) / 2) mCount++; // next reading
-#endif
+
 		// wrong space
 		else mCount = 0;
 	}
@@ -99,40 +96,15 @@ bool IRLremoteNEC::decodeIR(unsigned long duration){
 
 	// check last input
 	if (mCount >= IR_LENGTH){
-		/*
-		//Debug output
-		for(int i=0; i<IR_BLOCKS;i++){
-		for(int j=0; j<8;j++){
-		Serial.print((mHighBits[i]>>(7-j))&0x01);
-		}
-		Serial.println();
-		}
-		Serial.println();
-		*/
-
-		//write command based on each Protocol
-#ifdef PANASONIC
-		// Errorcorrection for Panasonic with XOR
-		// Address left out, we dont need that (0,1)
-		if (uint8_t(IRData.whole[2] ^ IRData.whole[3] ^ IRData.whole[4]) == IRData.whole[5]){
-			//in my case [2] has a fix value
-			uint32_t command = (IRData.whole[3] << 8) + IRData.whole[4];
-			mCount = 0;
-			return true;
-		}
-#endif
-
-#ifdef NEC
-		// You can also check the Address, but i wont do that.
 		// In some other Nec Protocols the Address has an inverse or not
 		if (uint8_t((IRData.whole[2] ^ (~IRData.whole[3]))) == 0){
 			// Errorcorrection for the Command is the inverse
 			IRData.whole[4] = 0;
 			IRData.whole[5] = 0;
+
 			mCount = 0;
 			return true;
 		}
-#endif
 
 		mCount = 0;
 	}

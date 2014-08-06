@@ -10,29 +10,41 @@
 
 #include "IRLremote.h"
 
-// select your protocol here
-IRLremoteNEC IRLremote;
-//IRLremotePanasonic IRLremote;
-
 const int interruptIR = 0;
+IR_Remote_Data_t newestIRData;
+
+// choose your protocol
+IRLprotocolNEC IRprotocol;
+//IRLprotocolPanasonic IRprotocol;
+//IRLprotocolAll IRprotocol;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Startup");
 
+  // reset variables
+  memset(&newestIRData, 0, sizeof(newestIRData));
+
   // attach the interrupt function
-  IRLremote.begin(interruptIR, irEvent);
+  IRLremote.begin(interruptIR, IRprotocol, irEvent);
 }
 
 void loop() {
-  // empty
+  // temporary disable interrupts and print newest input
+  cli();
+  if (newestIRData.address || newestIRData.command) {
+    Serial.println(newestIRData.address, HEX);
+    Serial.println(newestIRData.command, HEX);
+    // reset variables
+    memset(&newestIRData, 0, sizeof(newestIRData));
+  }
+  sei();
 }
 
 void irEvent(IR_Remote_Data_t IRData) {
   // Called when directly received correct IR Signal
-  // Do not use Serial inside, it can crash your Arduino.
-  // This is only for debug
-  Serial.println(IRData.address, HEX);
-  Serial.println(IRData.command, HEX);
-}
+  // Do not use Serial inside, it can crash your Arduino!
 
+  // Update the values to the newest valid input
+  newestIRData = IRData;
+}

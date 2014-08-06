@@ -8,18 +8,20 @@
 
 #include "IRLremote.h"
 
-// select your protocol here
-IRLremoteNEC IRLremote;
-//IRLremotePanasonic IRLremote;
-
 const int interruptIR = 0;
+
+// choose your protocol
+IRLprotocolNEC IRprotocol;
+//IRLprotocolPanasonic IRprotocol;
+//IRLprotocolAll IRprotocol;
+
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Startup");
 
   // no function is attached
-  IRLremote.begin(interruptIR);
+  IRLremote.begin(interruptIR, IRprotocol);
 }
 
 void loop() {

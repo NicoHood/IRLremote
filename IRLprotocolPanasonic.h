@@ -21,12 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTEPANASONIC_h
-#define IRLREMOTEPANASONIC_h
+#ifndef IRLPROTOCOLPANASONIC_h
+#define IRLPROTOCOLPANASONIC_h
 
-#include "CIRLremote.h"
-
-#define PANASONIC
+#include <CIRLremote.h>
 
 //PANASONIC
 //IRP notation: {37k,432}<1,-1|1,-3>(8,-4,3:8,1:8,D:8,S:8,F:8,(D^S^F):8,1,-173)+ 
@@ -41,14 +39,16 @@ THE SOFTWARE.
 #define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
 #define IR_TIMEOUT IR_PULSE*173/2
 
-class IRLremotePanasonic : public CIRLremote{
-public:
-	inline IRLremotePanasonic(void){ ; }
 
-protected:
+class IRLprotocolPanasonic : public CIRLprotocol{
+public:
+	IRLprotocolPanasonic(void){ }
+
 	// virtual functions that needs to be implemented:
 	bool decodeIR(unsigned long duration);
 	void reset(void);
+
+private:
 	uint8_t mCount;
 };
 

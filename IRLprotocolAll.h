@@ -21,13 +21,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <IRLremote.h>
+#ifndef IRLPROTOCOLALL_H
+#define IRLPROTOCOLALL_H
 
-void IRLremoteAll::reset(void){
-	mCount = 0;
-}
+// include the main remote
+#include <CIRLremote.h>
 
-bool IRLremoteAll::decodeIR(unsigned long duration){
-	return IRLremoteNEC::decodeIR(duration);
-	//return IRLremotePanasonic::decodeIR(duration);
-}
+// include all protocols here
+#include <IRLprotocolNEC.h>
+#include <IRLprotocolPanasonic.h>
+
+class IRLprotocolAll : public CIRLprotocol{
+public:
+	IRLprotocolAll(void){ }
+
+	// virtual functions that needs to be implemented:
+	bool decodeIR(unsigned long duration);
+	void reset(void);
+
+private:
+	// private instance of all other protocols
+	IRLprotocolPanasonic _IRLprotocolPanasonic;
+	IRLprotocolNEC _IRLprotocolNEC;
+};
+
+#endif
