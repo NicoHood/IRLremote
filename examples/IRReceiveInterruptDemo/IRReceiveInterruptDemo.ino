@@ -6,11 +6,14 @@
  Receives IR signals and instantly calls an attached interrupt function.
  This may fire more than one time if you press too long, add a debounce.
  Dont use Serial inside the interrupt!
-
- Define your protocol in the IRLremote.h file!
  */
 
 #include "IRLremote.h"
+
+// select your protocol here
+IRLremoteNEC IRLremote;
+//IRLremotePanasonic IRLremote;
+
 const int interruptIR = 0;
 
 void setup() {
@@ -32,5 +35,4 @@ void irEvent(IR_Remote_Data_t IRData) {
   Serial.println(IRData.address, HEX);
   Serial.println(IRData.command, HEX);
 }
-
 

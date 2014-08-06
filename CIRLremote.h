@@ -21,36 +21,52 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTENEC_H
-#define IRLREMOTENEC_H
+#ifndef CIRLREMOTE_H
+#define CIRLREMOTE_H
 
-#include <CIRLremote.h>
+#include <Arduino.h>
 
-#define NEC
+typedef union{
+	uint8_t whole[6];
+	struct{
+		uint16_t address;
+		uint32_t command;
+	};
+} IR_Remote_Data_t;
 
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define IR_PULSE 564
-#define IR_BLOCKS 4
-#define IR_LEAD IR_PULSE*16
-#define IR_SPACE IR_PULSE*8
-#define IR_SPACE_HOLDING IR_PULSE*4
-#define IR_LOW_0 IR_PULSE*1
-#define IR_LOW_1 IR_PULSE*1
-#define IR_HIGH_0 IR_PULSE*1
-#define IR_HIGH_1 IR_PULSE*3
-#define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
-#define IR_TIMEOUT IR_PULSE*173/2
-
-class IRLremoteNEC : public CIRLremote{
+class CIRLremote{
 public:
-	inline IRLremoteNEC(void){ ; }
+	CIRLremote(void);
+
+	// set userfunction to access new input directly
+	void begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t) = NULL);
+	void end(void);
+	
+	// functions if no user function was set
+	bool available(void);
+	IR_Remote_Data_t read(void);
+
+private:
+	// interrupt function with rapper to use static + virtual at the same time
+	static CIRLremote *active_object;
+	static void interruptIR_wrapper(void);
+	void interruptIR(void);
+
+	// decode function and its reset call needs to be implemented
+	virtual bool decodeIR(unsigned long duration) = 0;
+	virtual void reset(void) = 0;
+
+	// function called on a valid IR event
+	void(*user_onReceive)(IR_Remote_Data_t);
+
+	// ir managment variables
+	uint8_t mInterrupt;
+	bool pauseIR;
+	unsigned long  mLastTime;
 
 protected:
-	// virtual functions that needs to be implemented:
-	bool decodeIR(unsigned long duration);
-	void reset(void);
-	uint8_t mCount;
+	// variables for ir processing from child class
+	IR_Remote_Data_t IRData;
 };
 
 #endif

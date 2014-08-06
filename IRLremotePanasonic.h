@@ -21,20 +21,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTENEC_H
-#define IRLREMOTENEC_H
+#ifndef IRLREMOTEPANASONIC_h
+#define IRLREMOTEPANASONIC_h
 
-#include <CIRLremote.h>
+#include "CIRLremote.h"
 
-#define NEC
+#define PANASONIC
 
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define IR_PULSE 564
-#define IR_BLOCKS 4
-#define IR_LEAD IR_PULSE*16
-#define IR_SPACE IR_PULSE*8
-#define IR_SPACE_HOLDING IR_PULSE*4
+//PANASONIC
+//IRP notation: {37k,432}<1,-1|1,-3>(8,-4,3:8,1:8,D:8,S:8,F:8,(D^S^F):8,1,-173)+ 
+#define IR_PULSE 432
+#define IR_BLOCKS 6
+#define IR_LEAD IR_PULSE*8
+#define IR_SPACE IR_PULSE*4
 #define IR_LOW_0 IR_PULSE*1
 #define IR_LOW_1 IR_PULSE*1
 #define IR_HIGH_0 IR_PULSE*1
@@ -42,9 +41,9 @@ THE SOFTWARE.
 #define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
 #define IR_TIMEOUT IR_PULSE*173/2
 
-class IRLremoteNEC : public CIRLremote{
+class IRLremotePanasonic : public CIRLremote{
 public:
-	inline IRLremoteNEC(void){ ; }
+	inline IRLremotePanasonic(void){ ; }
 
 protected:
 	// virtual functions that needs to be implemented:

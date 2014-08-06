@@ -4,11 +4,14 @@
 
  IRReceiveBlockingDemo
  Receives IR signals and blocks until the data is read.
-
- Define your protocol in the IRLremote.h file!
  */
 
 #include "IRLremote.h"
+
+// select your protocol here
+IRLremoteNEC IRLremote;
+//IRLremotePanasonic IRLremote;
+
 const int interruptIR = 0;
 
 void setup() {

@@ -21,36 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTENEC_H
-#define IRLREMOTENEC_H
+#ifndef IRLREMOTEALLC_H
+#define IRLREMOTEALL_H
 
 #include <CIRLremote.h>
+#include <CIRLremoteNEC.h>
 
-#define NEC
-
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define IR_PULSE 564
-#define IR_BLOCKS 4
-#define IR_LEAD IR_PULSE*16
-#define IR_SPACE IR_PULSE*8
-#define IR_SPACE_HOLDING IR_PULSE*4
-#define IR_LOW_0 IR_PULSE*1
-#define IR_LOW_1 IR_PULSE*1
-#define IR_HIGH_0 IR_PULSE*1
-#define IR_HIGH_1 IR_PULSE*3
-#define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
-#define IR_TIMEOUT IR_PULSE*173/2
-
-class IRLremoteNEC : public CIRLremote{
-public:
-	inline IRLremoteNEC(void){ ; }
-
-protected:
-	// virtual functions that needs to be implemented:
-	bool decodeIR(unsigned long duration);
-	void reset(void);
-	uint8_t mCount;
-};
 
 #endif

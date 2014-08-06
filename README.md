@@ -15,6 +15,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Very accurate even when pointing in different directions
 * Maximum error correction
 * Interrupt function
+* No timer is needed
 
 **Supported Protocols**
 * NEC
