@@ -58,9 +58,9 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 		uint8_t length = (mCount / 2) - 1;
 
 		// write logical 1
-		if (duration > (IR_HIGH_0 + IR_HIGH_1) / 2) IRData.whole[length / 8] |= (0x80 >> (length % 8));
+		if (duration > (IR_HIGH_0 + IR_HIGH_1) / 2) IRData.whole[length / 8] |= (1 << (length % 8));
 		// write logical 0
-		else IRData.whole[length / 8] &= ~(0x80 >> (length % 8));
+		else IRData.whole[length / 8] &= ~(1 << (length % 8));
 		// next reading
 		mCount++;
 	}

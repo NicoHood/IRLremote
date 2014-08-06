@@ -33,7 +33,9 @@ void loop() {
   // temporary disable interrupts and print newest input
   cli();
   if (newestIRData.address || newestIRData.command) {
+    Serial.print("Address:");
     Serial.println(newestIRData.address, HEX);
+    Serial.print("Command:");
     Serial.println(newestIRData.command, HEX);
     // reset variables
     memset(&newestIRData, 0, sizeof(newestIRData));

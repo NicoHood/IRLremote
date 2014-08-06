@@ -39,7 +39,7 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
-1.4.2 Release (06.08.2014)
+1.4.3 Release (06.08.2014)
 * changed and improved a lot of stuff
 * rearranged classes
 * removed older versions
