@@ -6,6 +6,8 @@ New lightweight IR library with different implementation
 The idea was: minimal implementation with maximal recognition.
 The trick behind this is to only recognize one Protocol at the same time but with maximum error correction.
 It is still possible to add more than one Protocol but if you add too many it will slow down and not work anymore.
+On top of that the first possible hit is recognized as valid. You might get wrong values if the protocols are very similar.
+This is because of maximum recognition and error correction. Its by design this way.
 However there are only two implemented yet so this shouldnt be a problem.
 
 This library is way more efficient than the "standard" IR library from Ken Shirriff.
@@ -39,6 +41,9 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
+1.4.4 Release (07.08.2014)
+* added raw protocol (broken)
+
 1.4.3 Release (06.08.2014)
 * changed and improved a lot of stuff
 * rearranged classes

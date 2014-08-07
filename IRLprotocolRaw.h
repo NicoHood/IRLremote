@@ -21,16 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTE_H
-#define IRLREMOTE_H
+#ifndef IRLPROTOCOLRAW_H
+#define IRLPROTOCOLRAW_H
 
 // include the main remote
 #include <CIRLremote.h>
 
-// include all protocols here
-#include <IRLprotocolNEC.h>
-#include <IRLprotocolPanasonic.h>
-#include <IRLprotocolAll.h>
-#include <IRLprotocolRaw.h>
+#define IR_RAW_TIMEOUT 50000
+#define IR_RAW_BUFFER_SIZE 100
+
+class IRLprotocolRaw : public CIRLprotocol{
+public:
+	IRLprotocolRaw(void){ }
+
+	// virtual functions that needs to be implemented:
+	bool decodeIR(unsigned long duration);
+	void reset(void);
+
+	// new functions for the user to access the raw buffer
+	uint8_t available(void);
+	uint32_t buffer[IR_RAW_BUFFER_SIZE];
+
+private:
+	uint8_t mCount;
+};
 
 #endif

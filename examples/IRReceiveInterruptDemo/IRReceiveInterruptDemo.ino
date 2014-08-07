@@ -2,7 +2,7 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRReceiveInterruptDemo
+ IRReceiveInterrupt Demo
  Receives IR signals and instantly calls an attached interrupt function.
  This may fire more than one time if you press too long, add a debounce.
  Dont use Serial inside the interrupt!

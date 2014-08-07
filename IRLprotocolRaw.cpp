@@ -21,16 +21,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef IRLREMOTE_H
-#define IRLREMOTE_H
-
-// include the main remote
-#include <CIRLremote.h>
-
-// include all protocols here
-#include <IRLprotocolNEC.h>
-#include <IRLprotocolPanasonic.h>
-#include <IRLprotocolAll.h>
 #include <IRLprotocolRaw.h>
 
-#endif
+void IRLprotocolRaw::reset(void){
+	// reset counter on every new input
+	mCount = 0;
+}
+
+bool IRLprotocolRaw::decodeIR(unsigned long duration){
+	// block until data is read
+	if (available()) return false;
+
+	// save value and increase count
+	buffer[mCount++] = duration;
+
+	// save last time for timeout check in the buff too
+	if (mCount != IR_RAW_BUFFER_SIZE)
+		buffer[mCount] = micros();
+
+	// always return false to not call any interrupt function
+	return false;
+}
+
+uint8_t IRLprotocolRaw::available(void){
+	// check if we have data
+	if (mCount){
+		// check if buffer is full
+		if (mCount == IR_RAW_BUFFER_SIZE)
+			return mCount;
+
+		// check if last reading was a timeout
+		if (buffer[mCount - 1] > IR_RAW_TIMEOUT)
+			return mCount;
+
+		// check if reading timed out and save value
+		unsigned long duration = micros() - buffer[mCount];
+		if (duration > IR_RAW_TIMEOUT){
+			buffer[mCount++] = duration;
+			return mCount;
+		}
+	}
+	return 0;
+}

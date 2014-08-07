@@ -45,8 +45,8 @@ public:
 	virtual bool decodeIR(unsigned long duration) = 0;
 	virtual void reset(void) = 0;
 
-	//virtual void write(void* data, uint8_t length); //TODO = 0;
-
+	//virtual void write(IR_Remote_Data_t)=0;
+	
 	// variables for ir processing
 	IR_Remote_Data_t IRData;
 };
@@ -65,6 +65,13 @@ public:
 	bool available(void);
 	IR_Remote_Data_t read(void);
 
+	// additional functions to control the lib
+	//unsigned long getTimeout(void);
+	//bool paused(void);
+	//void pause(void);
+	//void resume(void);
+	//void reset(void);
+
 private:
 	// interrupt function with rapper to use static + virtual at the same time
 	static CIRLremote *active_object;
@@ -76,7 +83,8 @@ private:
 
 	// ir managment variables
 	uint8_t mInterrupt;
-	bool pauseIR;
+	bool newInput;
+	//bool pauseIR;
 	unsigned long  mLastTime;
 
 	CIRLprotocol* IRprotocol;

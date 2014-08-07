@@ -29,8 +29,9 @@ CIRLremote IRLremote;
 CIRLremote * CIRLremote::active_object = NULL;
 
 CIRLremote::CIRLremote(void){
-	// ensure available() doesnt return anything
-	pauseIR = false;
+	// ensure available() and paused() returns false
+	newInput = false;
+	//pauseIR = false;
 }
 
 void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function)(IR_Remote_Data_t)){
@@ -39,10 +40,6 @@ void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function
 
 	// select the class itself for the wrapper
 	active_object = this;
-
-	// reset variables
-	pauseIR = false;
-	mLastTime = 0;
 
 	// save new values
 	mInterrupt = interrupt;
@@ -55,6 +52,7 @@ void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function
 
 	// do whatever is necessary to reset the decode function
 	IRprotocol->reset();
+	mLastTime = 0; // TODO move to constructor if getTimeout() is used
 
 	// attach the wrapper function that calls our main function on an interrupt
 	attachInterrupt(mInterrupt, interruptIR_wrapper, CHANGE);
@@ -67,24 +65,31 @@ void CIRLremote::end(void){
 	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
 	detachInterrupt(mInterrupt);
 
-	// ensure available() doesnt return anything
-	pauseIR = false;
+	// ensure available(), paused() doesnt return anything
+	newInput = false;
+	//pauseIR = false;
 
 	// deselect the class
 	active_object = NULL;
 }
 
 bool CIRLremote::available(void){
-	return pauseIR;
+	return newInput;
 }
 
 IR_Remote_Data_t CIRLremote::read(void){
 	IR_Remote_Data_t IRReport;
 
 	// reset remote and return data. Copy before unpausing!
-	if (pauseIR){
+	if (newInput){
+		// save new value
 		IRReport = IRprotocol->IRData;
-		pauseIR = false;
+
+		// fires the protocols reset function
+		//IRprotocol->reset();
+
+		// resume reading
+		newInput = false;
 	}
 	// return empty report
 	else
@@ -93,16 +98,43 @@ IR_Remote_Data_t CIRLremote::read(void){
 	return IRReport;
 }
 
-void CIRLremote::interruptIR_wrapper(void){ //called interrupt CHANGE
+//unsigned long CIRLremote::getTimeout(void){
+//	// returns time since last signal
+//	return micros() - mLastTime;
+//}
+//
+//bool CIRLremote::paused(void){
+//	return pauseIR;
+//}
+//
+//void CIRLremote::pause(void){
+//	pauseIR = true;
+//}
+//
+//void CIRLremote::resume(void){
+//	pauseIR = false;
+//}
+//
+//void CIRLremote::reset(void){
+//	// calls the protocol's reset function
+//	IRprotocol->reset();
+//
+//	// resume reading
+//	newInput = false;
+//	pauseIR = false;
+//}
+
+void CIRLremote::interruptIR_wrapper(void){
+	// called by interrupt CHANGE
 	// call the instance. Needed for non static functions
-	if (active_object)
-		active_object->interruptIR();
+	//if (active_object)
+	active_object->interruptIR();
 }
 
-void CIRLremote::interruptIR(void){ //called interrupt CHANGE
+void CIRLremote::interruptIR(void){
 	// for no user function set we need to pause IR
 	// to not overwrite the actual values until they are read.
-	if (pauseIR) return;
+	if (newInput) return; //  || pauseIR
 
 	//save the duration between the last reading
 	unsigned long time = micros();
@@ -110,11 +142,11 @@ void CIRLremote::interruptIR(void){ //called interrupt CHANGE
 	mLastTime = time;
 
 	// check if we have a new input and call the userfunction
-	// if no userfunction is set, flag a newinput signal.
+	// if no userfunction is set, flag a newinput signal and block
 	if (IRprotocol->decodeIR(duration)){
 		if (user_onReceive != NULL)
 			user_onReceive(IRprotocol->IRData);
 		else
-			pauseIR = true;
+			newInput = true;
 	}
 }

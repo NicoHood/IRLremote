@@ -89,8 +89,6 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 		// Errorcorrection for Panasonic with XOR
 		if (uint8_t(IRData.whole[2] ^ IRData.whole[3] ^ IRData.whole[4]) == IRData.whole[5]){
 			// in my case [2] has a fix value
-			//uint32_t command = (IRData.whole[3] << 8) + IRData.whole[4];
-			//TODO
 			mCount = 0;
 			return true;
 		}
