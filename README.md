@@ -28,6 +28,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 
 **Planned features:**
 * Sending function
+* Use PCInt (conflict with SoftSerial)
 
 Try the examples to see how it works. See this reference about choosing the right interrupt pin:
 http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
@@ -41,6 +42,9 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
+1.4.5 Release (30.08.2014)
+* fixed raw protocol
+
 1.4.4 Release (07.08.2014)
 * added raw protocol (broken)
 

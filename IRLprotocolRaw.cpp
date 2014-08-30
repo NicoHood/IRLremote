@@ -44,22 +44,34 @@ bool IRLprotocolRaw::decodeIR(unsigned long duration){
 }
 
 uint8_t IRLprotocolRaw::available(void){
+	uint8_t oldSREG = SREG;
+	cli();
+
 	// check if we have data
 	if (mCount){
 		// check if buffer is full
-		if (mCount == IR_RAW_BUFFER_SIZE)
+		if (mCount == IR_RAW_BUFFER_SIZE){
+			SREG = oldSREG;
 			return mCount;
+		}
 
 		// check if last reading was a timeout
-		if (buffer[mCount - 1] > IR_RAW_TIMEOUT)
+		// no problem if mCount==0 because the if above prevents this
+		// anyways then it will just return 0
+		if (buffer[mCount - 1] > IR_RAW_TIMEOUT){
+			SREG = oldSREG;
 			return mCount;
+		}
 
 		// check if reading timed out and save value
 		unsigned long duration = micros() - buffer[mCount];
 		if (duration > IR_RAW_TIMEOUT){
 			buffer[mCount++] = duration;
+			SREG = oldSREG;
 			return mCount;
 		}
 	}
+
+	SREG = oldSREG;
 	return 0;
 }
