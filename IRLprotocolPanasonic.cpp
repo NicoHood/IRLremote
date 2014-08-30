@@ -36,7 +36,7 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 	// check Lead (needs a timeout or a correct signal)
 	else if (mCount == 0){
 		// lead is okay
-		if (duration > (IR_SPACE + IR_LEAD) / 2)
+		if (duration > ((IR_SPACE + IR_LEAD) / 2))
 			mCount++;
 		// wrong lead
 		else mCount = 0;
@@ -45,7 +45,8 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 	//check Space
 	else if (mCount == 1){
 		// normal Space
-		if (duration > (IR_SPACE + IR_HIGH_1) / 2) mCount++; // next reading
+		if (duration > (IR_SPACE + IR_HIGH_1) / 2) 
+			mCount++;
 
 		// wrong space
 		else mCount = 0;
@@ -53,14 +54,16 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 
 	// High pulses (odd numbers)
 	else if (mCount % 2 == 1){
-		// get number of the High Bits
-		// minus one for the lead
+		// get number of the High Bits minus one for the lead
 		uint8_t length = (mCount / 2) - 1;
 
-		// write logical 1
-		if (duration > (IR_HIGH_0 + IR_HIGH_1) / 2) IRData.whole[length / 8] |= (1 << (length % 8));
-		// write logical 0
-		else IRData.whole[length / 8] &= ~(1 << (length % 8));
+		// move bits and write 1 or 0 depending on the duration
+		IRData.whole[length / 8] <<= 1;
+		if (duration > ((IR_HIGH_0 + IR_HIGH_1) / 2))
+			IRData.whole[length / 8] |= 0x01;
+		else
+			IRData.whole[length / 8] &= ~0x01;
+
 		// next reading
 		mCount++;
 	}
@@ -71,15 +74,7 @@ bool IRLprotocolPanasonic::decodeIR(unsigned long duration){
 		// But you might miss some wrong values
 		// Checking takes more operations but is safer.
 		// We want maximum recognition so we leave this out here.
-		// also we have the inverse or the XOR to check the data.
-
-		// write low bits
-		//if(duration>(IR_LOW_0+IR_LOW_1)/2);
-		//else;
-
-		//check for error
-		//if(duration>(IR_HIGH_0+IR_HIGH_1)/2) mCount=0;
-		//else
+		// also we have the inverse or the XOR to check the data later
 		mCount++;
 	}
 

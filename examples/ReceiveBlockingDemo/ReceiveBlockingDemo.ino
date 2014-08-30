@@ -2,7 +2,7 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRReceiveBlocking Demo
+ IRL ReceiveBlocking Demo
  Receives IR signals and blocks until the data is read.
  */
 

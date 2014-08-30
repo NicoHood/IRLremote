@@ -64,14 +64,16 @@ bool IRLprotocolNEC::decodeIR(unsigned long duration){
 
 	// High pulses (odd numbers)
 	else if (mCount % 2 == 1){
-		// get number of the High Bits
-		// minus one for the lead
+		// get number of the High Bits minus one for the lead
 		uint8_t length = (mCount / 2) - 1;
 
-		// write logical 1
-		if (duration > (IR_HIGH_0 + IR_HIGH_1) / 2) IRData.whole[length / 8] |= (1 << (length % 8));
-		// write logical 0
-		else IRData.whole[length / 8] &= ~(1 << (length % 8));
+		// move bits and write 1 or 0 depending on the duration
+		IRData.whole[length / 8] <<= 1;
+		if (duration > ((IR_HIGH_0 + IR_HIGH_1) / 2))
+			IRData.whole[length / 8] |= 0x01;
+		else
+			IRData.whole[length / 8] &= ~0x01;
+
 		// next reading
 		mCount++;
 	}
@@ -82,21 +84,13 @@ bool IRLprotocolNEC::decodeIR(unsigned long duration){
 		// But you might miss some wrong values
 		// Checking takes more operations but is safer.
 		// We want maximum recognition so we leave this out here.
-		// also we have the inverse or the XOR to check the data.
-
-		// write low bits
-		//if(duration>(IR_LOW_0+IR_LOW_1)/2);
-		//else;
-
-		//check for error
-		//if(duration>(IR_HIGH_0+IR_HIGH_1)/2) mCount=0;
-		//else
+		// also we have the inverse or the XOR to check the data later
 		mCount++;
 	}
 
 	// check last input
 	if (mCount >= IR_LENGTH){
-		// In some other Nec Protocols the Address has an inverse or not
+		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
 		if (uint8_t((IRData.whole[2] ^ (~IRData.whole[3]))) == 0){
 			// Errorcorrection for the Command is the inverse
 			IRData.whole[4] = 0;

@@ -48,7 +48,7 @@ public:
 	// virtual functions that needs to be implemented:
 	bool decodeIR(unsigned long duration);
 	void reset(void);
-
+	
 private:
 	uint8_t mCount;
 };

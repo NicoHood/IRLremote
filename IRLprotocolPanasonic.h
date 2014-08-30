@@ -39,7 +39,6 @@ THE SOFTWARE.
 #define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
 #define IR_TIMEOUT IR_PULSE*173/2
 
-
 class IRLprotocolPanasonic : public CIRLprotocol{
 public:
 	IRLprotocolPanasonic(void){ }

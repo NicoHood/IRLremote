@@ -20,6 +20,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Maximum error correction
 * Interrupt function
 * No timer is needed
+* Receiving and sending possible
 
 **Supported Protocols**
 * NEC
@@ -27,7 +28,8 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Ask me for more
 
 **Planned features:**
-* Sending function
+* Sending function (for Panasonic)
+* remove bit banging PWM
 * Use PCInt (conflict with SoftSerial)
 
 Try the examples to see how it works. See this reference about choosing the right interrupt pin:
@@ -42,6 +44,10 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
+1.4.6 Release (30.08.2014)
+* fixed writing address + command bug
+* added sending function for NEC
+
 1.4.5 Release (30.08.2014)
 * fixed raw protocol
 
