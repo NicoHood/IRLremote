@@ -27,6 +27,12 @@ THE SOFTWARE.
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
+typedef enum IRType{
+	IR_ALL,
+	IR_NEC,
+	IR_PANASONIC,
+};
+
 // typedef for ir signal types
 typedef union{
 	uint8_t whole[6];
@@ -50,14 +56,48 @@ typedef union{
 #define NEC_SPACE_ZERO NEC_PULSE*1
 #define NEC_SPACE_ONE NEC_PULSE*3
 
+//template <IRType irType>
+//class CIRLprotocol2{
+//public:
+//	CIRLprotocol2(void){ }
+//
+//};
+//1904 53
 
 // decoding class definition
 class CIRLprotocol{
 public:
-	CIRLprotocol(void){ }
+	CIRLprotocol(IRType type):irType(type){ }
+	const uint8_t irType; //TODO save this byte
+	bool decodeIR(unsigned long duration){
+		switch (irType){
+		case IR_NEC:
+			uint8_t * data = decodeSpace < NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+				NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
+				(duration);
+			if (data){
 
-	// decode function and its reset call needs to be implemented
-	virtual bool decodeIR(unsigned long duration) = 0;
+				// In some other Nec Protocols the Address has an inverse or not, so we only check the command
+				if (uint8_t((data[2] ^ (~data[3]))) == 0){
+					// Errorcorrection for the Command is the inverse
+					memcpy(IRData.whole, data, NEC_BLOCKS);
+					IRData.whole[4] = 0;
+					IRData.whole[5] = 0;
+
+					if (uint8_t((data[0] ^ (~data[1]))) == 0){
+						// normal NEC with mirrored address
+					} // else extended NEC
+
+					return true;
+				}
+				//else if (IRData.command == -1L)
+				//	return true;
+			}
+			return false;
+		}
+	};
+
+
 	inline void reset(void){
 		//TODO improve
 		// sends a timeout, function should reset
@@ -66,66 +106,68 @@ public:
 
 	// default decoder helper functions
 	template <uint16_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
-		uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength>
-		bool decodeSpace(unsigned long duration){
-		static uint8_t mCount = 0;
+		uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
+		uint8_t* decodeSpace(unsigned long duration){
+		// variables for ir processing
+		static uint8_t data[blocks];
+		static uint8_t count = 0;
 
 		// if timeout(start next value)
 		if (duration >= ((timeout + markLead) / 2))
-			mCount = 0;
+			count = 0;
 
 		// check Lead (needs a timeout or a correct signal)
-		else if (mCount == 0){
+		else if (count == 0){
 			// lead is okay
 			if (duration > ((markLead + spaceLead) / 2))
-				mCount++;
+				count++;
 			// wrong lead
-			else mCount = 0;
+			else count = 0;
 		}
 
 		//check Space/Space Holding
-		else if (mCount == 1){
+		else if (count == 1){
 			// protocol supports space holding (Nec)
 			if (spaceHolding){
 				// normal Space
 				if (duration > (spaceLead + spaceHolding) / 2)
 					// next reading
-					mCount++;
+					count++;
 
 				// Button holding
 				else if (duration > (spaceHolding + spaceOne) / 2){
-					IRData.command = -1L;
-					mCount = 0;
-					return true;
+					memset(data, 0xFF, blocks);
+					count = 0;
+					return data;
 				}
 				// wrong space
-				else mCount = 0;
+				else count = 0;
 			}
 
 			// protocol doesnt support space holding (Panasonic)
 			else{
 				// normal Space
 				if (duration > (spaceLead + spaceOne) / 2)
-					mCount++;
+					count++;
 				// wrong space
-				else mCount = 0;
+				else count = 0;
 			}
 		}
 
 		// High pulses (odd numbers)
-		else if (mCount % 2 == 1){
+		else if (count % 2 == 1){
 			// get number of the High Bits minus one for the lead
-			uint8_t length = (mCount / 2) - 1;
+			uint8_t length = (count / 2) - 1;
 
 			// move bits and write 1 or 0 depending on the duration
-			IRData.whole[length / 8] <<= 1;
+			data[length / 8] <<= 1;
 			if (duration > ((spaceOne + spaceZero) / 2))
-				IRData.whole[length / 8] |= 0x01;
+				data[length / 8] |= 0x01;
 			else
-				IRData.whole[length / 8] &= ~0x01;
+				data[length / 8] &= ~0x01;
 
 			// next reading
-			mCount++;
+			count++;
 		}
 
 		// Low pulses (even numbers)
@@ -135,26 +177,22 @@ public:
 			// Checking takes more operations but is safer.
 			// We want maximum recognition so we leave this out here.
 			// also we have the inverse or the XOR to check the data later
-			mCount++;
+			count++;
 		}
 
 		// check last input
-		if (mCount >= irLength){
-			mCount = 0;
-			return true;
+		if (count >= irLength){
+			count = 0;
+			return data;
 		}
-		return false;
+		return NULL;
 	}
 
 	// variables for ir processing
 	IR_Remote_Data_t IRData;
 };
 
-typedef enum IRType{
-	ALL = 0,
-	NEC = 1,
-	PANASONIC = 2,
-};
+
 
 
 

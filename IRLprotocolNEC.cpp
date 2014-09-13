@@ -23,25 +23,6 @@ THE SOFTWARE.
 
 #include <IRLprotocolNEC.h>
 
-bool IRLprotocolNEC::decodeIR(unsigned long duration){
-
-	if (decodeSpace<NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-		NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH>
-		(duration)){
-		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-		if (uint8_t((IRData.whole[2] ^ (~IRData.whole[3]))) == 0){
-			// Errorcorrection for the Command is the inverse
-			IRData.whole[4] = 0;
-			IRData.whole[5] = 0;
-
-			if (uint8_t((IRData.whole[0] ^ (~IRData.whole[1]))) == 0){
-			// normal NEC with mirrored address
-			} // else extended NEC
-
-			return true;
-		}
-		else if (IRData.command == -1L)
-			return true;
-	}
-	return false;
-}
+//bool IRLprotocolNEC::decodeIR(unsigned long duration){
+//
+//}
