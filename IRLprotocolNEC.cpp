@@ -23,84 +23,25 @@ THE SOFTWARE.
 
 #include <IRLprotocolNEC.h>
 
-void IRLprotocolNEC::reset(void){
-	mCount = 0;
-}
-
 bool IRLprotocolNEC::decodeIR(unsigned long duration){
 
-	// if timeout(start next value)
-	if (duration >= IR_TIMEOUT)
-		mCount = 0;
-
-	// check Lead (needs a timeout or a correct signal)
-	else if (mCount == 0){
-		// lead is okay
-		if (duration > (IR_SPACE_HOLDING + IR_LEAD) / 2)
-			mCount++;
-		// wrong lead
-		else mCount = 0;
-	}
-
-	//check Space/Space Holding
-	else if (mCount == 1){
-
-		// normal Space
-		if (duration > (IR_SPACE + IR_SPACE_HOLDING) / 2)
-			// next reading
-			mCount++;
-
-		// Button holding
-		else if (duration > (IR_HIGH_1 + IR_SPACE_HOLDING) / 2){
-			IRData.address = 0;
-			IRData.command = 0xFFFFFFFF;
-			mCount = 0;
-			return true;
-		}
-
-		// wrong space
-		else mCount = 0;
-	}
-
-	// High pulses (odd numbers)
-	else if (mCount % 2 == 1){
-		// get number of the High Bits minus one for the lead
-		uint8_t length = (mCount / 2) - 1;
-
-		// move bits and write 1 or 0 depending on the duration
-		IRData.whole[length / 8] <<= 1;
-		if (duration > ((IR_HIGH_0 + IR_HIGH_1) / 2))
-			IRData.whole[length / 8] |= 0x01;
-		else
-			IRData.whole[length / 8] &= ~0x01;
-
-		// next reading
-		mCount++;
-	}
-
-	// Low pulses (even numbers)
-	else{
-		// You dont really need to check them for errors.
-		// But you might miss some wrong values
-		// Checking takes more operations but is safer.
-		// We want maximum recognition so we leave this out here.
-		// also we have the inverse or the XOR to check the data later
-		mCount++;
-	}
-
-	// check last input
-	if (mCount >= IR_LENGTH){
+	if (decodeSpace<NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+		NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH>
+		(duration)){
 		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
 		if (uint8_t((IRData.whole[2] ^ (~IRData.whole[3]))) == 0){
 			// Errorcorrection for the Command is the inverse
 			IRData.whole[4] = 0;
 			IRData.whole[5] = 0;
 
-			mCount = 0;
+			if (uint8_t((IRData.whole[0] ^ (~IRData.whole[1]))) == 0){
+			// normal NEC with mirrored address
+			} // else extended NEC
+
 			return true;
 		}
-
-		mCount = 0;
+		else if (IRData.command == -1L)
+			return true;
 	}
 	return false;
 }

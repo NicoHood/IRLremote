@@ -44,9 +44,13 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
+1.4.7 Release (13.09.2014)
+* changed NEC to template
+
 1.4.6 Release (30.08.2014)
 * fixed writing address + command bug
 * added sending function for NEC
+* added Led example
 
 1.4.5 Release (30.08.2014)
 * fixed raw protocol

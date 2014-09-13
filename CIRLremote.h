@@ -25,6 +25,7 @@ THE SOFTWARE.
 #define CIRLREMOTE_H
 
 #include <Arduino.h>
+#include <avr/pgmspace.h>
 
 // typedef for ir signal types
 typedef union{
@@ -35,6 +36,20 @@ typedef union{
 	};
 } IR_Remote_Data_t;
 
+//NEC
+//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
+#define NEC_PULSE 564UL
+#define NEC_BLOCKS 4
+#define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
+#define NEC_TIMEOUT NEC_PULSE*173
+#define NEC_MARK_LEAD NEC_PULSE*16
+#define NEC_SPACE_LEAD NEC_PULSE*8
+#define NEC_SPACE_HOLDING NEC_PULSE*4
+#define NEC_MARK_ZERO NEC_PULSE*1
+#define NEC_MARK_ONE NEC_PULSE*1
+#define NEC_SPACE_ZERO NEC_PULSE*1
+#define NEC_SPACE_ONE NEC_PULSE*3
+
 
 // decoding class definition
 class CIRLprotocol{
@@ -43,32 +58,105 @@ public:
 
 	// decode function and its reset call needs to be implemented
 	virtual bool decodeIR(unsigned long duration) = 0;
-	virtual void reset(void) = 0;
+	inline void reset(void){
+		//TODO improve
+		// sends a timeout, function should reset
+		decodeIR(-1L);
+	}
+
+	// default decoder helper functions
+	template <uint16_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
+		uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength>
+		bool decodeSpace(unsigned long duration){
+		static uint8_t mCount = 0;
+
+		// if timeout(start next value)
+		if (duration >= ((timeout + markLead) / 2))
+			mCount = 0;
+
+		// check Lead (needs a timeout or a correct signal)
+		else if (mCount == 0){
+			// lead is okay
+			if (duration > ((markLead + spaceLead) / 2))
+				mCount++;
+			// wrong lead
+			else mCount = 0;
+		}
+
+		//check Space/Space Holding
+		else if (mCount == 1){
+			// protocol supports space holding (Nec)
+			if (spaceHolding){
+				// normal Space
+				if (duration > (spaceLead + spaceHolding) / 2)
+					// next reading
+					mCount++;
+
+				// Button holding
+				else if (duration > (spaceHolding + spaceOne) / 2){
+					IRData.command = -1L;
+					mCount = 0;
+					return true;
+				}
+				// wrong space
+				else mCount = 0;
+			}
+
+			// protocol doesnt support space holding (Panasonic)
+			else{
+				// normal Space
+				if (duration > (spaceLead + spaceOne) / 2)
+					mCount++;
+				// wrong space
+				else mCount = 0;
+			}
+		}
+
+		// High pulses (odd numbers)
+		else if (mCount % 2 == 1){
+			// get number of the High Bits minus one for the lead
+			uint8_t length = (mCount / 2) - 1;
+
+			// move bits and write 1 or 0 depending on the duration
+			IRData.whole[length / 8] <<= 1;
+			if (duration > ((spaceOne + spaceZero) / 2))
+				IRData.whole[length / 8] |= 0x01;
+			else
+				IRData.whole[length / 8] &= ~0x01;
+
+			// next reading
+			mCount++;
+		}
+
+		// Low pulses (even numbers)
+		else{
+			// You dont really need to check them for errors.
+			// But you might miss some wrong values
+			// Checking takes more operations but is safer.
+			// We want maximum recognition so we leave this out here.
+			// also we have the inverse or the XOR to check the data later
+			mCount++;
+		}
+
+		// check last input
+		if (mCount >= irLength){
+			mCount = 0;
+			return true;
+		}
+		return false;
+	}
 
 	// variables for ir processing
 	IR_Remote_Data_t IRData;
 };
 
+typedef enum IRType{
+	ALL = 0,
+	NEC = 1,
+	PANASONIC = 2,
+};
 
-//typedef enum IRType{
-//	NEC			= 1,
-//	PANASONIC	= 2,
-//};
 
-
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define NEC_PULSE 564
-#define NEC_BLOCKS 4
-#define NEC_MARK_LEAD NEC_PULSE*16
-#define NEC_SPACE_LEAD NEC_PULSE*8
-#define NEC_SPACE_HOLDING NEC_PULSE*4
-#define NEC_MARK_ZERO NEC_PULSE*1
-#define NEC_MARK_ONE NEC_PULSE*1
-#define NEC_SPACE_ZERO NEC_PULSE*1
-#define NEC_SPACE_ONE NEC_PULSE*3
-#define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
-#define NEC_TIMEOUT NEC_PULSE*173/2 // we check half of the documented timeout
 
 // ir management class
 class CIRLremote{
@@ -91,6 +179,8 @@ public:
 	void mark37(int time);
 	void space(int time);
 
+	IR_Remote_Data_t IRData;
+
 	// additional functions to control the lib
 	//unsigned long getTimeout(void);
 	//bool paused(void);
@@ -100,9 +190,11 @@ public:
 
 private:
 	// interrupt function with rapper to use static + virtual at the same time
+	//TODO remove active object and replace with IRLremote instance
 	static CIRLremote *active_object;
 	static void interruptIR_wrapper(void);
 	void interruptIR(void);
+
 
 	// function called on a valid IR event
 	void(*user_onReceive)(IR_Remote_Data_t);
@@ -115,6 +207,7 @@ private:
 
 	CIRLprotocol* IRprotocol;
 
+	//TODO remove this out of here
 	uint8_t _bitMask;
 	volatile uint8_t * _outPort;
 };

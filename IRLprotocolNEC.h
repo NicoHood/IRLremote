@@ -26,31 +26,16 @@ THE SOFTWARE.
 
 #include <CIRLremote.h>
 
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define IR_PULSE 564
-#define IR_BLOCKS 4
-#define IR_LEAD IR_PULSE*16
-#define IR_SPACE IR_PULSE*8
-#define IR_SPACE_HOLDING IR_PULSE*4
-#define IR_LOW_0 IR_PULSE*1
-#define IR_LOW_1 IR_PULSE*1
-#define IR_HIGH_0 IR_PULSE*1
-#define IR_HIGH_1 IR_PULSE*3
-#define IR_LENGTH 2 + IR_BLOCKS*8*2 //2 for lead&space, each block has 8bits: low and high
-#define IR_TIMEOUT IR_PULSE*173/2
-
-
 class IRLprotocolNEC : public CIRLprotocol{
 public:
 	IRLprotocolNEC(void){ }
 
 	// virtual functions that needs to be implemented:
 	bool decodeIR(unsigned long duration);
-	void reset(void);
+	//void reset(void);
 	
 private:
-	uint8_t mCount;
+
 };
 
 #endif
