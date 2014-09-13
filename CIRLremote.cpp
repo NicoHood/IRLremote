@@ -23,18 +23,18 @@ THE SOFTWARE.
 
 #include <CIRLremote.h>
 
-CIRLremote IRLremote;
+CIRLremote IRLremote(IR_NEC);
 
 // points to the class itself later, needed for the wrapper
 CIRLremote * CIRLremote::active_object = NULL;
 
-CIRLremote::CIRLremote(void){
-	// ensure available() and paused() returns false
-	newInput = false;
-	//pauseIR = false;
-}
+//CIRLremote::CIRLremote(IRType type) :irType(type){
+//	// ensure available() and paused() returns false
+//	newInput = false;
+//	//pauseIR = false;
+//}
 
-void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function)(IR_Remote_Data_t)){
+void CIRLremote::begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t)){
 	// check if we already set an Interrupt (by this or another class), do not set it twice!
 	if (active_object != NULL) return;
 
@@ -43,7 +43,7 @@ void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function
 
 	// save new values
 	mInterrupt = interrupt;
-	IRprotocol = &protocol;
+	//IRprotocol = &protocol;
 	user_onReceive = function;
 
 	// TODO pullup? only for 1.5.7 with pin to interrupt define possible
@@ -51,7 +51,7 @@ void CIRLremote::begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function
 	//pinMode(2, INPUT_PULLUP);
 
 	// do whatever is necessary to reset the decode function
-	IRprotocol->reset();
+	reset();
 	mLastTime = 0; // TODO move to constructor if getTimeout() is used
 
 	// attach the wrapper function that calls our main function on an interrupt
@@ -83,7 +83,7 @@ IR_Remote_Data_t CIRLremote::read(void){
 	// reset remote and return data. Copy before unpausing!
 	if (newInput){
 		// save new value
-		IRReport = IRprotocol->IRData;
+		IRReport = IRData;
 
 		// fires the protocols reset function
 		//IRprotocol->reset();
@@ -143,9 +143,9 @@ void CIRLremote::interruptIR(void){
 
 	// check if we have a new input and call the userfunction
 	// if no userfunction is set, flag a newinput signal and block
-	if (IRprotocol->decodeIR(duration)){
+	if (decodeIR(duration)){
 		if (user_onReceive != NULL)
-			user_onReceive(IRprotocol->IRData);
+			user_onReceive(IRData);
 		else
 			newInput = true;
 	}

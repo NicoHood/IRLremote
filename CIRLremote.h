@@ -62,13 +62,36 @@ typedef union{
 //	CIRLprotocol2(void){ }
 //
 //};
-//1904 53
 
-// decoding class definition
-class CIRLprotocol{
+
+// ir management class
+//template <IRType irType2>
+class CIRLremote{
 public:
-	CIRLprotocol(IRType type):irType(type){ }
-	const uint8_t irType; //TODO save this byte
+	CIRLremote(IRType type) :irType(type){
+		// ensure available() and paused() returns false
+		newInput = false;
+		//pauseIR = false;
+	}
+
+	// set userfunction to access new input directly
+	void begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t) = NULL);
+	void end(void);
+
+	// functions if no user function was set
+	bool available(void);
+	IR_Remote_Data_t read(void);
+
+	void write(const uint8_t pin, IR_Remote_Data_t IRData);
+	void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
+
+	// functions to set the pin high (with bitbang pwm) or low
+	void mark38_4(int time);
+	void mark37(int time);
+	void space(int time);
+
+	const IRType irType;
+
 	bool decodeIR(unsigned long duration){
 		switch (irType){
 		case IR_NEC:
@@ -189,35 +212,7 @@ public:
 	}
 
 	// variables for ir processing
-	IR_Remote_Data_t IRData;
-};
-
-
-
-
-
-// ir management class
-class CIRLremote{
-public:
-	CIRLremote(void);
-
-	// set userfunction to access new input directly
-	void begin(uint8_t interrupt, CIRLprotocol &protocol, void(*function)(IR_Remote_Data_t) = NULL);
-	void end(void);
-
-	// functions if no user function was set
-	bool available(void);
-	IR_Remote_Data_t read(void);
-
-	void write(const uint8_t pin, IR_Remote_Data_t IRData);
-	void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
-
-	// functions to set the pin high (with bitbang pwm) or low
-	void mark38_4(int time);
-	void mark37(int time);
-	void space(int time);
-
-	IR_Remote_Data_t IRData;
+	IR_Remote_Data_t IRData; //TODO remove this
 
 	// additional functions to control the lib
 	//unsigned long getTimeout(void);
@@ -243,7 +238,7 @@ private:
 	//bool pauseIR;
 	unsigned long  mLastTime;
 
-	CIRLprotocol* IRprotocol;
+	//CIRLprotocol* IRprotocol;
 
 	//TODO remove this out of here
 	uint8_t _bitMask;
