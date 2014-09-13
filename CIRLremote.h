@@ -27,6 +27,20 @@ THE SOFTWARE.
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
+//NEC
+//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
+#define NEC_PULSE 564UL
+#define NEC_BLOCKS 4
+#define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
+#define NEC_TIMEOUT NEC_PULSE*173
+#define NEC_MARK_LEAD NEC_PULSE*16
+#define NEC_SPACE_LEAD NEC_PULSE*8
+#define NEC_SPACE_HOLDING NEC_PULSE*4
+#define NEC_MARK_ZERO NEC_PULSE*1
+#define NEC_MARK_ONE NEC_PULSE*1
+#define NEC_SPACE_ZERO NEC_PULSE*1
+#define NEC_SPACE_ONE NEC_PULSE*3
+
 typedef enum IRType{
 	IR_ALL,
 	IR_NEC,
@@ -42,90 +56,50 @@ typedef union{
 	};
 } IR_Remote_Data_t;
 
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define NEC_PULSE 564UL
-#define NEC_BLOCKS 4
-#define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
-#define NEC_TIMEOUT NEC_PULSE*173
-#define NEC_MARK_LEAD NEC_PULSE*16
-#define NEC_SPACE_LEAD NEC_PULSE*8
-#define NEC_SPACE_HOLDING NEC_PULSE*4
-#define NEC_MARK_ZERO NEC_PULSE*1
-#define NEC_MARK_ONE NEC_PULSE*1
-#define NEC_SPACE_ZERO NEC_PULSE*1
-#define NEC_SPACE_ONE NEC_PULSE*3
+// function called on a valid IR event
+// may be overwritten by the user
+void irEvent(IR_Remote_Data_t IRData) __attribute__((weak));
 
-//template <IRType irType>
-//class CIRLprotocol2{
-//public:
-//	CIRLprotocol2(void){ }
-//
-//};
-
-
-// ir management class
 //template <IRType irType2>
 class CIRLremote{
 public:
-	CIRLremote(IRType type) :irType(type){
-		// ensure available() and paused() returns false
-		newInput = false;
-		//pauseIR = false;
-	}
+	CIRLremote(IRType type) :irType(type){ }
+const IRType irType;
 
 	// set userfunction to access new input directly
-	void begin(uint8_t interrupt, void(*function)(IR_Remote_Data_t) = NULL);
+	void begin(uint8_t interrupt);
 	void end(void);
-
+	
 	// functions if no user function was set
 	bool available(void);
 	IR_Remote_Data_t read(void);
 
+	// functions to send the protocol
+	//TODO template
 	void write(const uint8_t pin, IR_Remote_Data_t IRData);
 	void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
 
+
+private:
+	// interrupt function with rapper to call static instance
+	static void interruptIR_wrapper(void);
+	void interruptIR(void);
+
+	// ir managment variables
+	uint8_t mInterrupt;
+	unsigned long  mLastTime;
+
+
+	//TODO remove this out of here
+	//uint8_t _bitMask;
+	//volatile uint8_t * _outPort;	
+	
 	// functions to set the pin high (with bitbang pwm) or low
 	void mark38_4(int time);
 	void mark37(int time);
 	void space(int time);
 
-	const IRType irType;
-
-	bool decodeIR(unsigned long duration){
-		switch (irType){
-		case IR_NEC:
-			uint8_t * data = decodeSpace < NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-				NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
-				(duration);
-			if (data){
-
-				// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-				if (uint8_t((data[2] ^ (~data[3]))) == 0){
-					// Errorcorrection for the Command is the inverse
-					memcpy(IRData.whole, data, NEC_BLOCKS);
-					IRData.whole[4] = 0;
-					IRData.whole[5] = 0;
-
-					if (uint8_t((data[0] ^ (~data[1]))) == 0){
-						// normal NEC with mirrored address
-					} // else extended NEC
-
-					return true;
-				}
-				//else if (IRData.command == -1L)
-				//	return true;
-			}
-			return false;
-		}
-	};
-
-
-	inline void reset(void){
-		//TODO improve
-		// sends a timeout, function should reset
-		decodeIR(-1L);
-	}
+public:
 
 	// default decoder helper functions
 	template <uint16_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
@@ -210,39 +184,6 @@ public:
 		}
 		return NULL;
 	}
-
-	// variables for ir processing
-	IR_Remote_Data_t IRData; //TODO remove this
-
-	// additional functions to control the lib
-	//unsigned long getTimeout(void);
-	//bool paused(void);
-	//void pause(void);
-	//void resume(void);
-	//void reset(void);
-
-private:
-	// interrupt function with rapper to use static + virtual at the same time
-	//TODO remove active object and replace with IRLremote instance
-	static CIRLremote *active_object;
-	static void interruptIR_wrapper(void);
-	void interruptIR(void);
-
-
-	// function called on a valid IR event
-	void(*user_onReceive)(IR_Remote_Data_t);
-
-	// ir managment variables
-	uint8_t mInterrupt;
-	bool newInput;
-	//bool pauseIR;
-	unsigned long  mLastTime;
-
-	//CIRLprotocol* IRprotocol;
-
-	//TODO remove this out of here
-	uint8_t _bitMask;
-	volatile uint8_t * _outPort;
 };
 
 
