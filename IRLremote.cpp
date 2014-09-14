@@ -28,22 +28,22 @@ THE SOFTWARE.
 //================================================================================
 
 // ensure available() returns false
-bool newInput = false;
-IR_Remote_Data_t lastIRData = { 0 };
+bool IRLnewInput = false;
+IR_Remote_Data_t IRLlastIRData = { 0 };
 
 // Called when directly received correct IR Signal
 // Do not use Serial inside, it can crash your Arduino!
 void irEvent(IR_Remote_Data_t IRData) {
 	// For no user function set we need to pause IR
 	// to not overwrite the actual values until they are read.
-	if (newInput) return;
+	if (IRLnewInput) return;
 
-	lastIRData = IRData;
-	newInput = true;
+	IRLlastIRData = IRData;
+	IRLnewInput = true;
 }
 
 bool IRLavailable(void){
-	return newInput;
+	return IRLnewInput;
 }
 
 IR_Remote_Data_t IRLread(void){
@@ -51,11 +51,11 @@ IR_Remote_Data_t IRLread(void){
 	IR_Remote_Data_t IRReport = { 0 };
 
 	// get new data if available
-	if (newInput)
-		IRReport = lastIRData;
+	if (IRLnewInput)
+		IRReport = IRLlastIRData;
 
 	//unpause and return data
-	newInput = false;
+	IRLnewInput = false;
 	return IRReport;
 }
 
@@ -71,39 +71,36 @@ void IRLinterrupt(void){
 	lastTime = time;
 
 	// determinate which decode function must be called
-	IRType irType = IR_NEC;
+	const IRType irType = IR_NEC;
 	switch (irType){
 	case IR_NEC:
-		uint8_t * data = IRLdecodeSpace < NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
-			(duration);
-		if (data){
-
+		static uint8_t data[NEC_BLOCKS];
+		// pass the duration to the decoding function
+		if (IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS>
+			(duration, data)){
+			// Check if the protcol's checksum is correct
 			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-			if (uint8_t((data[2] ^ (~data[3]))) == 0){
+			if (IRLcheckInverse1(data) || data[0]==0xFF){
+				//if (IRLcheckInverse0(data))
+				// no extended NEC, normal NEC!
 				IR_Remote_Data_t IRData;
-				// Errorcorrection for the Command is the inverse
 				memcpy(IRData.whole, data, NEC_BLOCKS);
 				IRData.whole[4] = 0;
 				IRData.whole[5] = 0;
-
-				if (uint8_t((data[0] ^ (~data[1]))) == 0){
-					// normal NEC with mirrored address
-				} // else extended NEC
 				irEvent(IRData);
 				return;
 			}
-			//else if (IRData.command == -1L)
-			//	return true;
 		}
+		break;
 	}
 }
 
 template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
 	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
-	uint8_t* IRLdecodeSpace(unsigned long duration){
+	bool IRLdecodeSpace(unsigned long duration, uint8_t data[]){
 	// variables for ir processing
-	static uint8_t data[blocks];
+
 	static uint8_t count = 0;
 
 	// if timeout(start next value)
@@ -130,9 +127,13 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 
 			// Button holding
 			else if (duration > (spaceHolding + spaceOne) / 2){
-				memset(data, 0xFF, blocks);
+				// set command to 0xFF if button is held down
+				if (blocks <= 4){
+					data[0] = data[1] = 0x00;
+					data[2] = data[3] = 0xFF;
+				}
 				count = 0;
-				return data;
+				return true;
 			}
 			// wrong space
 			else count = 0;
@@ -175,12 +176,22 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 	}
 
 	// check last input
+	// TODO calculate with blocks to not go over bounds
 	if (count >= irLength){
 		count = 0;
-		return data;
+		return true;
 	}
-	return NULL;
+	return false;
 }
+
+//TODO remove
+bool IRLcheckHolding(uint8_t data[], uint8_t length){
+	for (int i = 0; i < length; i++)
+		if (data[i] != 0xFF)
+			return false;
+	return true;
+}
+
 
 //
 //

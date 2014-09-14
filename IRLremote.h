@@ -70,8 +70,8 @@ inline void IRLbegin(const uint8_t interrupt);
 inline void IRLend(const uint8_t interrupt);
 
 // variables for IR processing if no user function was set
-extern bool newInput;
-extern IR_Remote_Data_t lastIRData;
+extern bool IRLnewInput;
+extern IR_Remote_Data_t IRLlastIRData;
 
 // function called on a valid IR event, must be overwritten by the user
 void __attribute__((weak)) irEvent(IR_Remote_Data_t IRData);
@@ -86,9 +86,13 @@ void IRLinterrupt(void);
 // default decoder helper function
 template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
 	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
-	uint8_t* IRLdecodeSpace(unsigned long duration);
+	bool IRLdecodeSpace(unsigned long duration, uint8_t data[]);
 
+// functions to check if the received data is valid with the protocol checksums
+inline bool IRLcheckInverse0(uint8_t data[]);
+inline bool IRLcheckInverse1(uint8_t data[]);
 
+bool IRLcheckHolding(uint8_t data[], uint8_t length);
 
 
 // functions to send the protocol
@@ -106,7 +110,7 @@ void mark37(int time);
 void space(int time);
 
 //================================================================================
-// Implementation
+// Inline Implementation
 //================================================================================
 
 void IRLbegin(const uint8_t interrupt){
@@ -120,7 +124,21 @@ void IRLend(const uint8_t interrupt){
 
 	// ensure available(), doesnt return anything
 	//TODO move out here?
-	newInput = false;
+	IRLnewInput = false;
+}
+
+bool IRLcheckInverse0(uint8_t data[]){
+	// check if byte 2 and is the inverse of byte 3
+	if (uint8_t((data[0] ^ (~data[1]))) == 0)
+		return true;
+	else return false;
+}
+
+bool IRLcheckInverse1(uint8_t data[]){
+	// check if byte 0 and is the inverse of byte 1
+	if (uint8_t((data[2] ^ (~data[3]))) == 0)
+		return true;
+	else return false;
 }
 
 #endif

@@ -1,26 +1,30 @@
 IRLremote
 =========
 
-New lightweight IR library with different implementation
+New lightweight IR library with different, smarter implementation.
 
-The idea was: minimal implementation with maximal recognition.
-The trick behind this is to only recognize one Protocol at the same time but with maximum error correction.
-It is still possible to add more than one Protocol but if you add too many it will slow down and not work anymore.
-On top of that the first possible hit is recognized as valid. You might get wrong values if the protocols are very similar.
+The idea is: minimal implementation with maximal recognition.
+The trick behind this is to only recognize one protocol at the same time (by default) but with maximum error correction.
+It is still possible to add more than one protocol but if you add too many it will slow down and not work anymore
+because the signals are decoded while receiving them.
+
+On top of that the first possible hit is recognized as valid.
+You might get wrong values if you use >1 protocol and the protocol timings + checksum are very similar.
 This is because of maximum recognition and error correction. Its by design this way.
-However there are only two implemented yet so this shouldnt be a problem.
 
-This library is way more efficient than the "standard" IR library from Ken Shirriff.
+This library is way more efficient than the "standard" IR library from Ken Shirriff 
+and should be a replacement of the library (sorry for that ;D).
 
 **The main improvements are:**
 * Faster decoding (on the fly)
-* Huge Ram improvements
-* Huge Flash improvements (less than 1kb)
+* Huge Ram improvements (13 bytes to decode NEC)
+* Huge Flash improvements (less than 1kb flash to decode)
 * Very accurate even when pointing in different directions
 * Maximum error correction
-* Interrupt function
+* Uses pin interrupt function
 * No timer is needed
 * Receiving and sending possible
+* IDE 1.5.7 compatible
 
 **Supported Protocols**
 * NEC
@@ -29,8 +33,14 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 
 **Planned features:**
 * Sending function (for Panasonic)
-* remove bit banging PWM
+* remove/improve bit banging PWM
 * Use PCInt (conflict with SoftSerial)
+
+Installation/How to use
+=======================
+
+Download the zip, extract and remove the "-master" of the folder.
+Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/Libraries).
 
 Try the examples to see how it works. See this reference about choosing the right interrupt pin:
 http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
@@ -44,6 +54,11 @@ http://nicohood.wordpress.com/
 Version History
 ===============
 ```
+1.5.0 Release (xx.09.2014)
+* huge Ram and Flash improvements
+* new library structure
+* more compact code
+
 1.4.7 Release (13.09.2014)
 * changed NEC to template
 
