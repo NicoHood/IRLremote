@@ -23,96 +23,138 @@ THE SOFTWARE.
 
 #include <CIRLremote.h>
 
-CIRLremote IRLremote(IR_NEC);
+//CIRLremote IRLremote;
 
-void CIRLremote::begin(uint8_t interrupt){
-	// save new values
-	mInterrupt = interrupt;
+//void IRLbegin(const uint8_t interrupt){
+//	// attach the wrapper function that calls our main function on an interrupt
+//	attachInterrupt(interrupt, IRLinterrupt, CHANGE);
+//}
 
-	// attach the wrapper function that calls our main function on an interrupt
-	attachInterrupt(mInterrupt, interruptIR_wrapper, CHANGE);
-}
+//void IRLinterrupt(void){
+//	//save the duration between the last reading
+//	static unsigned long lastTime = 0;
+//	unsigned long time = micros();
+//	unsigned long duration = time - lastTime;
+//	lastTime = time;
+//
+//	// determinate which decode function must be called
+//	IRType irType = IR_NEC;
+//	switch (irType){
+//	case IR_NEC:
+//		uint8_t * data = IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+//			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
+//			(duration);
+//		if (data){
+//
+//			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
+//			if (uint8_t((data[2] ^ (~data[3]))) == 0){
+//				IR_Remote_Data_t IRData;
+//				// Errorcorrection for the Command is the inverse
+//				memcpy(IRData.whole, data, NEC_BLOCKS);
+//				IRData.whole[4] = 0;
+//				IRData.whole[5] = 0;
+//
+//				if (uint8_t((data[0] ^ (~data[1]))) == 0){
+//					// normal NEC with mirrored address
+//				} // else extended NEC
+//				irEvent(IRData);
+//				return;
+//			}
+//			//else if (IRData.command == -1L)
+//			//	return true;
+//		}
+//	}
+//}
 
-void CIRLremote::interruptIR_wrapper(void){
-	// Called by interrupt CHANGE
-	// Call the instance. Needed for non static functions
-	IRLremote.interruptIR();
-}
+
+//void CIRLremote::begin(const uint8_t interrupt){
+//	// attach the wrapper function that calls our main function on an interrupt
+//	attachInterrupt(interrupt, interruptIR_wrapper, CHANGE);
+//}
+
+//void CIRLremote::interruptIR_wrapper(void){
+//	// Called by interrupt CHANGE
+//	// Call the instance. Needed for non static functions
+//	//IRLremote.interruptIR();
+//}
 
 void CIRLremote::interruptIR(void){
-	//save the duration between the last reading
-	unsigned long time = micros();
-	unsigned long duration = time - mLastTime;
-	mLastTime = time;
+	////save the duration between the last reading
+	//unsigned long time = micros();
+	//unsigned long duration = time - mLastTime;
+	//mLastTime = time;
 
-	// determinate which decode function must be called
-	switch (irType){
-	case IR_NEC:
-		uint8_t * data = decodeSpace < NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
-			(duration);
-		if (data){
+	//// determinate which decode function must be called
+	//IRType irType = IR_NEC;
+	//switch (irType){
+	//case IR_NEC:
+	//	uint8_t * data = IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+	//		NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
+	//		(duration);
+	//	if (data){
 
-			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-			if (uint8_t((data[2] ^ (~data[3]))) == 0){
-				IR_Remote_Data_t IRData;
-				// Errorcorrection for the Command is the inverse
-				memcpy(IRData.whole, data, NEC_BLOCKS);
-				IRData.whole[4] = 0;
-				IRData.whole[5] = 0;
+	//		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
+	//		if (uint8_t((data[2] ^ (~data[3]))) == 0){
+	//			IR_Remote_Data_t IRData;
+	//			// Errorcorrection for the Command is the inverse
+	//			memcpy(IRData.whole, data, NEC_BLOCKS);
+	//			IRData.whole[4] = 0;
+	//			IRData.whole[5] = 0;
 
-				if (uint8_t((data[0] ^ (~data[1]))) == 0){
-					// normal NEC with mirrored address
-				} // else extended NEC
-				irEvent(IRData);
-				return;
-			}
-			//else if (IRData.command == -1L)
-			//	return true;
-		}
-	}
+	//			if (uint8_t((data[0] ^ (~data[1]))) == 0){
+	//				// normal NEC with mirrored address
+	//			} // else extended NEC
+	//			irEvent(IRData);
+	//			return;
+	//		}
+	//		//else if (IRData.command == -1L)
+	//		//	return true;
+	//	}
+	//}
 }
 
 // ensure available() returns false
-static bool newInput = false;
-static IR_Remote_Data_t lastIRData = { 0 };
+//static bool newInput = false;
+//static IR_Remote_Data_t lastIRData = { 0 };
 // Called when directly received correct IR Signal
 // Do not use Serial inside, it can crash your Arduino!
 void irEvent(IR_Remote_Data_t IRData) {
-	// For no user function set we need to pause IR
-	// to not overwrite the actual values until they are read.
-	if (newInput) return;
+	//// For no user function set we need to pause IR
+	//// to not overwrite the actual values until they are read.
+	//if (newInput) return;
 
-	lastIRData = IRData;
-	newInput = true;
+	//lastIRData = IRData;
+	//newInput = true;
 }
 
 
 bool CIRLremote::available(void){
-	return newInput;
+	//return newInput;
 }
 
 IR_Remote_Data_t CIRLremote::read(void){
-	// by default return an empty report
-	IR_Remote_Data_t IRReport = { 0 };
+	//// by default return an empty report
+	//IR_Remote_Data_t IRReport = { 0 };
 
-	// get new data if available
-	if (newInput)
-		IRReport = lastIRData;
+	//// get new data if available
+	//if (newInput)
+	//	IRReport = lastIRData;
 
-	//unpause and return data
-	newInput = false;
-	return IRReport;
+	////unpause and return data
+	//newInput = false;
+	//return IRReport;
 }
 
 
-void CIRLremote::end(void){
-	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
-	detachInterrupt(mInterrupt);
-
-	// ensure available(), doesnt return anything
-	newInput = false;
+void CIRLremote::end(const uint8_t interrupt){
+//	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
+//	detachInterrupt(interrupt);
+//
+//	// ensure available(), doesnt return anything
+//	newInput = false;
 }
+
+
 
 //void CIRLremote::write(const uint8_t pin, IR_Remote_Data_t IRData)
 //{

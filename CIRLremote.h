@@ -60,15 +60,23 @@ typedef union{
 // may be overwritten by the user
 void irEvent(IR_Remote_Data_t IRData) __attribute__((weak));
 
+
+class CIRLremote2{
+public:
+	CIRLremote2(void){ }
+	// set userfunction to access new input directly
+	void begin(const uint8_t interrupt){};
+	//uint8_t k[888];
+	};
+
 //template <IRType irType2>
 class CIRLremote{
 public:
-	CIRLremote(IRType type) :irType(type){ }
-const IRType irType;
-
+	CIRLremote(void){ }
+	
 	// set userfunction to access new input directly
-	void begin(uint8_t interrupt);
-	void end(void);
+	void begin(const uint8_t interrupt);
+	void end(const uint8_t interrupt);
 	
 	// functions if no user function was set
 	bool available(void);
@@ -76,17 +84,16 @@ const IRType irType;
 
 	// functions to send the protocol
 	//TODO template
-	void write(const uint8_t pin, IR_Remote_Data_t IRData);
-	void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
+	//void write(const uint8_t pin, IR_Remote_Data_t IRData);
+	//void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
 
 
-private:
+//private:
 	// interrupt function with rapper to call static instance
 	static void interruptIR_wrapper(void);
 	void interruptIR(void);
 
 	// ir managment variables
-	uint8_t mInterrupt;
 	unsigned long  mLastTime;
 
 
@@ -99,94 +106,152 @@ private:
 	void mark37(int time);
 	void space(int time);
 
-public:
+};
 
-	// default decoder helper functions
-	template <uint16_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
-		uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
-		uint8_t* decodeSpace(unsigned long duration){
-		// variables for ir processing
-		static uint8_t data[blocks];
-		static uint8_t count = 0;
+//================================================================================
+// Prototypes
+//================================================================================
 
-		// if timeout(start next value)
-		if (duration >= ((timeout + markLead) / 2))
-			count = 0;
+// attach the interrupt function
+inline void IRLbegin(const uint8_t interrupt);
 
-		// check Lead (needs a timeout or a correct signal)
-		else if (count == 0){
-			// lead is okay
-			if (duration > ((markLead + spaceLead) / 2))
+// called by interrupt CHANGE
+inline void IRLinterrupt(void);
+
+// default decoder helper function
+template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
+	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
+	inline uint8_t* IRLdecodeSpace(unsigned long duration);
+
+//================================================================================
+// Implementation
+//================================================================================
+
+void IRLbegin(const uint8_t interrupt){
+	// attach the function that decodes the signals
+	attachInterrupt(interrupt, IRLinterrupt, CHANGE);
+}
+
+void IRLinterrupt(void){
+	//save the duration between the last reading
+	static unsigned long lastTime = 0;
+	unsigned long time = micros();
+	unsigned long duration = time - lastTime;
+	lastTime = time;
+
+	// determinate which decode function must be called
+	IRType irType = IR_NEC;
+	switch (irType){
+	case IR_NEC:
+		uint8_t * data = IRLdecodeSpace < NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS >
+			(duration);
+		if (data){
+
+			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
+			if (uint8_t((data[2] ^ (~data[3]))) == 0){
+				IR_Remote_Data_t IRData;
+				// Errorcorrection for the Command is the inverse
+				memcpy(IRData.whole, data, NEC_BLOCKS);
+				IRData.whole[4] = 0;
+				IRData.whole[5] = 0;
+
+				if (uint8_t((data[0] ^ (~data[1]))) == 0){
+					// normal NEC with mirrored address
+				} // else extended NEC
+				irEvent(IRData);
+				return;
+			}
+			//else if (IRData.command == -1L)
+			//	return true;
+		}
+	}
+}
+
+template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
+	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
+	uint8_t* IRLdecodeSpace(unsigned long duration){
+	// variables for ir processing
+	static uint8_t data[blocks];
+	static uint8_t count = 0;
+
+	// if timeout(start next value)
+	if (duration >= ((timeout + markLead) / 2))
+		count = 0;
+
+	// check Lead (needs a timeout or a correct signal)
+	else if (count == 0){
+		// lead is okay
+		if (duration > ((markLead + spaceLead) / 2))
+			count++;
+		// wrong lead
+		else count = 0;
+	}
+
+	//check Space/Space Holding
+	else if (count == 1){
+		// protocol supports space holding (Nec)
+		if (spaceHolding){
+			// normal Space
+			if (duration > (spaceLead + spaceHolding) / 2)
+				// next reading
 				count++;
-			// wrong lead
+
+			// Button holding
+			else if (duration > (spaceHolding + spaceOne) / 2){
+				memset(data, 0xFF, blocks);
+				count = 0;
+				return data;
+			}
+			// wrong space
 			else count = 0;
 		}
 
-		//check Space/Space Holding
-		else if (count == 1){
-			// protocol supports space holding (Nec)
-			if (spaceHolding){
-				// normal Space
-				if (duration > (spaceLead + spaceHolding) / 2)
-					// next reading
-					count++;
-
-				// Button holding
-				else if (duration > (spaceHolding + spaceOne) / 2){
-					memset(data, 0xFF, blocks);
-					count = 0;
-					return data;
-				}
-				// wrong space
-				else count = 0;
-			}
-
-			// protocol doesnt support space holding (Panasonic)
-			else{
-				// normal Space
-				if (duration > (spaceLead + spaceOne) / 2)
-					count++;
-				// wrong space
-				else count = 0;
-			}
-		}
-
-		// High pulses (odd numbers)
-		else if (count % 2 == 1){
-			// get number of the High Bits minus one for the lead
-			uint8_t length = (count / 2) - 1;
-
-			// move bits and write 1 or 0 depending on the duration
-			data[length / 8] <<= 1;
-			if (duration > ((spaceOne + spaceZero) / 2))
-				data[length / 8] |= 0x01;
-			else
-				data[length / 8] &= ~0x01;
-
-			// next reading
-			count++;
-		}
-
-		// Low pulses (even numbers)
+		// protocol doesnt support space holding (Panasonic)
 		else{
-			// You dont really need to check them for errors.
-			// But you might miss some wrong values
-			// Checking takes more operations but is safer.
-			// We want maximum recognition so we leave this out here.
-			// also we have the inverse or the XOR to check the data later
-			count++;
+			// normal Space
+			if (duration > (spaceLead + spaceOne) / 2)
+				count++;
+			// wrong space
+			else count = 0;
 		}
-
-		// check last input
-		if (count >= irLength){
-			count = 0;
-			return data;
-		}
-		return NULL;
 	}
-};
 
+	// High pulses (odd numbers)
+	else if (count % 2 == 1){
+		// get number of the High Bits minus one for the lead
+		uint8_t length = (count / 2) - 1;
 
-extern CIRLremote IRLremote;
+		// move bits and write 1 or 0 depending on the duration
+		data[length / 8] <<= 1;
+		if (duration > ((spaceOne + spaceZero) / 2))
+			data[length / 8] |= 0x01;
+		else
+			data[length / 8] &= ~0x01;
+
+		// next reading
+		count++;
+	}
+
+	// Low pulses (even numbers)
+	else{
+		// You dont really need to check them for errors.
+		// But you might miss some wrong values
+		// Checking takes more operations but is safer.
+		// We want maximum recognition so we leave this out here.
+		// also we have the inverse or the XOR to check the data later
+		count++;
+	}
+
+	// check last input
+	if (count >= irLength){
+		count = 0;
+		return data;
+	}
+	return NULL;
+}
+
+//extern CIRLremote IRLremote;
+//extern CIRLremote2 IRLremote2;
 
 #endif
