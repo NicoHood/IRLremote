@@ -21,116 +21,47 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef CIRLREMOTE_H
-#define CIRLREMOTE_H
-
-#include <Arduino.h>
-#include <avr/pgmspace.h>
-
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
-#define NEC_PULSE 564UL
-#define NEC_BLOCKS 4
-#define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
-#define NEC_TIMEOUT NEC_PULSE*173
-#define NEC_MARK_LEAD NEC_PULSE*16
-#define NEC_SPACE_LEAD NEC_PULSE*8
-#define NEC_SPACE_HOLDING NEC_PULSE*4
-#define NEC_MARK_ZERO NEC_PULSE*1
-#define NEC_MARK_ONE NEC_PULSE*1
-#define NEC_SPACE_ZERO NEC_PULSE*1
-#define NEC_SPACE_ONE NEC_PULSE*3
-
-typedef enum IRType{
-	IR_ALL,
-	IR_NEC,
-	IR_PANASONIC,
-};
-
-// typedef for ir signal types
-typedef union{
-	uint8_t whole[6];
-	struct{
-		uint16_t address;
-		uint32_t command;
-	};
-} IR_Remote_Data_t;
-
-// function called on a valid IR event
-// may be overwritten by the user
-void irEvent(IR_Remote_Data_t IRData) __attribute__((weak));
-
-
-class CIRLremote2{
-public:
-	CIRLremote2(void){ }
-	// set userfunction to access new input directly
-	void begin(const uint8_t interrupt){};
-	//uint8_t k[888];
-	};
-
-//template <IRType irType2>
-class CIRLremote{
-public:
-	CIRLremote(void){ }
-	
-	// set userfunction to access new input directly
-	void begin(const uint8_t interrupt);
-	void end(const uint8_t interrupt);
-	
-	// functions if no user function was set
-	bool available(void);
-	IR_Remote_Data_t read(void);
-
-	// functions to send the protocol
-	//TODO template
-	//void write(const uint8_t pin, IR_Remote_Data_t IRData);
-	//void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
-
-
-//private:
-	// interrupt function with rapper to call static instance
-	static void interruptIR_wrapper(void);
-	void interruptIR(void);
-
-	// ir managment variables
-	unsigned long  mLastTime;
-
-
-	//TODO remove this out of here
-	//uint8_t _bitMask;
-	//volatile uint8_t * _outPort;	
-	
-	// functions to set the pin high (with bitbang pwm) or low
-	void mark38_4(int time);
-	void mark37(int time);
-	void space(int time);
-
-};
+#include <IRLremote.h>
 
 //================================================================================
-// Prototypes
+// User function
 //================================================================================
 
-// attach the interrupt function
-inline void IRLbegin(const uint8_t interrupt);
+// ensure available() returns false
+bool newInput = false;
+IR_Remote_Data_t lastIRData = { 0 };
 
-// called by interrupt CHANGE
-inline void IRLinterrupt(void);
+// Called when directly received correct IR Signal
+// Do not use Serial inside, it can crash your Arduino!
+void irEvent(IR_Remote_Data_t IRData) {
+	// For no user function set we need to pause IR
+	// to not overwrite the actual values until they are read.
+	if (newInput) return;
 
-// default decoder helper function
-template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
-	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
-	inline uint8_t* IRLdecodeSpace(unsigned long duration);
-
-//================================================================================
-// Implementation
-//================================================================================
-
-void IRLbegin(const uint8_t interrupt){
-	// attach the function that decodes the signals
-	attachInterrupt(interrupt, IRLinterrupt, CHANGE);
+	lastIRData = IRData;
+	newInput = true;
 }
+
+bool IRLavailable(void){
+	return newInput;
+}
+
+IR_Remote_Data_t IRLread(void){
+	// by default return an empty report
+	IR_Remote_Data_t IRReport = { 0 };
+
+	// get new data if available
+	if (newInput)
+		IRReport = lastIRData;
+
+	//unpause and return data
+	newInput = false;
+	return IRReport;
+}
+
+//================================================================================
+// Decoding
+//================================================================================
 
 void IRLinterrupt(void){
 	//save the duration between the last reading
@@ -251,7 +182,131 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 	return NULL;
 }
 
-//extern CIRLremote IRLremote;
-//extern CIRLremote2 IRLremote2;
-
-#endif
+//
+//
+//void irEvent(IR_Remote_Data_t IRData){}
+//bool CIRLremote::available(void){
+//	//return newInput;
+//}
+//
+//IR_Remote_Data_t CIRLremote::read(void){
+//	//// by default return an empty report
+//	//IR_Remote_Data_t IRReport = { 0 };
+//
+//	//// get new data if available
+//	//if (newInput)
+//	//	IRReport = lastIRData;
+//
+//	////unpause and return data
+//	//newInput = false;
+//	//return IRReport;
+//}
+//
+//
+//void CIRLremote::end(const uint8_t interrupt){
+////	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
+////	detachInterrupt(interrupt);
+////
+////	// ensure available(), doesnt return anything
+////	newInput = false;
+//}
+//
+//
+//
+////void CIRLremote::write(const uint8_t pin, IR_Remote_Data_t IRData)
+////{
+////	// Get the port mask and the pointers to the out/mode registers
+////	// we need to save this as global variable to get the timings right
+////	_bitMask = digitalPinToBitMask(pin);
+////	uint8_t port = digitalPinToPort(pin);
+////	_outPort = portOutputRegister(port);
+////
+////	// set pin to OUTPUT
+////	volatile uint8_t * _modePort = portModeRegister(port);
+////	*_modePort |= _bitMask;
+////
+////	// disable interrupts
+////	//uint8_t oldSREG = SREG;
+////	//cli();
+////
+////	const int repeat = 1;
+////	for (int i = 0; i < repeat; i++)
+////		writeNEC(pin, IRData);
+////
+////	// enable interrupts
+////	//SREG = oldSREG;
+////
+////	// set pin to INPUT again to be save
+////	*_modePort &= ~_bitMask;
+////}
+//
+//
+////void CIRLremote::writeNEC(const uint8_t pin, IR_Remote_Data_t IRData)
+////{
+////	// send header
+////	mark38_4(NEC_MARK_LEAD);
+////	if (IRData.command == 0xFFFF)
+////		// space
+////		space(NEC_SPACE_HOLDING);
+////	else{
+////		// normal signal
+////		space(NEC_SPACE_LEAD);
+////		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
+////			// send logic bits
+////			uint8_t index = i / 8;
+////			if (IRData.whole[index] & 0x80) {
+////				mark38_4(NEC_MARK_ZERO);
+////				space(NEC_SPACE_ONE);
+////			}
+////			else {
+////				mark38_4(NEC_MARK_ZERO);
+////				space(NEC_SPACE_ZERO);
+////			}
+////			// get next bit
+////			IRData.whole[index] <<= 1;
+////		}
+////	}
+////	// finish mark
+////	mark38_4(NEC_MARK_ZERO);
+////	space(0);
+////}
+////
+////void CIRLremote::mark38_4(int time) {
+////	// Sends an IR mark for the specified number of microseconds.
+////	// The mark output is modulated at the PWM frequency.
+////	// 1/38.4kHz = 0.00002604166
+////
+////	while ((time -= 26) > 0){
+////		*_outPort |= _bitMask;
+////		delayMicroseconds(12);
+////		*_outPort &= ~_bitMask;
+////		delayMicroseconds(13);
+////	}
+////}
+////
+////void CIRLremote::mark37(int time) {
+////	// Sends an IR mark for the specified number of microseconds.
+////	// The mark output is modulated at the PWM frequency.
+////	// 1/37kHz = 0.00002702702
+////	while ((time -= 27) > 0){
+////		*_outPort |= _bitMask;
+////		delayMicroseconds(13);
+////		*_outPort &= ~_bitMask;
+////		delayMicroseconds(13);
+////	}
+////
+////	//time = time / 26;
+////	//while (time--){
+////	//	*_outPort |= _bitMask;
+////	//	delayMicroseconds(12);
+////	//	*_outPort &= ~_bitMask;
+////	//	delayMicroseconds(13);
+////	//}
+////}
+////
+////void CIRLremote::space(int time) {
+////	// Sends an IR space for the specified number of microseconds.
+////	// A space is no output, so the PWM output is disabled.
+////	*_outPort &= ~_bitMask; // write pin LOW
+////	delayMicroseconds(time);
+////}
