@@ -3,42 +3,46 @@
  See the readme for credit to other people.
 
  IRL Receive Led Demo
- Receives IR signals and instantly calls an attached interrupt function.
- This should demonstrate that you can use the IR sensor from almost every direction.
- Blink example: 1,116 bytes flash, 11 bytes ram
- Receive Led Demo: 1,886 bytes flash, 49 bytes ram
+ Receives IR and lights the LED on a valid signal.
+ 
+ This should demonstrate that you can use the IR sensor
+ from almost every direction with almost no ram/flash.
+ 
+ BlinkWithoutDelay: 1,006 bytes flash, 15 bytes ram
+ IRL Receive Led:   1,588 bytes flash, 26 bytes ram
+
+ Ram usage:
+ 4byte attachInterrupt function
+ 4bytes lastTime
+ for each protocol:
+ 4-6 bytes temporary work data
+ 1 byte temporary count
+ = 8+(n*5~7) bytes ram used
  */
 
 #include "IRLremote.h"
 
+// See readme to choose the right interrupt number
 const int interruptIR = 0;
-
-// choose your protocol
-//IRLprotocolNEC IRprotocol;
-IRLprotocolPanasonic IRprotocol;
-//IRLprotocolAll IRprotocol;
 
 const int pinLed = 13;
 unsigned long previousMillis = 0;
 
 void setup() {
   pinMode(pinLed, OUTPUT);
-
-  // attach the interrupt function
-  IRLremote.begin(interruptIR, IRprotocol, irEvent);
+  IRLbegin(interruptIR);
 }
 
 void loop() {
-  // turn led on for a few ms when received a special IR command
+  // Turn led on for a few ms when received a valid IR signal
   if (millis() - previousMillis < 100)
     digitalWrite(pinLed, HIGH);
   else
     digitalWrite(pinLed, LOW);
 }
 
-void irEvent(IR_Remote_Data_t IRData) {
-  // Called when directly received correct IR Signal
+void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
+  // Called when received a valid IR signal
   // Do not use Serial inside, it can crash your Arduino!
-  if (IRData.command == 0x3D003805)
-    previousMillis = millis();
+  previousMillis = millis();
 }

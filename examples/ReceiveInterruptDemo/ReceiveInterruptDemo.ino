@@ -4,49 +4,51 @@
 
  IRL ReceiveInterrupt Demo
  Receives IR signals and instantly calls an attached interrupt function.
- This may fire more than one time if you press too long, add a debounce.
+ This may fire more than one time if you press a button too long, add a debounce.
  Dont use Serial inside the interrupt!
  */
 
 #include "IRLremote.h"
 
+// See readme to choose the right interrupt number
 const int interruptIR = 0;
-IR_Remote_Data_t newestIRData;
 
-// choose your protocol
-IRLprotocolNEC IRprotocol;
-//IRLprotocolPanasonic IRprotocol;
-//IRLprotocolAll IRprotocol;
+uint8_t IRProtocol = false;
+uint16_t IRAddress = 0;
+uint32_t IRCommand = 0;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Startup");
 
-  // reset variables
-  memset(&newestIRData, 0, sizeof(newestIRData));
-
-  // attach the interrupt function
-  IRLremote.begin(interruptIR, IRprotocol, irEvent);
+  IRLbegin(interruptIR);
 }
 
 void loop() {
-  // temporary disable interrupts and print newest input
+  // Temporary disable interrupts and print newest input
+  uint8_t oldSREG = SREG;
   cli();
-  if (newestIRData.address || newestIRData.command) {
+  if (IRProtocol) {
+    // Print as much as you want in this function
+    // See source to terminate what number is for each protocol
+    Serial.print("Protocol:");
+    Serial.println(IRProtocol);
     Serial.print("Address:");
-    Serial.println(newestIRData.address, HEX);
+    Serial.println(IRAddress, HEX);
     Serial.print("Command:");
-    Serial.println(newestIRData.command, HEX);
-    // reset variables
-    memset(&newestIRData, 0, sizeof(newestIRData));
+    Serial.println(IRCommand, HEX);
+    // Reset variables to not read the same value twice
+    IRProtocol = false;
   }
-  sei();
+  SREG = oldSREG;
 }
 
-void irEvent(IR_Remote_Data_t IRData) {
+void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
   // Called when directly received correct IR Signal
   // Do not use Serial inside, it can crash your Arduino!
 
   // Update the values to the newest valid input
-  newestIRData = IRData;
+  IRProtocol = protocol;
+  IRAddress = address;
+  IRCommand = command;
 }

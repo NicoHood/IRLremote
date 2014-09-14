@@ -8,30 +8,29 @@
 
 #include "IRLremote.h"
 
+// See readme to choose the right interrupt number
 const int interruptIR = 0;
-
-// choose your protocol
-IRLprotocolNEC IRprotocol;
-//IRLprotocolPanasonic IRprotocol;
-//IRLprotocolAll IRprotocol;
-
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Startup");
 
-  // no function is attached
-  IRLremote.begin(interruptIR, IRprotocol);
+  IRLbegin(interruptIR);
 }
 
 void loop() {
-  // this will get the first valid input and ignores any new until its read
-  if (IRLremote.available()) {
-    // print as much as you want in this function
-    IR_Remote_Data_t IRData = IRLremote.read();
+  // This will get the first valid input, blocks and ignores any new until its read
+  if (IRLavailable()) {
+    // Print as much as you want in this function
+    // See source to terminate what number is for each protocol
+    Serial.print("Protocol:");
+    Serial.println(IRLgetProtocol());
     Serial.print("Address:");
-    Serial.println(IRData.address, HEX);
+    Serial.println(IRLgetAddress(), HEX);
     Serial.print("Command:");
-    Serial.println(IRData.command, HEX);
+    Serial.println(IRLgetCommand(), HEX);
+
+    // Resume reading to get new values
+    IRLresume();
   }
 }
