@@ -24,39 +24,23 @@ THE SOFTWARE.
 #include <IRLremote.h>
 
 //================================================================================
-// User function
+// User function helper
 //================================================================================
 
 // ensure available() returns false
-bool IRLnewInput = false;
-IR_Remote_Data_t IRLlastIRData = { 0 };
+uint16_t IRLAddress = 0;
+uint32_t IRLCommand = 0;
+uint8_t  IRLProtocol = false;
 
 // Called when directly received correct IR Signal
 // Do not use Serial inside, it can crash your Arduino!
-void irEvent(IR_Remote_Data_t IRData) {
+void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
 	// For no user function set we need to pause IR
 	// to not overwrite the actual values until they are read.
-	if (IRLnewInput) return;
-
-	IRLlastIRData = IRData;
-	IRLnewInput = true;
-}
-
-bool IRLavailable(void){
-	return IRLnewInput;
-}
-
-IR_Remote_Data_t IRLread(void){
-	// by default return an empty report
-	IR_Remote_Data_t IRReport = { 0 };
-
-	// get new data if available
-	if (IRLnewInput)
-		IRReport = IRLlastIRData;
-
-	//unpause and return data
-	IRLnewInput = false;
-	return IRReport;
+	if (IRLProtocol) return;
+	IRLAddress = address;
+	IRLCommand = command;
+	IRLProtocol = protocol;
 }
 
 //================================================================================
@@ -81,14 +65,12 @@ void IRLinterrupt(void){
 			(duration, data)){
 			// Check if the protcol's checksum is correct
 			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-			if (IRLcheckInverse1(data) || data[0]==0xFF){
+			if (IRLcheckInverse1(data) || (data[2] == 0xFF && data[3] == 0xFF)){
 				//if (IRLcheckInverse0(data))
 				// no extended NEC, normal NEC!
-				IR_Remote_Data_t IRData;
-				memcpy(IRData.whole, data, NEC_BLOCKS);
-				IRData.whole[4] = 0;
-				IRData.whole[5] = 0;
-				irEvent(IRData);
+				uint16_t address = (data[1] << 8) | data[0];
+				uint32_t command = ((data[2] << 8) | data[3]) & 0xFFFF;
+				irEvent(IR_NEC, address, command);
 				return;
 			}
 		}
@@ -193,131 +175,101 @@ bool IRLcheckHolding(uint8_t data[], uint8_t length){
 }
 
 
+
+//void CIRLremote::write(const uint8_t pin, IR_Remote_Data_t IRData)
+//{
+//	// Get the port mask and the pointers to the out/mode registers
+//	// we need to save this as global variable to get the timings right
+//	_bitMask = digitalPinToBitMask(pin);
+//	uint8_t port = digitalPinToPort(pin);
+//	_outPort = portOutputRegister(port);
 //
+//	// set pin to OUTPUT
+//	volatile uint8_t * _modePort = portModeRegister(port);
+//	*_modePort |= _bitMask;
 //
-//void irEvent(IR_Remote_Data_t IRData){}
-//bool CIRLremote::available(void){
-//	//return newInput;
+//	// disable interrupts
+//	//uint8_t oldSREG = SREG;
+//	//cli();
+//
+//	const int repeat = 1;
+//	for (int i = 0; i < repeat; i++)
+//		writeNEC(pin, IRData);
+//
+//	// enable interrupts
+//	//SREG = oldSREG;
+//
+//	// set pin to INPUT again to be save
+//	*_modePort &= ~_bitMask;
+//}
+
+
+//void CIRLremote::writeNEC(const uint8_t pin, IR_Remote_Data_t IRData)
+//{
+//	// send header
+//	mark38_4(NEC_MARK_LEAD);
+//	if (IRData.command == 0xFFFF)
+//		// space
+//		space(NEC_SPACE_HOLDING);
+//	else{
+//		// normal signal
+//		space(NEC_SPACE_LEAD);
+//		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
+//			// send logic bits
+//			uint8_t index = i / 8;
+//			if (IRData.whole[index] & 0x80) {
+//				mark38_4(NEC_MARK_ZERO);
+//				space(NEC_SPACE_ONE);
+//			}
+//			else {
+//				mark38_4(NEC_MARK_ZERO);
+//				space(NEC_SPACE_ZERO);
+//			}
+//			// get next bit
+//			IRData.whole[index] <<= 1;
+//		}
+//	}
+//	// finish mark
+//	mark38_4(NEC_MARK_ZERO);
+//	space(0);
 //}
 //
-//IR_Remote_Data_t CIRLremote::read(void){
-//	//// by default return an empty report
-//	//IR_Remote_Data_t IRReport = { 0 };
+//void CIRLremote::mark38_4(int time) {
+//	// Sends an IR mark for the specified number of microseconds.
+//	// The mark output is modulated at the PWM frequency.
+//	// 1/38.4kHz = 0.00002604166
 //
-//	//// get new data if available
-//	//if (newInput)
-//	//	IRReport = lastIRData;
-//
-//	////unpause and return data
-//	//newInput = false;
-//	//return IRReport;
+//	while ((time -= 26) > 0){
+//		*_outPort |= _bitMask;
+//		delayMicroseconds(12);
+//		*_outPort &= ~_bitMask;
+//		delayMicroseconds(13);
+//	}
 //}
 //
+//void CIRLremote::mark37(int time) {
+//	// Sends an IR mark for the specified number of microseconds.
+//	// The mark output is modulated at the PWM frequency.
+//	// 1/37kHz = 0.00002702702
+//	while ((time -= 27) > 0){
+//		*_outPort |= _bitMask;
+//		delayMicroseconds(13);
+//		*_outPort &= ~_bitMask;
+//		delayMicroseconds(13);
+//	}
 //
-//void CIRLremote::end(const uint8_t interrupt){
-////	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
-////	detachInterrupt(interrupt);
-////
-////	// ensure available(), doesnt return anything
-////	newInput = false;
+//	//time = time / 26;
+//	//while (time--){
+//	//	*_outPort |= _bitMask;
+//	//	delayMicroseconds(12);
+//	//	*_outPort &= ~_bitMask;
+//	//	delayMicroseconds(13);
+//	//}
 //}
 //
-//
-//
-////void CIRLremote::write(const uint8_t pin, IR_Remote_Data_t IRData)
-////{
-////	// Get the port mask and the pointers to the out/mode registers
-////	// we need to save this as global variable to get the timings right
-////	_bitMask = digitalPinToBitMask(pin);
-////	uint8_t port = digitalPinToPort(pin);
-////	_outPort = portOutputRegister(port);
-////
-////	// set pin to OUTPUT
-////	volatile uint8_t * _modePort = portModeRegister(port);
-////	*_modePort |= _bitMask;
-////
-////	// disable interrupts
-////	//uint8_t oldSREG = SREG;
-////	//cli();
-////
-////	const int repeat = 1;
-////	for (int i = 0; i < repeat; i++)
-////		writeNEC(pin, IRData);
-////
-////	// enable interrupts
-////	//SREG = oldSREG;
-////
-////	// set pin to INPUT again to be save
-////	*_modePort &= ~_bitMask;
-////}
-//
-//
-////void CIRLremote::writeNEC(const uint8_t pin, IR_Remote_Data_t IRData)
-////{
-////	// send header
-////	mark38_4(NEC_MARK_LEAD);
-////	if (IRData.command == 0xFFFF)
-////		// space
-////		space(NEC_SPACE_HOLDING);
-////	else{
-////		// normal signal
-////		space(NEC_SPACE_LEAD);
-////		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
-////			// send logic bits
-////			uint8_t index = i / 8;
-////			if (IRData.whole[index] & 0x80) {
-////				mark38_4(NEC_MARK_ZERO);
-////				space(NEC_SPACE_ONE);
-////			}
-////			else {
-////				mark38_4(NEC_MARK_ZERO);
-////				space(NEC_SPACE_ZERO);
-////			}
-////			// get next bit
-////			IRData.whole[index] <<= 1;
-////		}
-////	}
-////	// finish mark
-////	mark38_4(NEC_MARK_ZERO);
-////	space(0);
-////}
-////
-////void CIRLremote::mark38_4(int time) {
-////	// Sends an IR mark for the specified number of microseconds.
-////	// The mark output is modulated at the PWM frequency.
-////	// 1/38.4kHz = 0.00002604166
-////
-////	while ((time -= 26) > 0){
-////		*_outPort |= _bitMask;
-////		delayMicroseconds(12);
-////		*_outPort &= ~_bitMask;
-////		delayMicroseconds(13);
-////	}
-////}
-////
-////void CIRLremote::mark37(int time) {
-////	// Sends an IR mark for the specified number of microseconds.
-////	// The mark output is modulated at the PWM frequency.
-////	// 1/37kHz = 0.00002702702
-////	while ((time -= 27) > 0){
-////		*_outPort |= _bitMask;
-////		delayMicroseconds(13);
-////		*_outPort &= ~_bitMask;
-////		delayMicroseconds(13);
-////	}
-////
-////	//time = time / 26;
-////	//while (time--){
-////	//	*_outPort |= _bitMask;
-////	//	delayMicroseconds(12);
-////	//	*_outPort &= ~_bitMask;
-////	//	delayMicroseconds(13);
-////	//}
-////}
-////
-////void CIRLremote::space(int time) {
-////	// Sends an IR space for the specified number of microseconds.
-////	// A space is no output, so the PWM output is disabled.
-////	*_outPort &= ~_bitMask; // write pin LOW
-////	delayMicroseconds(time);
-////}
+//void CIRLremote::space(int time) {
+//	// Sends an IR space for the specified number of microseconds.
+//	// A space is no output, so the PWM output is disabled.
+//	*_outPort &= ~_bitMask; // write pin LOW
+//	delayMicroseconds(time);
+//}

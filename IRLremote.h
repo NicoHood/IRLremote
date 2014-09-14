@@ -26,6 +26,10 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
+//================================================================================
+// Definitions
+//================================================================================
+
 //NEC
 //IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
 #define NEC_PULSE 564UL
@@ -40,24 +44,11 @@ THE SOFTWARE.
 #define NEC_SPACE_ZERO NEC_PULSE*1
 #define NEC_SPACE_ONE NEC_PULSE*3
 
-//================================================================================
-// Typedefs
-//================================================================================
-
 typedef enum IRType{
 	IR_ALL,
 	IR_NEC,
 	IR_PANASONIC,
 };
-
-// typedef for ir signal types
-typedef union{
-	uint8_t whole[6];
-	struct{
-		uint16_t address;
-		uint32_t command;
-	};
-} IR_Remote_Data_t;
 
 //================================================================================
 // Prototypes
@@ -70,15 +61,19 @@ inline void IRLbegin(const uint8_t interrupt);
 inline void IRLend(const uint8_t interrupt);
 
 // variables for IR processing if no user function was set
-extern bool IRLnewInput;
-extern IR_Remote_Data_t IRLlastIRData;
+extern uint16_t IRLAddress;
+extern uint32_t IRLCommand;
+extern uint8_t  IRLProtocol;
 
 // function called on a valid IR event, must be overwritten by the user
-void __attribute__((weak)) irEvent(IR_Remote_Data_t IRData);
+void __attribute__((weak)) irEvent(uint8_t protocol, uint16_t address, uint32_t command);
 
 // functions to use if no user function was set
-bool IRLavailable(void);
-IR_Remote_Data_t IRLread(void);
+inline bool IRLavailable(void);
+inline uint8_t IRLgetProtocol(void);
+inline uint16_t IRLgetAddress(void);
+inline uint32_t IRLgetCommand(void);
+inline void IRLresume(void);
 
 // called by interrupt CHANGE
 void IRLinterrupt(void);
@@ -110,7 +105,7 @@ void mark37(int time);
 void space(int time);
 
 //================================================================================
-// Inline Implementation
+// Inline Implementations
 //================================================================================
 
 void IRLbegin(const uint8_t interrupt){
@@ -124,7 +119,27 @@ void IRLend(const uint8_t interrupt){
 
 	// ensure available(), doesnt return anything
 	//TODO move out here?
-	IRLnewInput = false;
+	IRLProtocol = false;
+}
+
+bool IRLavailable(void){
+	return IRLProtocol;
+}
+
+uint8_t IRLgetProtocol(void){
+	return IRLProtocol;
+}
+
+uint16_t IRLgetAddress(void){
+	return IRLAddress;
+}
+
+uint32_t IRLgetCommand(void){
+	return IRLCommand;
+}
+
+void IRLresume(void){
+	IRLProtocol = false;
 }
 
 bool IRLcheckInverse0(uint8_t data[]){
