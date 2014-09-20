@@ -31,6 +31,6 @@ void loop() {
     Serial.println(IRLgetCommand(), HEX);
 
     // Resume reading to get new values
-    IRLresume();
+    IRLreset();
   }
 }

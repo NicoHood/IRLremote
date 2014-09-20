@@ -3,28 +3,20 @@ IRLremote
 
 New lightweight IR library with different, smarter implementation.
 
-The idea is: minimal implementation with maximal recognition.
-The trick behind this is to only recognize one protocol at the same time (by default) but with maximum error correction.
-It is still possible to add more than one protocol but if you add too many it will slow down and not work anymore
-because the signals are decoded while receiving them.
-
-On top of that the first possible hit is recognized as valid.
-You might get wrong values if you use >1 protocol and the protocol timings + checksum are very similar.
-This is because of maximum recognition and error correction. Its by design this way.
-
 This library is way more efficient than the "standard" IR library from Ken Shirriff 
 and should be a replacement of the library (sorry for that ;D).
 
 **The main improvements are:**
 * Faster decoding (on the fly)
-* Huge Ram improvements (13 bytes to decode NEC)
-* Huge Flash improvements (less than 1kb flash to decode)
+* Huge Ram improvements (13 bytes ram to decode NEC)
+* Huge Flash improvements (less than 1kb flash to decode NEC)
 * Very accurate even when pointing in different directions
 * Maximum error correction
 * Uses pin interrupt function
 * No timer is needed
 * Receiving and sending possible
 * IDE 1.5.7 compatible
+* Easy to use
 
 **Supported Protocols**
 * NEC
@@ -33,7 +25,7 @@ and should be a replacement of the library (sorry for that ;D).
 
 **Planned features:**
 * Sending function (for Panasonic)
-* remove/improve bit banging PWM
+* Remove/improve bit banging PWM
 * Use PCInt (conflict with SoftSerial)
 
 Installation/How to use
@@ -50,6 +42,28 @@ http://www.hifi-remote.com/johnsfine/DecodeIR.html#JVC-48
 
 More Projects + contact can be found here:
 http://nicohood.wordpress.com/
+
+How it works
+============
+
+The idea is: minimal implementation with maximal recognition.
+You can decode more than one protocol at the same time.
+
+The trick is to only check the border between logical zero and one
+to terminate the logic and rely on the lead/length/checksum as error correction.
+Lets say a logical 0 is 500ms and 1 is 1000ms. Then the border would be 750ms
+to get maximum recognition instead of using just 10%.
+
+Other protocols use different timings, leads, length, checksums
+so it shouldnt interfere with other protocols even with this method.
+
+This gives the library very small implementation but
+you can point into almost every possible direction in the room
+without worrying about wrong signals but still get correct one from very weird angels.
+
+It saves a lot of ram because it decodes the signals "on the fly" when an interrupt occurs.
+Thatswhy you should not add too many protocols at once to exceed the time and miss the next signal.
+However its so fast, its shouldnt make any difference since we are talking about ms, not us.
 
 Version History
 ===============

@@ -54,27 +54,60 @@ void IRLinterrupt(void){
 	unsigned long duration = time - lastTime;
 	lastTime = time;
 
+	//TODO
+	const IRType irType = IR_ALL;
+	//const IRType irType = IR_NEC;
+	//const IRType irType = IR_PANASONIC;
+
 	// determinate which decode function must be called
-	const IRType irType = IR_NEC;
 	switch (irType){
-	case IR_NEC:
-		static uint8_t data[NEC_BLOCKS];
-		// pass the duration to the decoding function
-		if (IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-			NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS>
-			(duration, data)){
-			// Check if the protcol's checksum is correct
-			// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-			if (IRLcheckInverse1(data) || (data[2] == 0xFF && data[3] == 0xFF)){
-				//if (IRLcheckInverse0(data))
-				// no extended NEC, normal NEC!
-				uint16_t address = (data[1] << 8) | data[0];
-				uint32_t command = ((data[2] << 8) | data[3]) & 0xFFFF;
-				irEvent(IR_NEC, address, command);
-				return;
-			}
-		}
+	case IR_ALL:
+		decodeNEC(duration);
+		decodePanasonic(duration);
 		break;
+	case IR_NEC:
+		decodeNEC(duration);
+		break;
+	case IR_PANASONIC:
+		decodePanasonic(duration);
+		break;
+	}
+}
+
+void decodeNEC(const uint32_t duration){
+	// temporary buffer to hold bytes for decoding this protocol
+	static uint8_t data[NEC_BLOCKS];
+	// pass the duration to the decoding function
+	if (IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
+		NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS>
+		(duration, data)){
+		// Check if the protcol's checksum is correct
+		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
+		if (IRLcheckInverse1(data) || IRLcheckHolding(data)){
+			// you could check the address for inverse0 too
+			// but newer devices use an extended address without inverse
+			uint16_t address = (data[0] << 8) | data[1];
+			uint32_t command = ((data[2] << 8) | data[3]) & 0xFFFF;
+			irEvent(IR_NEC, address, command);
+			return;
+		}
+	}
+}
+
+void decodePanasonic(const uint32_t duration){
+	// temporary buffer to hold bytes for decoding this protocol
+	static uint8_t data[PANASONIC_BLOCKS];
+	// pass the duration to the decoding function
+	if (IRLdecodeSpace <PANASONIC_TIMEOUT, PANASONIC_MARK_LEAD, PANASONIC_SPACE_LEAD, PANASONIC_SPACE_HOLDING,
+		PANASONIC_SPACE_ZERO, PANASONIC_SPACE_ONE, PANASONIC_LENGTH, PANASONIC_BLOCKS>
+		(duration, data)){
+		// Check if the protcol's checksum is correct
+		if (IRLcheckXOR0(data)){
+			uint16_t address = (data[0] << 8) | data[1];
+			uint32_t command = (uint32_t(data[2]) << 24) | (uint32_t(data[3]) << 16) | (uint32_t(data[4]) << 8) | data[5];
+			irEvent(IR_PANASONIC, address, command);
+			return;
+		}
 	}
 }
 
@@ -166,14 +199,9 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 	return false;
 }
 
-//TODO remove
-bool IRLcheckHolding(uint8_t data[], uint8_t length){
-	for (int i = 0; i < length; i++)
-		if (data[i] != 0xFF)
-			return false;
-	return true;
-}
-
+//================================================================================
+// Sending
+//================================================================================
 
 
 //void CIRLremote::write(const uint8_t pin, IR_Remote_Data_t IRData)

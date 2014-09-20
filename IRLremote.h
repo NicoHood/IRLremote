@@ -44,6 +44,20 @@ THE SOFTWARE.
 #define NEC_SPACE_ZERO NEC_PULSE*1
 #define NEC_SPACE_ONE NEC_PULSE*3
 
+//PANASONIC
+//IRP notation: {37k,432}<1,-1|1,-3>(8,-4,3:8,1:8,D:8,S:8,F:8,(D^S^F):8,1,-173)+ 
+#define PANASONIC_PULSE 432UL
+#define PANASONIC_BLOCKS 6
+#define PANASONIC_LENGTH 2 + PANASONIC_BLOCKS*8*2 //2 for lead + space, each block has 8bits: mark and space
+#define PANASONIC_TIMEOUT PANASONIC_PULSE*173
+#define PANASONIC_MARK_LEAD PANASONIC_PULSE*8
+#define PANASONIC_SPACE_LEAD PANASONIC_PULSE*4
+#define PANASONIC_SPACE_HOLDING 0 // no holding function in this protocol
+#define PANASONIC_MARK_ZERO PANASONIC_PULSE*1
+#define PANASONIC_MARK_ONE PANASONIC_PULSE*1
+#define PANASONIC_SPACE_ZERO PANASONIC_PULSE*1
+#define PANASONIC_SPACE_ONE PANASONIC_PULSE*3
+
 typedef enum IRType{
 	IR_ALL,
 	IR_NEC,
@@ -73,10 +87,14 @@ inline bool IRLavailable(void);
 inline uint8_t IRLgetProtocol(void);
 inline uint16_t IRLgetAddress(void);
 inline uint32_t IRLgetCommand(void);
-inline void IRLresume(void);
+inline void IRLreset(void);
 
 // called by interrupt CHANGE
 void IRLinterrupt(void);
+
+// special decode function for each protocol
+void decodeNEC(const uint32_t duration);
+void decodePanasonic(const uint32_t duration);
 
 // default decoder helper function
 template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
@@ -86,9 +104,8 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 // functions to check if the received data is valid with the protocol checksums
 inline bool IRLcheckInverse0(uint8_t data[]);
 inline bool IRLcheckInverse1(uint8_t data[]);
-
-bool IRLcheckHolding(uint8_t data[], uint8_t length);
-
+inline bool IRLcheckHolding(uint8_t data[]);
+inline bool IRLcheckXOR0(uint8_t data[]);
 
 // functions to send the protocol
 //TODO template
@@ -116,10 +133,7 @@ void IRLbegin(const uint8_t interrupt){
 void IRLend(const uint8_t interrupt){
 	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
 	detachInterrupt(interrupt);
-
-	// ensure available(), doesnt return anything
-	//TODO move out here?
-	IRLProtocol = false;
+	// also make sure to call reset() after end() if you use the intern reading functions
 }
 
 bool IRLavailable(void){
@@ -138,7 +152,7 @@ uint32_t IRLgetCommand(void){
 	return IRLCommand;
 }
 
-void IRLresume(void){
+void IRLreset(void){
 	IRLProtocol = false;
 }
 
@@ -152,6 +166,19 @@ bool IRLcheckInverse0(uint8_t data[]){
 bool IRLcheckInverse1(uint8_t data[]){
 	// check if byte 0 and is the inverse of byte 1
 	if (uint8_t((data[2] ^ (~data[3]))) == 0)
+		return true;
+	else return false;
+}
+
+bool IRLcheckHolding(uint8_t data[]){
+	if (data[2] == 0xFF && data[3] == 0xFF)
+		return true;
+	else return false;
+}
+
+bool IRLcheckXOR0(uint8_t data[]){
+	// this function is used for panasonic checksum
+	if (uint8_t(data[2] ^ data[3] ^ data[4]) == data[5])
 		return true;
 	else return false;
 }
