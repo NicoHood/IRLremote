@@ -118,12 +118,12 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 
 // functions to send the protocol
 //TODO template
-//void write(const uint8_t pin, IR_Remote_Data_t IRData);
-//void writeNEC(const uint8_t pin, IR_Remote_Data_t IRData);
+void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command);
+void IRLwriteNEC(const uint8_t pin, uint16_t address, uint32_t command);
 
 //TODO remove this out of here
-//uint8_t _bitMask;
-//volatile uint8_t * _outPort;	
+extern uint8_t _bitMask;
+extern volatile uint8_t * _outPort;	
 
 // functions to set the pin high or low (with bitbang pwm)
 void mark38_4(int time);
@@ -238,7 +238,7 @@ void decodePanasonic(const uint32_t duration){
 }
 
 void decodeRaw(const uint32_t duration){
-	//TODO
+	//TODO, use advanced raw example instead
 }
 
 bool IRLcheckInverse0(uint8_t data[]){

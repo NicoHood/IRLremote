@@ -2,7 +2,7 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Send Demo
+ IRL Send
  Sends IR signals on any pin. This uses Bitbanging.
  Write anything to the Serial port and hit enter to send Data.
  Turn interrupts off to get a better result if needed
@@ -25,9 +25,8 @@ void loop() {
       Serial.read();
       // send the data, no pin setting to OUTPUT needed
     Serial.println("Sending...");
-    IR_Remote_Data_t IRData;
-    IRData.address = 0xC686;
-    IRData.command = 0x7F80;
-    IRLremote.write(pinSendIR, IRData);
+    uint16_t address = 0xC686;
+    uint32_t command = 0x7F80;
+    IRLwrite(pinSendIR, address, command);
   }
 }

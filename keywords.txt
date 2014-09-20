@@ -17,8 +17,8 @@ IRLgetProtocol	KEYWORD2
 IRLgetAddress	KEYWORD2
 IRLgetCommand	KEYWORD2
 IREvent	KEYWORD2
-decodeIR	KEYWORD2
 IRLinterrupt	KEYWORD2
+decodeIR	KEYWORD2
 decodeALL	KEYWORD2
 decodeNec	KEYWORD2
 decodePanasonic	KEYWORD2
