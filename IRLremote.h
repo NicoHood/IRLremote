@@ -59,9 +59,10 @@ THE SOFTWARE.
 #define PANASONIC_SPACE_ONE PANASONIC_PULSE*3
 
 typedef enum IRType{
-	IR_USER, // 0
-	IR_ALL,  // 1
-	IR_NEC,  // ...
+	IR_NO_PROTOCOL, // 0
+	IR_USER, // 1
+	IR_ALL, // 2
+	IR_NEC, // ...
 	IR_PANASONIC,
 	// add new protocols here
 	IR_RAW,
@@ -79,9 +80,9 @@ inline void IRLbegin(const uint8_t interrupt);
 inline void IRLend(const uint8_t interrupt);
 
 // variables for IR processing if no user function was set
+extern uint8_t  IRLProtocol;
 extern uint16_t IRLAddress;
 extern uint32_t IRLCommand;
-extern uint8_t  IRLProtocol;
 
 // functions to use if no user function was set
 inline bool IRLavailable(void);
@@ -162,7 +163,7 @@ uint32_t IRLgetCommand(void){
 }
 
 void IRLreset(void){
-	IRLProtocol = false;
+	IRLProtocol = 0;
 }
 
 template <IRType irType>

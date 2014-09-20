@@ -26,7 +26,7 @@ and should be a replacement of the library (sorry for that ;D).
 
 **Planned features:**
 * Sending function (for Panasonic)
-* Remove/improve bit banging PWM
+* Remove/improve bit banging PWM (maybe with tone())
 * Use PCInt (conflict with SoftSerial)
 
 Installation/How to use
@@ -36,24 +36,28 @@ Download the zip, extract and remove the "-master" of the folder.
 Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/Libraries).
 
 Try the examples to see how it works.
+I recommend to check the example ReceiveInterrupt or ReceiveBlocking.
 
 See this reference about choosing the right interrupt pin:
 http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
 
-Choose your protocol from one of these options.
-Each protocol number (in the examples) is equal to one of these names, starting from zero:
+Choose your protocol from one of these options:
 ```cpp
 typedef enum IRType{
-	IR_USER, // 0
-	IR_ALL,  // 1
-	IR_NEC,  // ...
+	IR_NO_PROTOCOL, // 0
+	IR_USER, // 1
+	IR_ALL, // 2
+	IR_NEC, // ...
 	IR_PANASONIC,
 	// add new protocols here
 	IR_RAW,
 };
 ```
+Each protocol number (in the examples) is equal to one of these names, starting from zero.
+So if you get Protocol 3 this means its NEC. By default the library tries to decode all known protocols.
+You can save a lot of ram/flash/performance by using a fixed protocol like IR_NEC instead of IR_ALL in the begin function.
 
-The user IRType is for custom protocols/protocol combinations. See advanced example.
+The IR_USER IRType is for custom protocols/protocol combinations. See advanced examples.
 
 Informations about IR protocols can be found here (a bit hard to understand but try it if you want to create a new protocol).
 You can also ask me to implement any new protocol, just file it as issue or contact me on my blog.
@@ -69,28 +73,31 @@ The idea is: minimal implementation with maximal recognition.
 You can decode more than one protocol at the same time.
 
 The trick is to only check the border between logical zero and one
-to terminate the logic and rely on the lead/length/checksum as error correction.
+to terminate space/mark and rely on the lead/length/checksum as error correction.
 Lets say a logical 0 is 500ms and 1 is 1000ms. Then the border would be 750ms
 to get maximum recognition instead of using just 10%.
 
 Other protocols use different timings, leads, length, checksums
 so it shouldnt interfere with other protocols even with this method.
 
-This gives the library very small implementation but
-you can point into almost every possible direction in the room
-without worrying about wrong signals but still get correct one from very weird angels.
+This gives the library very small implementation with maximum recognition.
+You can point into almost every possible direction in the room without wrong signals.
 
 It saves a lot of ram because it decodes the signals "on the fly" when an interrupt occurs.
-Thatswhy you should not add too many protocols at once to exceed the time and miss the next signal.
+Thatswhy you should not add too many protocols at once to exceed the time of the next signal.
 However its so fast, its shouldnt make any difference since we are talking about ms, not us.
+
+Check ReceiveNECLed for a minimal implementation example.
 
 Version History
 ===============
 ```
-1.5.0 Release (xx.09.2014)
+1.5.0 Release (20.09.2014)
 * huge Ram and Flash improvements
 * new library structure
-* more compact code
+* more compact code/new structure
+* more than one protocol possible at the same time
+* customizable decoding functions
 
 1.4.7 Release (13.09.2014)
 * changed NEC to template

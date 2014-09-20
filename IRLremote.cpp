@@ -28,9 +28,9 @@ THE SOFTWARE.
 //================================================================================
 
 // ensure available() returns false
+uint8_t  IRLProtocol = 0;
 uint16_t IRLAddress = 0;
 uint32_t IRLCommand = 0;
-uint8_t  IRLProtocol = false;
 
 // Called when directly received correct IR Signal
 // Do not use Serial inside, it can crash your Arduino!

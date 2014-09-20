@@ -2,14 +2,14 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Receive Led Demo
+ IRL Receive NEC Led
  Receives IR and lights the LED on a valid signal.
- 
+
  This should demonstrate that you can use the IR sensor
  from almost every direction with almost no ram/flash.
- 
- BlinkWithoutDelay: 1,006 bytes flash, 15 bytes ram
- IRL Receive Led:   1,588 bytes flash, 26 bytes ram
+
+ BlinkWithoutDelay:   1,006 bytes flash, 15 bytes ram
+ IRL Receive NEC Led: 1,580 bytes flash, 26 bytes ram
 
  Ram usage:
  4byte attachInterrupt function
@@ -30,7 +30,7 @@ unsigned long previousMillis = 0;
 
 void setup() {
   pinMode(pinLed, OUTPUT);
-  IRLbegin(interruptIR);
+  IRLbegin<IR_NEC>(interruptIR);
 }
 
 void loop() {
@@ -41,7 +41,7 @@ void loop() {
     digitalWrite(pinLed, LOW);
 }
 
-void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
+void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
   // Called when received a valid IR signal
   // Do not use Serial inside, it can crash your Arduino!
   previousMillis = millis();

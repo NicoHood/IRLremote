@@ -6,27 +6,27 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-IR_Remote_Data_t	KEYWORD1
-CIRLremote	KEYWORD1
-CIRLprotocol	KEYWORD1
-IRLprotocolNEC	KEYWORD1
-IRLprotocolPanasonic	KEYWORD1
-IRLprotocolAll	KEYWORD1
-
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-IRLremote	KEYWORD3
-
-begin	KEYWORD2
-end	KEYWORD2
-available	KEYWORD2
-read	KEYWORD2
-write	KEYWORD2
+IRLbegin	KEYWORD2
+IRLend	KEYWORD2
+IRLavailable	KEYWORD2
+IRLgetProtocol	KEYWORD2
+IRLgetAddress	KEYWORD2
+IRLgetCommand	KEYWORD2
+IREvent	KEYWORD2
 decodeIR	KEYWORD2
-reset	KEYWORD2
-getTimeout	KEYWORD2
+IRLinterrupt	KEYWORD2
+decodeALL	KEYWORD2
+decodeNec	KEYWORD2
+decodePanasonic	KEYWORD2
+IRLcheckInverse0	KEYWORD2
+IRLcheckInverse1	KEYWORD2
+IRLcheckHolding	KEYWORD2
+IRLcheckXOR0	KEYWORD2
+IRLdecodeSpace	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
@@ -35,4 +35,11 @@ getTimeout	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
+
+IR_NO_PROTOCOL	LITERAL1
+IR_USER	LITERAL1
+IR_ALL	LITERAL1
+IR_NEC	LITERAL1
+IR_PANASONIC	LITERAL1
+IR_RAW	LITERAL1
 
