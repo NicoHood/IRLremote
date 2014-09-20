@@ -135,9 +135,15 @@ void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16
 
 	Substract the while, portmanipulation, loop overhead /3 loop cycles
 
-	F_CPU(16.000.000)            1 * 1.000.000(pulse in ms)          9(Overhead)
-	========================== * ================================= - ==============
-	1.000.000 * 3(loop cycles)   kHz * 2(half of a on/off pulse)     3(loop cycles)
+	F_CPU(16.000.000)            1 * 1.000.000(pulse in ms)   12(Overhead)
+	========================== * ========================== - ==============
+	1.000.000 * 3(loop cycles)   Hz * 2(half of a pulse)      3(loop cycles)
+
+	<==>
+
+	F_CPU(16.000.000) - (12(Overhead) * Hz * 2(half of a pulse))
+	===========================================================
+	Hz * 2(half of a on/off pulse) * 3(loop cycles)
 
 	________________________________________________________________________________
 	Iterations calculation:
@@ -147,10 +153,10 @@ void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16
 
 	time * (F_CPU(16.000.000) / 1.000.000)
 	======================================
-	(delay*3(loop cycles) + overhead)
+	delay*3(loop cycles) + overhead
 	*/
 
-	uint8_t delay = (F_CPU / (Hz * 2UL * 3UL) - (12UL / 3UL));
+	uint8_t delay = (F_CPU - (12UL * Hz * 2UL)) / (Hz * 2UL * 3UL);
 	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * 3UL + 12);
 
 	while (iterations--){
