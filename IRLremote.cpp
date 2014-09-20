@@ -34,7 +34,7 @@ uint8_t  IRLProtocol = false;
 
 // Called when directly received correct IR Signal
 // Do not use Serial inside, it can crash your Arduino!
-void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
+void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
 	// For no user function set we need to pause IR
 	// to not overwrite the actual values until they are read.
 	if (IRLProtocol) return;
@@ -43,161 +43,18 @@ void irEvent(uint8_t protocol, uint16_t address, uint32_t command) {
 	IRLProtocol = protocol;
 }
 
+void decodeIR(const uint32_t duration){
+	// add your own protocols here or create your own decoding function
+	// you can overwrite this function in your .ino file
+	decodeAll(duration);
+}
+
+
 //================================================================================
 // Decoding
 //================================================================================
 
-void IRLinterrupt(void){
-	//save the duration between the last reading
-	static unsigned long lastTime = 0;
-	unsigned long time = micros();
-	unsigned long duration = time - lastTime;
-	lastTime = time;
 
-	//TODO
-	const IRType irType = IR_ALL;
-	//const IRType irType = IR_NEC;
-	//const IRType irType = IR_PANASONIC;
-
-	// determinate which decode function must be called
-	switch (irType){
-	case IR_ALL:
-		decodeNEC(duration);
-		decodePanasonic(duration);
-		break;
-	case IR_NEC:
-		decodeNEC(duration);
-		break;
-	case IR_PANASONIC:
-		decodePanasonic(duration);
-		break;
-	}
-}
-
-void decodeNEC(const uint32_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[NEC_BLOCKS];
-	// pass the duration to the decoding function
-	if (IRLdecodeSpace <NEC_TIMEOUT, NEC_MARK_LEAD, NEC_SPACE_LEAD, NEC_SPACE_HOLDING,
-		NEC_SPACE_ZERO, NEC_SPACE_ONE, NEC_LENGTH, NEC_BLOCKS>
-		(duration, data)){
-		// Check if the protcol's checksum is correct
-		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-		if (IRLcheckInverse1(data) || IRLcheckHolding(data)){
-			// you could check the address for inverse0 too
-			// but newer devices use an extended address without inverse
-			uint16_t address = (data[0] << 8) | data[1];
-			uint32_t command = ((data[2] << 8) | data[3]) & 0xFFFF;
-			irEvent(IR_NEC, address, command);
-			return;
-		}
-	}
-}
-
-void decodePanasonic(const uint32_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[PANASONIC_BLOCKS];
-	// pass the duration to the decoding function
-	if (IRLdecodeSpace <PANASONIC_TIMEOUT, PANASONIC_MARK_LEAD, PANASONIC_SPACE_LEAD, PANASONIC_SPACE_HOLDING,
-		PANASONIC_SPACE_ZERO, PANASONIC_SPACE_ONE, PANASONIC_LENGTH, PANASONIC_BLOCKS>
-		(duration, data)){
-		// Check if the protcol's checksum is correct
-		if (IRLcheckXOR0(data)){
-			uint16_t address = (data[0] << 8) | data[1];
-			uint32_t command = (uint32_t(data[2]) << 24) | (uint32_t(data[3]) << 16) | (uint32_t(data[4]) << 8) | data[5];
-			irEvent(IR_PANASONIC, address, command);
-			return;
-		}
-	}
-}
-
-template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
-	uint16_t spaceZero, uint16_t spaceOne, uint16_t irLength, uint8_t blocks>
-	bool IRLdecodeSpace(unsigned long duration, uint8_t data[]){
-	// variables for ir processing
-
-	static uint8_t count = 0;
-
-	// if timeout(start next value)
-	if (duration >= ((timeout + markLead) / 2))
-		count = 0;
-
-	// check Lead (needs a timeout or a correct signal)
-	else if (count == 0){
-		// lead is okay
-		if (duration > ((markLead + spaceLead) / 2))
-			count++;
-		// wrong lead
-		else count = 0;
-	}
-
-	//check Space/Space Holding
-	else if (count == 1){
-		// protocol supports space holding (Nec)
-		if (spaceHolding){
-			// normal Space
-			if (duration > (spaceLead + spaceHolding) / 2)
-				// next reading
-				count++;
-
-			// Button holding
-			else if (duration > (spaceHolding + spaceOne) / 2){
-				// set command to 0xFF if button is held down
-				if (blocks <= 4){
-					data[0] = data[1] = 0x00;
-					data[2] = data[3] = 0xFF;
-				}
-				count = 0;
-				return true;
-			}
-			// wrong space
-			else count = 0;
-		}
-
-		// protocol doesnt support space holding (Panasonic)
-		else{
-			// normal Space
-			if (duration > (spaceLead + spaceOne) / 2)
-				count++;
-			// wrong space
-			else count = 0;
-		}
-	}
-
-	// High pulses (odd numbers)
-	else if (count % 2 == 1){
-		// get number of the High Bits minus one for the lead
-		uint8_t length = (count / 2) - 1;
-
-		// move bits and write 1 or 0 depending on the duration
-		data[length / 8] <<= 1;
-		if (duration > ((spaceOne + spaceZero) / 2))
-			data[length / 8] |= 0x01;
-		else
-			data[length / 8] &= ~0x01;
-
-		// next reading
-		count++;
-	}
-
-	// Low pulses (even numbers)
-	else{
-		// You dont really need to check them for errors.
-		// But you might miss some wrong values
-		// Checking takes more operations but is safer.
-		// We want maximum recognition so we leave this out here.
-		// also we have the inverse or the XOR to check the data later
-		count++;
-	}
-
-	// check last input
-	// TODO calculate with blocks to not go over bounds
-	if (count >= irLength){
-		count = 0;
-		return true;
-	}
-	return false;
-}
 
 //================================================================================
 // Sending

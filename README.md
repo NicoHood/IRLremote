@@ -17,6 +17,7 @@ and should be a replacement of the library (sorry for that ;D).
 * Receiving and sending possible
 * IDE 1.5.7 compatible
 * Easy to use
+* Customizable
 
 **Supported Protocols**
 * NEC
@@ -34,13 +35,31 @@ Installation/How to use
 Download the zip, extract and remove the "-master" of the folder.
 Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/Libraries).
 
-Try the examples to see how it works. See this reference about choosing the right interrupt pin:
+Try the examples to see how it works.
+
+See this reference about choosing the right interrupt pin:
 http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
 
-Informations about IR Protocols can be found here (a bit hard to understand but try it if you want to create a new Protocol)
+Choose your protocol from one of these options.
+Each protocol number (in the examples) is equal to one of these names, starting from zero:
+```cpp
+typedef enum IRType{
+	IR_USER, // 0
+	IR_ALL,  // 1
+	IR_NEC,  // ...
+	IR_PANASONIC,
+	// add new protocols here
+	IR_RAW,
+};
+```
+
+The user IRType is for custom protocols/protocol combinations. See advanced example.
+
+Informations about IR protocols can be found here (a bit hard to understand but try it if you want to create a new protocol).
+You can also ask me to implement any new protocol, just file it as issue or contact me on my blog.
 http://www.hifi-remote.com/johnsfine/DecodeIR.html#JVC-48
 
-More Projects + contact can be found here:
+More projects + contact can be found here:
 http://nicohood.wordpress.com/
 
 How it works
