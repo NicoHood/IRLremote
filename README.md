@@ -59,6 +59,8 @@ You can save a lot of ram/flash/performance by using a fixed protocol like IR_NE
 
 The IR_USER IRType is for custom protocols/protocol combinations. See advanced examples.
 
+For sending see the SendSerial/Button examples. But its still under construction.
+
 Informations about IR protocols can be found here (a bit hard to understand but try it if you want to create a new protocol).
 You can also ask me to implement any new protocol, just file it as issue or contact me on my blog.
 http://www.hifi-remote.com/johnsfine/DecodeIR.html#JVC-48
