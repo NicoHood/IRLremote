@@ -2,29 +2,32 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Send Button
+ IRL Send Serial
  Sends IR signals on any pin. This uses Bitbanging.
- Press the button to send data.
+ Write anything to the Serial port and hit enter to send Data.
  Turn interrupts off to get a better result if needed
  */
 
 #include "IRLremote.h"
 
 const int pinSendIR = 3;
-const int pinButton = 8;
 
 void setup() {
-  pinMode(pinButton, INPUT_PULLUP);
+  Serial.begin(115200);
+  Serial.println("Startup");
 }
 
 void loop() {
-  if (!digitalRead(pinButton)) {
+  if (Serial.available()) {
+    // discard all Serial bytes to avoid multiple sending
+    delay(10);
+    while (Serial.available())
+      Serial.read();
+      
     // send the data, no pin setting to OUTPUT needed
+    Serial.println("Sending...");
     uint16_t address = 0xC686;
     uint32_t command = 0x7F80;
     IRLwrite(pinSendIR, address, command);
-
-    // simple debounce
-    delay(300);
   }
 }
