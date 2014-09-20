@@ -10,14 +10,14 @@ and should be a replacement of the library (sorry for that ;D).
 * Faster decoding (on the fly)
 * Huge Ram improvements (13 bytes ram to decode NEC)
 * Huge Flash improvements (less than 1kb flash to decode NEC)
+* Written in C but uses C++ templates
 * Very accurate even when pointing in different directions
 * Maximum error correction
-* Uses pin interrupt function
-* No timer is needed
+* Uses pin interrupt function/No timer needed
 * Receiving and sending possible
 * IDE 1.5.7 compatible
-* Easy to use
-* Customizable
+* Easy to use/Customizable
+* Perfect for Attinys
 
 **Supported Protocols**
 * NEC
@@ -90,10 +90,16 @@ Thatswhy you should not add too many protocols at once to exceed the time of the
 However its so fast, its shouldnt make any difference since we are talking about ms, not us.
 
 Check ReceiveNECLed for a minimal implementation example.
+The code itself seems to be a bit organized but i had to implement a lot of functions inline
+to get maximum optimization.
 
 Version History
 ===============
 ```
+1.5.1 Release (20.09.2014)
+* improved Bitbang PWM
+* fixed SendSerial example
+
 1.5.0 Release (20.09.2014)
 * huge Ram and Flash improvements
 * new library structure

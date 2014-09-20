@@ -25,6 +25,7 @@ THE SOFTWARE.
 #define IRLREMOTE_H
 
 #include <Arduino.h>
+#include <util/delay_basic.h>
 
 //================================================================================
 // Definitions
@@ -32,6 +33,7 @@ THE SOFTWARE.
 
 //NEC
 //IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*) 
+#define NEC_HZ 38400
 #define NEC_PULSE 564UL
 #define NEC_BLOCKS 4
 #define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
@@ -46,6 +48,7 @@ THE SOFTWARE.
 
 //PANASONIC
 //IRP notation: {37k,432}<1,-1|1,-3>(8,-4,3:8,1:8,D:8,S:8,F:8,(D^S^F):8,1,-173)+ 
+#define PANASONIC_HZ 37000
 #define PANASONIC_PULSE 432UL
 #define PANASONIC_BLOCKS 6
 #define PANASONIC_LENGTH 2 + PANASONIC_BLOCKS*8*2 //2 for lead + space, each block has 8bits: mark and space
@@ -119,16 +122,11 @@ template <uint32_t timeout, uint16_t markLead, uint16_t spaceLead, uint16_t spac
 // functions to send the protocol
 //TODO template
 void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command);
-void IRLwriteNEC(const uint8_t pin, uint16_t address, uint32_t command);
-
-//TODO remove this out of here
-extern uint8_t _bitMask;
-extern volatile uint8_t * _outPort;	
+void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
 
 // functions to set the pin high or low (with bitbang pwm)
-void mark38_4(int time);
-void mark37(int time);
-void space(int time);
+void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
+void space(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
 
 //================================================================================
 // Inline Implementations
