@@ -95,7 +95,8 @@ Version History
 1.5.0 Release (20.09.2014)
 * huge Ram and Flash improvements
 * new library structure
-* more compact code/new structure
+* compacter code/new structure
+* more examples
 * more than one protocol possible at the same time
 * customizable decoding functions
 
