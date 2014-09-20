@@ -91,7 +91,7 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command)
 {
 	// send header
-	mark(PANASONIC_HZ, outPort, bitmask, NEC_MARK_LEAD);
+	mark(NEC_HZ, outPort, bitmask, NEC_MARK_LEAD);
 	if (command == 0xFFFF)
 		// space
 		space(outPort, bitmask, NEC_SPACE_HOLDING);
@@ -150,8 +150,8 @@ void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16
 	(delay*3(loop cycles) + overhead)
 	*/
 
-	uint8_t delay = (F_CPU / (Hz * 2UL * 3UL) - (9UL / 3UL));
-	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * 3UL + 9);
+	uint8_t delay = (F_CPU / (Hz * 2UL * 3UL) - (12UL / 3UL));
+	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * 3UL + 12);
 
 	while (iterations--){
 		*outPort ^= bitMask;
