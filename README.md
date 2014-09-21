@@ -95,8 +95,9 @@ However its so fast, its shouldnt make any difference since we are talking about
 Then you need to check in the main loop if the buffer has any valid signals.
 It checks every signal, thatswhy its slow and takes a lot of flash.
 And it also checks about 10~20% from the original value. Lets say a pulse is 100ms. Then 80-120ms is valid.
-Thatswhy the recognition is worse. And he also doesnt check the protocol intern error correction (or better recognition).
-For example NEC has an inverse in the command. Its easy to filter wrong signals then.
+Thatswhy the recognition is worse. And he also doesnt check the protocol intern error correction.
+For example NEC has an inverse in the command: the first byte is the inverse of the 2nd byte. Its easy to filter wrong signals then.
+So every protocol has its built in checksums, which we will use. And I also check for timeouts and start new readings if the signal timed out.
 The only positive thing is that with the timer the pin is more flexible. However i will try to implement a PCINT version later.
 
 For sending i decided to use Bitbang. This works on every MCU and on any PIN. He used proper timers,
