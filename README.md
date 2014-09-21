@@ -1,7 +1,7 @@
-![Infrared Picture](header.jpg)
-
 IRLremote
 =========
+
+![Infrared Picture](header.jpg)
 
 New lightweight IR library with different, smarter implementation.
 
