@@ -60,19 +60,17 @@ void decodeIR(const uint32_t duration){
 // Sending
 //================================================================================
 
-uint8_t _bitMask;
-volatile uint8_t * _outPort;
 void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 {
-	// Get the port mask and the pointers to the out/mode registers
-	// we need to save this as global variable to get the timings right
-	_bitMask = digitalPinToBitMask(pin);
+	// get the port mask and the pointers to the out/mode registers
+	uint8_t bitMask = digitalPinToBitMask(pin);
 	uint8_t port = digitalPinToPort(pin);
-	_outPort = portOutputRegister(port);
+	volatile uint8_t * outPort = portOutputRegister(port);
+	volatile uint8_t * modePort = portModeRegister(port);
 
-	// set pin to OUTPUT
-	volatile uint8_t * _modePort = portModeRegister(port);
-	*_modePort |= _bitMask;
+	// set pin to OUTPUT and LOW
+	*modePort |= bitMask;
+	*outPort &= ~bitMask;
 
 	// disable interrupts
 	//uint8_t oldSREG = SREG;
@@ -80,26 +78,26 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 
 	const int repeat = 1;
 	for (int i = 0; i < repeat; i++)
-		IRLwriteNEC(pin, address, command);
+		IRLwriteNEC(outPort, bitMask, address, command);
 
 	// enable interrupts
 	//SREG = oldSREG;
 
 	// set pin to INPUT again to be save
-	*_modePort &= ~_bitMask;
+	*modePort &= ~bitMask;
 }
 
 
-void IRLwriteNEC(const uint8_t pin, uint16_t address, uint32_t command)
+void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command)
 {
 	// send header
-	mark38_4(NEC_MARK_LEAD);
+	mark(NEC_HZ, outPort, bitmask, NEC_MARK_LEAD);
 	if (command == 0xFFFF)
 		// space
-		space(NEC_SPACE_HOLDING);
+		space(outPort, bitmask, NEC_SPACE_HOLDING);
 	else{
 		// normal signal
-		space(NEC_SPACE_LEAD);
+		space(outPort, bitmask, NEC_SPACE_LEAD);
 		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
 			// the bitorder is a mess i know.
 			bool bit;
@@ -109,55 +107,70 @@ void IRLwriteNEC(const uint8_t pin, uint16_t address, uint32_t command)
 				bit = ((command >> (((i / 8) - 2) * 8))&(0x80 >> (i % 8))) ? 1 : 0;
 
 			// send logic bits
-			mark38_4(NEC_MARK_ZERO);
+			mark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
 			if (bit)
-				space(NEC_SPACE_ONE);
+				space(outPort, bitmask, NEC_SPACE_ONE);
 			else
-				space(NEC_SPACE_ZERO);
+				space(outPort, bitmask, NEC_SPACE_ZERO);
 		}
 
 		// finish mark
-		mark38_4(NEC_MARK_ZERO);
-		space(0);
+		mark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
+		space(outPort, bitmask, 0);
 	}
 }
 
-void mark38_4(int time) {
-	// Sends an IR mark for the specified number of microseconds.
-	// The mark output is modulated at the PWM frequency.
-	// 1/38.4kHz = 0.00002604166
+void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
+	/*
+	Bitbangs PWM in the given Hz number for the given time
+	________________________________________________________________________________
+	Delay calculation:
+	F_CPU/1.000.000 to get number of cycles/uS
+	/3 to get the number of loops needed for 1ms (1loop = 3 cycles)
 
-	while ((time -= 26) > 0){
-		*_outPort |= _bitMask;
-		delayMicroseconds(12);
-		*_outPort &= ~_bitMask;
-		delayMicroseconds(13);
+	Multiply with the number of ms delay:
+	1/kHz to get the seconds
+	* 1.000.000 to get it in uS
+	/2 to get half of a full pulse
+
+	Substract the while, portmanipulation, loop overhead /3 loop cycles
+
+	F_CPU(16.000.000)            1 * 1.000.000(pulse in ms)   12(overhead)
+	========================== * ========================== - ==============
+	1.000.000 * 3(loop cycles)   Hz * 2(half of a pulse)      3(loop cycles)
+
+	<==>
+
+	F_CPU(16.000.000) - (12(overhead) * Hz * 2(half of a pulse))
+	===========================================================
+	Hz * 2(half of a on/off pulse) * 3(loop cycles)
+
+	________________________________________________________________________________
+	Iterations calculation:
+	Devide time with cycles in while loop
+	Multiply this with the cycles per uS
+	cycles per while loop: 3(loop cycles) * delay + overhead
+
+	time * (F_CPU(16.000.000) / 1.000.000)
+	======================================
+	delay*3(loop cycles) + overhead
+	*/
+
+	const uint32_t loopCycles = 3;
+	const uint32_t overHead = 12;
+	uint8_t delay = (F_CPU - (overHead * Hz * 2UL)) / (Hz * 2UL * loopCycles);
+	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
+
+	while (iterations--){
+		*outPort ^= bitMask;
+		_delay_loop_1(delay);
 	}
 }
 
-void mark37(int time) {
-	// Sends an IR mark for the specified number of microseconds.
-	// The mark output is modulated at the PWM frequency.
-	// 1/37kHz = 0.00002702702
-	while ((time -= 27) > 0){
-		*_outPort |= _bitMask;
-		delayMicroseconds(13);
-		*_outPort &= ~_bitMask;
-		delayMicroseconds(13);
-	}
-
-	//time = time / 26;
-	//while (time--){
-	//	*_outPort |= _bitMask;
-	//	delayMicroseconds(12);
-	//	*_outPort &= ~_bitMask;
-	//	delayMicroseconds(13);
-	//}
-}
-
-void space(int time) {
+void space(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
 	// Sends an IR space for the specified number of microseconds.
 	// A space is no output, so the PWM output is disabled.
-	*_outPort &= ~_bitMask; // write pin LOW
+	*outPort &= ~bitMask; // write pin LOW
 	delayMicroseconds(time);
+	//_delay_loop_2(time*(F_CPU/1000000UL)/4UL);
 }
