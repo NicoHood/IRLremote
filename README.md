@@ -91,6 +91,19 @@ It saves a lot of ram because it decodes the signals "on the fly" when an interr
 Thatswhy you should not add too many protocols at once to exceed the time of the next signal.
 However its so fast, its shouldnt make any difference since we are talking about ms, not us.
 
+**In comparison to Ken's lib**, he records the signals (with timer interrupts) in a buffer which takes a lot of ram.
+Then you need to check in the main loop if the buffer has any valid signals.
+It checks every signal, thatswhy its slow and takes a lot of flash.
+And it also checks about 10~20% from the original value. Lets say a pulse is 100ms. Then 80-120ms is valid.
+Thatswhy the recognition is worse. And he also doesnt check the protocol intern error correction (or better recognition).
+For example NEC has an inverse in the command. Its easy to filter wrong signals then.
+The only positive thing is that with the timer the pin is more flexible. However i will try to implement a PCINT version later.
+
+For sending i decided to use Bitbang. This works on every MCU and on any PIN. He used proper timers,
+but only PIN 3 is usable for sending (an interrupt pin). Bitbang might have problems with other interrupts but should work relyable.
+You can turn off interrupts before sending if you like to ensure a proper sending.
+Normal IR devices shouldnt complain about a bit intolerance in the pwm signal. Just try to keep interrupts short.
+
 Check ReceiveNECLed for a minimal implementation example.
 The code itself seems to be a bit organized but i had to implement a lot of functions inline
 to get maximum optimization.
@@ -98,7 +111,7 @@ to get maximum optimization.
 Version History
 ===============
 ```
-1.5.1 Release (20.09.2014)
+1.5.1 Release (21.09.2014)
 * improved Bitbang PWM
 * fixed SendSerial example
 
