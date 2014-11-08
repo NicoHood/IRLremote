@@ -100,6 +100,7 @@ void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, 
 		space(outPort, bitmask, NEC_SPACE_LEAD);
 		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
 			// the bitorder is a mess i know.
+			// 89ABCDEF01234567
 			bool bit;
 			if (i < (2 * 8))
 				bit = ((address >> ((i / 8) * 8))&(0x80 >> (i % 8))) ? 1 : 0;
@@ -135,7 +136,7 @@ void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16
 
 	Substract the while, portmanipulation, loop overhead /3 loop cycles
 
-	F_CPU(16.000.000)            1 * 1.000.000(pulse in ms)   12(overhead)
+	F_CPU(16.000.000)            1 * 1.000.000(pulse in uS)   12(overhead)
 	========================== * ========================== - ==============
 	1.000.000 * 3(loop cycles)   Hz * 2(half of a pulse)      3(loop cycles)
 
