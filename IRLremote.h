@@ -229,7 +229,7 @@ void IRLinterrupt(void){
 
 void decodeAll(const uint32_t duration){
 	decodeNec(duration);
-	decodePanasonic(duration);
+	//decodePanasonic(duration); //TODO
 	decodeSony12(duration);
 }
 
@@ -328,29 +328,36 @@ template <uint32_t timeout, uint16_t irLength, uint8_t blocks,
 	uint16_t markLead, uint16_t spaceLead, uint16_t spaceHolding,
 	uint16_t markZero, uint16_t markOne, uint16_t spaceZero, uint16_t spaceOne>
 	bool IRLdecodeSpace(unsigned long duration, uint8_t data[]){
+	uint8_t mode = 0;
+	uint16_t logicalOne;
+	if (spaceZero != spaceOne)
+		mode |= 0x01;
+	if (markZero != markOne)
+		mode |= 0x02;
+
 	// variables for ir processing
 	static uint8_t count = 0;
 
 	// if timeout start next possible reading
 	if (duration >= ((timeout + markLead) / 2))
-		count = 0;
+	count = 1;
 
-	// check Lead (needs a timeout or a correct signal)
-	else if (count == 0){
+	// check Mark Lead (needs a timeout or a correct signal)
+	else if (count == 1){
 		// lead is okay
-		if (duration > ((markLead + spaceLead) / 2))
+		if (duration > ((markLead + MAX(spaceLead, spaceOne)) / 2))
 			count++;
 		// wrong lead
 		else count = 0;
 		//Serial.println(duration);
 	}
 
-	//check Space/Space Holding
-	else if (count == 1){
+	//check Space Lead/Space Holding
+	else if (count == 2){
 		// protocol supports space holding (Nec)
 		if (spaceHolding){
 			// normal Space
-			if (duration > (spaceLead + spaceHolding) / 2)
+			if (duration > ((spaceLead + spaceHolding) / 2))
 				// next reading
 				count++;
 
@@ -379,15 +386,15 @@ template <uint32_t timeout, uint16_t irLength, uint8_t blocks,
 		}
 	}
 
-	// High pulses (odd numbers)
-	else if (count % 2 == 1){
+	// Space pulses (even numbers)
+	else if (count % 2 == 0){
 		// only check values if the protocol has different logical space pulses
 		if (spaceZero != spaceOne){
-			//Serial.println(count);
-			// get number of the High Bits minus one for the lead
+			
+			// get number of the Space Bits minus one for the lead (starting from zero)
 			uint8_t length;
 			if (markZero == markOne)
-				length = (count / 2) - 1;
+				length = (count  / 2)-2;
 			// special case: spaces and marks both have data in the pulse
 			else length = count - 2;
 
@@ -400,10 +407,16 @@ template <uint32_t timeout, uint16_t irLength, uint8_t blocks,
 		}
 		// next reading
 		count++;
+
+
+
+
 	}
 
-	// Low pulses (even numbers)
+	// Mark pulses (odd numbers)
 	else{
+
+
 		// You dont really need to check them for errors.
 		// But you might miss some wrong values
 		// Checking takes more operations but is safer.
@@ -415,16 +428,18 @@ template <uint32_t timeout, uint16_t irLength, uint8_t blocks,
 		uint8_t length;
 		if (markZero != markOne){
 			if (spaceZero != spaceOne)
-				length = (count / 2) - 1;
+				length = (count / 2) - 1; //TODO <--- wrong
 			// special case: spaces and marks both have data in the pulse
 			else length = count - 2;
 		}
 		count++;
+
+
 	}
 
 	// check last input
 	// TODO calculate with blocks to not go over bounds
-	if (count >= irLength){
+	if (count > irLength){
 		count = 0;
 		return true;
 	}
