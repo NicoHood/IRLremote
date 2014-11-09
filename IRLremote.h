@@ -350,112 +350,118 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 	// variables for ir processing
 	static uint8_t count = 0;
 
-	// if timeout start next possible reading
+	// if timeout always start next possible reading and abort any pending readings
 	if (duration >= timeoutThreshold)
 		count = 1;
 
-	// on a reset we are waiting for a timeout
+	// on a reset (error in decoding) we are waiting for a timeout to start a new reading again
+	// this is to not conflict with other protocols while they are sending 0/1 which might be similar to a lead in another protocol
 	else if (count == 0)
 		return false;
 
-	// check Mark Lead (needs a timeout or a correct signal)
-	else if (count == 1){
-		// lead is okay
-		if (duration > markLeadThreshold)
-			count++;
-		// wrong lead
-		else count = 0;
-	}
-
-	//check Space Lead/Space Holding
-	else if (count == 2){
-		if (spaceLeadThreshold){
-			// normal Space
-			if (duration > spaceLeadThreshold)
-				// next reading
-				count++;
-
-			// Button holding (if supported by protocol)
-			else if (spaceLeadHoldingThreshold && duration > spaceLeadHoldingThreshold){
-				// set command to 0xFF if button is held down
-				if (irLength == (4 * 8 * 2 + 2)){
-					data[0] = data[1] = 0x00;
-					data[2] = data[3] = 0xFF;
-				}
-				count = 0;
-				return true;
-			}
-			// wrong space
-			else count = 0;
-		}
-		// spaceThreshold unimportant
-		else count++;
-	}
-
-	// Mark pulses (odd numbers)
-	else if (count % 2 == 1){
-		// check for timeout (might be a different protocol)
-		if (markTimeout && duration > markTimeout){
-			count = 0;
-			return false;
-		}
-
-		// only check values if the protocol has different logical space pulses
-		else if (markThreshold){
-
-			// get number of the Mark Bits (starting from zero)
-			uint8_t length;
-			// only save every 2nd value, substract the first two lead pulses
-			if (!spaceThreshold)
-				length = (count / 2) - 1;
-			// special case: spaces and marks both have data in the pulse
-			else length = count - 2;
-
-			// move bits and write 1 or 0 depending on the duration
-			data[length / 8] <<= 1;
-			if (duration > markThreshold)
-				data[length / 8] |= 0x01;
-			else
-				data[length / 8] &= ~0x01;
-		}
-
-		// check last input (mark)
-		if (count > irLength){
-			count = 0;
-			return true;
-		}
-
-		// next reading
-		count++;
-	}
-
-	// Space pulses (even numbers)
+	// check pulses for mark/space and lead + logical 0/1 seperate
 	else{
-		// check for timeout (might be a different protocol)
-		if (spaceTimeout && duration > spaceTimeout){
-			count = 0;
-			return false;
+		// Mark pulses (odd numbers)
+		if (count % 2 == 1){
+			// check Mark Lead (needs a timeout or a correct signal)
+			if (count == 1){
+				// lead is okay// wrong lead
+				if (duration <= markLeadThreshold){
+					count = 0;
+					return false;
+				}
+			}
+
+			else{
+				// check for timeout if needed (might be a different protocol)
+				if (markTimeout && duration > markTimeout){
+					count = 0;
+					return false;
+				}
+
+				// only check values if the protocol has different logical space pulses
+				else if (markThreshold){
+
+					// get number of the Mark Bits (starting from zero)
+					uint8_t length;
+					// only save every 2nd value, substract the first two lead pulses
+					if (!spaceThreshold)
+						length = (count / 2) - 1;
+					// special case: spaces and marks both have data in the pulse
+					else length = count - 2;
+
+					// move bits and write 1 or 0 depending on the duration
+					data[length / 8] <<= 1;
+					if (duration > markThreshold)
+						data[length / 8] |= 0x01;
+					else
+						data[length / 8] &= ~0x01;
+				}
+
+				// check last input (always a mark)
+				if (count > irLength){
+					count = 0;
+					return true;
+				}
+			}
 		}
 
-		// only check values if the protocol has different logical space pulses
-		else if (spaceThreshold){
+		// Space pulses (even numbers)
+		else{
+			//check Space Lead/Space Holding
+			if (count == 2){
+				if (spaceLeadThreshold){
+					// normal Space, next reading
+					if (duration > spaceLeadThreshold);
 
-			// get number of the Space Bits (starting from zero)
-			uint8_t length;
-			// only save every 2nd value, substract the first two lead pulses
-			if (!markThreshold)
-				length = (count / 2) - 2;
-			// special case: spaces and marks both have data in the pulse
-			else length = count - 2;
+					// Button holding (if supported by protocol)
+					else if (spaceLeadHoldingThreshold && duration > spaceLeadHoldingThreshold){
+						// set command to 0xFF if button is held down
+						if (irLength == (4 * 8 * 2 + 2)){
+							data[0] = data[1] = 0x00;
+							data[2] = data[3] = 0xFF;
+						}
+						count = 0;
+						return true;
+					}
+					// wrong space
+					else {
+						count = 0;
+						return false;
+					}
+				}
+				// else ignore the threshold and pretend its correct
+			}
+			else{
+				// check for timeout if needed (might be a different protocol)
+				if (spaceTimeout && duration > spaceTimeout){
+					count = 0;
+					return false;
+				}
 
-			// move bits and write 1 or 0 depending on the duration
-			data[length / 8] <<= 1;
-			if (duration > spaceThreshold)
-				data[length / 8] |= 0x01;
-			else
-				data[length / 8] &= ~0x01;
+				// only check values if the protocol has different logical space pulses
+				else if (spaceThreshold){
+
+					// get number of the Space Bits (starting from zero)
+					uint8_t length;
+					// only save every 2nd value, substract the first two lead pulses
+					if (!markThreshold)
+						length = (count / 2) - 2;
+					// special case: spaces and marks both have data in the pulse
+					else length = count - 2;
+
+					// move bits and write 1 or 0 depending on the duration
+					data[length / 8] <<= 1;
+					if (duration > spaceThreshold)
+						data[length / 8] |= 0x01;
+					else
+						data[length / 8] &= ~0x01;
+				}
+
+			}
 		}
-		// next reading
+
+		// next reading, no errors
 		count++;
 	}
 
