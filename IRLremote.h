@@ -61,6 +61,17 @@ THE SOFTWARE.
 #define PANASONIC_SPACE_ZERO PANASONIC_PULSE*1
 #define PANASONIC_SPACE_ONE PANASONIC_PULSE*3
 
+/*
+Panasonic pulse demonstration:
+
+*---------|                        |------------|   |---------|   |---|   ... -|   |---------
+*         |                        |            |   |         |   |   |   ...  |   |
+*         |                        |            |   |         |   |   |   ...  |   |
+*         |------------------------|            |---|         |---|   |-  ...  |---|
+*         |       Lead Mark        | Lead Space |  Logical 1  | Log 0 |  Data  |End|
+
+*/
+
 //SONY 8, 12, 15, 20
 //IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:8,^22200)
 //IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:5,^45m)+ 
@@ -146,8 +157,9 @@ inline bool IRLcheckXOR0(uint8_t data[]);
 
 // default decoder helper function
 template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
-	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold>
-	inline bool IRLdecodeSpace(unsigned long duration, uint8_t data[]);
+	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
+	uint16_t markTimeout, uint16_t spaceTimeout>
+	inline bool IRLdecode(unsigned long duration, uint8_t data[]);
 
 // functions to send the protocol
 //TODO template
@@ -236,10 +248,11 @@ void decodeNec(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[NEC_BLOCKS];
 	// pass the duration to the decoding function
-	if (IRLdecodeSpace <NEC_LENGTH, (NEC_TIMEOUT + NEC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+	if (IRLdecode <NEC_LENGTH, (NEC_TIMEOUT + NEC_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(NEC_MARK_LEAD + NEC_SPACE_ONE) / 2, (NEC_SPACE_LEAD + NEC_SPACE_HOLDING) / 2, // markLeadThreshold, spaceLeadThreshold
 		(NEC_SPACE_HOLDING + NEC_SPACE_ONE) / 2, 0, // spaceLeadHoldingThreshold, markThreshold
-		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2> // spaceThreshold
+		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2, // spaceThreshold
+		0, 0>// markTimeout, spaceTimeout
 		(duration, data)){
 		// Check if the protcol's checksum is correct
 		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
@@ -258,10 +271,11 @@ void decodePanasonic(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[PANASONIC_BLOCKS];
 	// pass the duration to the decoding function
-	if (IRLdecodeSpace <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+	if (IRLdecode <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(PANASONIC_MARK_LEAD + PANASONIC_SPACE_ONE) / 2, (PANASONIC_SPACE_LEAD + PANASONIC_SPACE_ONE) / 2, // markLeadThreshold, spaceLeadThreshold
 		0, 0, // spaceLeadHoldingThreshold, markThreshold
-		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2> // spaceThreshold
+		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2, // spaceThreshold
+		0, 0>// markTimeout, spaceTimeout
 		(duration, data)){
 		// Check if the protcol's checksum is correct
 		if (IRLcheckXOR0(data)){
@@ -277,15 +291,16 @@ void decodeSony12(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[SONY_BLOCKS_12];
 	// pass the duration to the decoding function
-	if (IRLdecodeSpace <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
+	if (IRLdecode <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
-		0> // spaceThreshold
+		0, // spaceThreshold
+		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, SONY_MARK_ONE>// markTimeout, spaceTimeout
 		(duration, data)){
 		// protocol has no checksum
-		//TODO
-		uint16_t address = data[0] >> 1;
-		uint32_t command = ((data[0] & 0x01) << 5) | data[1];
+		//TODO LSB
+		uint16_t address = ((data[0] & 0x01) << 4) | data[1] & 0x0F;
+		uint32_t command = data[0] >> 1;
 		IREvent(IR_SONY, address, command);
 		return;
 	}
@@ -328,8 +343,9 @@ bool IRLcheckXOR0(uint8_t data[]){
      _a > _b ? _a : _b; })
 
 template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
-	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold>
-	bool IRLdecodeSpace(unsigned long duration, uint8_t data[]){
+	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
+	uint16_t markTimeout, uint16_t spaceTimeout>
+	bool IRLdecode(unsigned long duration, uint8_t data[]){
 
 	// variables for ir processing
 	static uint8_t count = 0;
@@ -376,34 +392,16 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 		else count++;
 	}
 
-	// Space pulses (even numbers)
-	else if (count % 2 == 0){
-		// only check values if the protocol has different logical space pulses
-		if (spaceThreshold){
-
-			// get number of the Space Bits (starting from zero)
-			uint8_t length;
-			// only save every 2nd value, substract the first two lead pulses
-			if (!markThreshold)
-				length = (count / 2) - 2;
-			// special case: spaces and marks both have data in the pulse
-			else length = count - 2;
-
-			// move bits and write 1 or 0 depending on the duration
-			data[length / 8] <<= 1;
-			if (duration > spaceThreshold)
-				data[length / 8] |= 0x01;
-			else
-				data[length / 8] &= ~0x01;
-		}
-		// next reading
-		count++;
-	}
-
 	// Mark pulses (odd numbers)
-	else{
+	else if (count % 2 == 1){
+		// check for timeout (might be a different protocol)
+		if (markTimeout && duration > markTimeout){
+			count = 0;
+			return false;
+		}
+
 		// only check values if the protocol has different logical space pulses
-		if (markThreshold){
+		else if (markThreshold){
 
 			// get number of the Mark Bits (starting from zero)
 			uint8_t length;
@@ -427,6 +425,36 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 			return true;
 		}
 
+		// next reading
+		count++;
+	}
+
+	// Space pulses (even numbers)
+	else{
+		// check for timeout (might be a different protocol)
+		if (spaceTimeout && duration > spaceTimeout){
+			count = 0;
+			return false;
+		}
+
+		// only check values if the protocol has different logical space pulses
+		else if (spaceThreshold){
+
+			// get number of the Space Bits (starting from zero)
+			uint8_t length;
+			// only save every 2nd value, substract the first two lead pulses
+			if (!markThreshold)
+				length = (count / 2) - 2;
+			// special case: spaces and marks both have data in the pulse
+			else length = count - 2;
+
+			// move bits and write 1 or 0 depending on the duration
+			data[length / 8] <<= 1;
+			if (duration > spaceThreshold)
+				data[length / 8] |= 0x01;
+			else
+				data[length / 8] &= ~0x01;
+		}
 		// next reading
 		count++;
 	}

@@ -28,8 +28,9 @@ and should be a replacement of the library (sorry for that ;D).
 
 **Planned features:**
 * Sending function (for Panasonic)
-* Remove/improve bit banging PWM (maybe with tone())
+* Remove/improve bit banging PWM
 * Use PCInt (conflict with SoftSerial)
+* Switch MSB to LSB
 
 Installation/How to use
 =======================

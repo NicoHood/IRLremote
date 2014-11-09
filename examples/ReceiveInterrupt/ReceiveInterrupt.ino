@@ -33,6 +33,7 @@ void loop() {
   if (IRProtocol) {
     // Print as much as you want in this function
     // See source to terminate what number is for each protocol
+    Serial.println();
     Serial.print("Protocol:");
     Serial.println(IRProtocol);
     Serial.print("Address:");
