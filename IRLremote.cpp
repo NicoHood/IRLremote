@@ -91,13 +91,13 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command)
 {
 	// send header
-	mark(NEC_HZ, outPort, bitmask, NEC_MARK_LEAD);
+	IRLmark(NEC_HZ, outPort, bitmask, NEC_MARK_LEAD);
 	if (command == 0xFFFF)
 		// space
-		space(outPort, bitmask, NEC_SPACE_HOLDING);
+		IRLspace(outPort, bitmask, NEC_SPACE_HOLDING);
 	else{
 		// normal signal
-		space(outPort, bitmask, NEC_SPACE_LEAD);
+		IRLspace(outPort, bitmask, NEC_SPACE_LEAD);
 		for (int i = 0; i < (NEC_BLOCKS * 8); i++) {
 			// the bitorder is a mess i know.
 			// 89ABCDEF01234567
@@ -108,20 +108,20 @@ void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, 
 				bit = ((command >> (((i / 8) - 2) * 8))&(0x80 >> (i % 8))) ? 1 : 0;
 
 			// send logic bits
-			mark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
+			IRLmark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
 			if (bit)
-				space(outPort, bitmask, NEC_SPACE_ONE);
+				IRLspace(outPort, bitmask, NEC_SPACE_ONE);
 			else
-				space(outPort, bitmask, NEC_SPACE_ZERO);
+				IRLspace(outPort, bitmask, NEC_SPACE_ZERO);
 		}
 
 		// finish mark
-		mark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
-		space(outPort, bitmask, 0);
+		IRLmark(NEC_HZ, outPort, bitmask, NEC_MARK_ZERO);
+		IRLspace(outPort, bitmask, 0);
 	}
 }
 
-void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
+void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
 	/*
 	Bitbangs PWM in the given Hz number for the given time
 	________________________________________________________________________________
@@ -168,9 +168,9 @@ void mark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16
 	}
 }
 
-void space(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
-	// Sends an IR space for the specified number of microseconds.
-	// A space is no output, so the PWM output is disabled.
+void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
+	// Sends an IRLspace for the specified number of microseconds.
+	// A IRLspace is no output, so the PWM output is disabled.
 	*outPort &= ~bitMask; // write pin LOW
 	delayMicroseconds(time);
 	//_delay_loop_2(time*(F_CPU/1000000UL)/4UL);

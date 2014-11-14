@@ -2,15 +2,15 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL ReceiveAdvancedRaw
+ IRL Receive_Raw
  Receives IR signals and prints raw values to the Serial.
  This also demonstrates how to implement your own decoding functions.
  */
 
 #include "IRLremote.h"
 
-// See readme to choose the right interrupt number
-const int interruptIR = 0;
+// see readme to choose the right pin (with an interrupt!) for your Arduino board
+const int interruptIR = digitalPinToInterrupt(2);
 
 // variables to record raw values
 #define IR_RAW_TIMEOUT 50000
@@ -19,6 +19,7 @@ uint32_t buffer[IR_RAW_BUFFER_SIZE];
 uint8_t count = 0;
 
 void setup() {
+  // start serial debug output
   Serial.begin(115200);
   Serial.println("Startup");
 
@@ -27,7 +28,9 @@ void setup() {
 }
 
 void loop() {
-  // check if raw buff is full or timed out
+  // check if raw buff is full or timed out.
+  // keep in mind that the defined timeout above might be in the output (by default 50000)
+  // so you dont get confused where the number is from.
   uint8_t irBytes = RAWIRLavailable();
   if (irBytes) {
     // print a mark
@@ -46,8 +49,8 @@ void loop() {
 }
 
 void decodeIR(const uint32_t duration) {
-  // Called when directly received and interrupt CHANGE
-  // Do not use Serial inside, it can crash your Arduino!
+  // called when directly received an interrupt CHANGE.
+  // do not use Serial inside, it can crash your program!
 
   // block until data is read
   if (RAWIRLavailable()) return;
@@ -55,7 +58,7 @@ void decodeIR(const uint32_t duration) {
   // save value and increase count
   buffer[count++] = duration;
 
-  // save last time for timeout check in the buff too
+  // save last time in the buff too, to calculate timeout check
   if (count != IR_RAW_BUFFER_SIZE)
     buffer[count] = micros();
 }
@@ -73,15 +76,16 @@ uint8_t RAWIRLavailable(void) {
       return count;
     }
 
-    // check if last reading was a timeout
+    // check if last reading was a timeout.
     // no problem if count==0 because the if above prevents this
-    // anyways then it will just return 0
+    // anyways then it would just return 0
     if (buffer[count - 1] > IR_RAW_TIMEOUT) {
       SREG = oldSREG;
       return count;
     }
 
-    // check if reading timed out and save value
+    // check if reading timed out and save value.
+    // saving is needed to abord the check above next time.
     unsigned long duration = micros() - buffer[count];
     if (duration > IR_RAW_TIMEOUT) {
       buffer[count++] = duration;
@@ -90,6 +94,7 @@ uint8_t RAWIRLavailable(void) {
     }
   }
 
+  // continue, we can still save into the buffer or the buffer is empty
   SREG = oldSREG;
   return 0;
 }

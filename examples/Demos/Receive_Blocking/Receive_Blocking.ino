@@ -2,16 +2,17 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL ReceiveBlocking
+ IRL Receive_Blocking
  Receives IR signals and blocks until the data is read.
  */
 
 #include "IRLremote.h"
 
-// See readme to choose the right interrupt number
-const int interruptIR = 0;
+// see readme to choose the right interrupt number
+const int interruptIR = digitalPinToInterrupt(2);
 
 void setup() {
+  // start serial debug output
   Serial.begin(115200);
   Serial.println("Startup");
 
@@ -21,10 +22,10 @@ void setup() {
 }
 
 void loop() {
-  // This will get the first valid input, blocks and ignores any new until its read
+  // this will get the first valid input, and blocks until you reset below
   if (IRLavailable()) {
-    // Print as much as you want in this function
-    // See source to terminate what number is for each protocol
+    // print as much as you want in this function
+    // see source to terminate what number is for each protocol
     Serial.println();
     Serial.print("Protocol:");
     Serial.println(IRLgetProtocol());

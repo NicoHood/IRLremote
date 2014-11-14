@@ -2,7 +2,7 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL ReceiveInterrupt
+ IRL Receive_NoBlocking
  Receives IR signals and instantly calls an attached interrupt function.
  This may fire more than one time if you press a button too long, add a debounce.
  Dont use Serial inside the interrupt!
@@ -10,14 +10,16 @@
 
 #include "IRLremote.h"
 
-// See readme to choose the right interrupt number
-const int interruptIR = 0;
+// see readme to choose the right interrupt number
+const int interruptIR = digitalPinToInterrupt(2);
 
+// temporary variables to save latest IR input
 uint8_t IRProtocol = 0;
 uint16_t IRAddress = 0;
 uint32_t IRCommand = 0;
 
 void setup() {
+  // start serial debug output
   Serial.begin(115200);
   Serial.println("Startup");
 
@@ -27,12 +29,12 @@ void setup() {
 }
 
 void loop() {
-  // Temporary disable interrupts and print newest input
+  // temporary disable interrupts and print newest input
   uint8_t oldSREG = SREG;
   cli();
   if (IRProtocol) {
-    // Print as much as you want in this function
-    // See source to terminate what number is for each protocol
+    // print as much as you want in this function
+    // see source to terminate what number is for each protocol
     Serial.println();
     Serial.print("Protocol:");
     Serial.println(IRProtocol);
@@ -40,17 +42,18 @@ void loop() {
     Serial.println(IRAddress, HEX);
     Serial.print("Command:");
     Serial.println(IRCommand, HEX);
-    // Reset variables to not read the same value twice
+	
+    // reset variable to not read the same value twice
     IRProtocol = 0;
   }
   SREG = oldSREG;
 }
 
 void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
-  // Called when directly received correct IR Signal
-  // Do not use Serial inside, it can crash your Arduino!
+  // called when directly received an interrupt CHANGE.
+  // do not use Serial inside, it can crash your program!
 
-  // Update the values to the newest valid input
+  // update the values to the newest valid input
   IRProtocol = protocol;
   IRAddress = address;
   IRCommand = command;
