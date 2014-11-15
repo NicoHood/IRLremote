@@ -12,15 +12,15 @@ and should be a replacement of the library (sorry for that ;D).
 * Faster decoding (on the fly)
 * Huge Ram improvements (13 bytes ram to decode NEC)
 * Huge Flash improvements (less than 1kb flash to decode NEC)
-* Written in C but uses C++ templates
+* Receiving and sending possible
 * Very accurate even when pointing in different directions
+* Easy to use/Customizable
 * Maximum error correction
 * Uses pin interrupt function/No timer needed
 * PCINT also usable for advanced users
-* Receiving and sending possible
-* IDE 1.5.7 compatible
-* Easy to use/Customizable
 * Perfect for Attinys
+* Written in C, only uses C++ templates
+* IDE 1.5.8 compatible
 
 **Supported Protocols**
 * NEC
@@ -43,13 +43,16 @@ Installation/How to use
 Download the zip, extract and remove the "-master" of the folder.
 Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/Libraries).
 
+### Receiving
+
+See [this reference](http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt) for choosing the right interrupt pin
+(not all pins are usable for decoding).
+If you cannot use one of these pins, you might want to try the advanced PCINT example.
+
 Try the examples to see how it works.
 **I recommend to check the example ReceiveInterrupt or ReceiveBlocking.**
 
-See this reference about choosing the right interrupt pin:
-http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
-
-Choose your protocol from one of these options:
+One you know what protocol your remote uses, choose yours from one of these options and change it in the setup():
 ```cpp
 typedef enum IRType{
 	IR_NO_PROTOCOL, // 0
@@ -68,19 +71,24 @@ typedef enum IRType{
 Each protocol number (Serial output in the examples) is equal to one of these names, starting from zero.
 So if you get protocol 3 this means its NEC. By default the library tries to decode all known protocols.
 
-You can save a lot of ram/flash/performance by using a fixed protocol like IR_NEC instead of IR_ALL in the begin function.
-If you choose a single protocol, keep in mind that accuracy is then set very low to get maximal recognition and less code size.
-If you want to use more protocols or keep away different IR input devices which might cause problems, see the advanced custom receiving example.
+**You can save a lot of ram/flash/performance by using a fixed protocol** like IR_NEC instead of IR_ALL in the begin function.
+If you choose a single protocol, keep in mind that accuracy is then set very low to get **maximal recognition and less code size**.
+If you want to use more protocols or keep away different IR input devices which might cause problems, see the **advanced custom receiving example**.
 
 The IR_USER IRType is for custom protocols/protocol combinations. See advanced examples.
 There is also an example for raw output and a PCINT version.
 
+### Sending
+
 For sending see the SendSerial/Button examples. But its still under construction.
 
-Informations about IR protocols can be found here (a bit hard to understand but try it if you want to create a new protocol).
-You can also ask me to implement any new protocol, just file it as issue or contact me on my blog.
-http://www.hifi-remote.com/johnsfine/DecodeIR.html
+### Adding new protocols
+
+Informations about IR protocols can be found [here](http://www.hifi-remote.com/johnsfine/DecodeIR.html)
+(a bit hard to understand but try it if you want to create a new protocol).
 => Website is offline, see /dev for an offline version of the website
+
+You can also ask me to implement any new protocol, just file it as issue on Github or contact me on my blog.
 
 More projects + contact can be found here:
 http://nicohood.wordpress.com/
@@ -88,8 +96,8 @@ http://nicohood.wordpress.com/
 How it works
 ============
 
-The idea is: minimal implementation with maximal recognition.
-You can decode more than one protocol at the same time.
+**The idea is: minimal implementation with maximal recognition.
+You can decode more than one protocol at the same time.**
 
 The trick is to only check the border between logical zero and one
 to terminate space/mark and rely on the lead/length/checksum as error correction.
@@ -121,12 +129,20 @@ You can turn off interrupts before sending if you like to ensure a proper sendin
 Normal IR devices shouldn't complain about a bit intolerance in the PWM signal. Just try to keep interrupts short.
 
 Check ReceiveNECLed for a minimal implementation example.
-The code itself seems to be a bit organized but i had to implement a lot of functions inline
+The code itself seems to be a bit organized but I had to implement a lot of functions inline
 to get maximum optimization.
+
+This text should not attack the library from Ken. It's a great library with a lot of work and the most used IR library yet.
+It is just worth a comparison and might be still useful like the old SoftSerial against the new one.
 
 Version History
 ===============
 ```
+1.7 Release (xx.11.2014)
+* Changed IR output from MSB to correct LSB
+* This improved the overall handling and also reduced the code
+* Improved, extended sending function
+
 1.6 Release (14.11.2014)
 * Reworked decoding template
 * Added Sony 12 protocol

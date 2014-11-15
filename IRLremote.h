@@ -37,6 +37,8 @@ THE SOFTWARE.
 #define NEC_HZ 38400
 #define NEC_PULSE 564UL
 #define NEC_BLOCKS 4
+#define NEC_ADDRESS_LENGTH 16
+#define NEC_COMMAND_LENGTH 16
 #define NEC_LENGTH 2 + NEC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
 #define NEC_TIMEOUT NEC_PULSE*173
 #define NEC_MARK_LEAD NEC_PULSE*16
@@ -53,6 +55,8 @@ THE SOFTWARE.
 #define PANASONIC_HZ 37000
 #define PANASONIC_PULSE 432UL
 #define PANASONIC_BLOCKS 6
+#define PANASONIC_ADDRESS_LENGTH 16
+#define PANASONIC_COMMAND_LENGTH 32
 #define PANASONIC_LENGTH 2 + PANASONIC_BLOCKS*8*2 // 2 for lead + space, each block has 8bits: mark and space
 #define PANASONIC_TIMEOUT PANASONIC_PULSE*173
 #define PANASONIC_MARK_LEAD PANASONIC_PULSE*8
@@ -86,6 +90,14 @@ Panasonic pulse demonstration:
 #define SONY_BLOCKS_12 2
 #define SONY_BLOCKS_15 2
 #define SONY_BLOCKS_20 3
+#define SONY_ADDRESS_LENGTH_8 0
+#define SONY_ADDRESS_LENGTH_12 5
+#define SONY_ADDRESS_LENGTH_15 8
+#define SONY_ADDRESS_LENGTH_20 13
+#define SONY_COMMAND_LENGTH_8 8
+#define SONY_COMMAND_LENGTH_12 7
+#define SONY_COMMAND_LENGTH_15 7
+#define SONY_COMMAND_LENGTH_20 7
 #define SONY_LENGTH_8 2 + (8-1)*2 // 2 for lead + space, -1 for mark end, 8 bit
 #define SONY_LENGTH_12 2 + (7+5-1)*2 // 2 for lead + space, -1 for mark end, 12 bit
 #define SONY_LENGTH_15 2 + (7+8-1)*2 // 2 for lead + space, -1 for mark end, 15 bit
@@ -105,6 +117,7 @@ typedef enum IRType{
 	IR_USER, // 1
 	IR_ALL, // 2
 	IR_NEC, // ...
+	IR_NEC_EXTENDED,
 	IR_PANASONIC,
 	IR_SONY8,
 	IR_SONY12,
@@ -117,6 +130,17 @@ typedef enum IRType{
 // definitions to use decoding functions with extra accuracy
 #define IR_EXTRA_ACCURACY true
 #define IR_NO_EXTRA_ACCURACY false
+
+// definitions for different protocol modes (used in NEC)
+#define IR_EXTENDED true
+#define IR_NORMAL false
+
+#define IR_ADDRESS_FIRST true
+#define IR_COMMAND_FIRST false
+
+// definition to convert an uint8_t array to an uint16_t/uint32_t at any position (thx timeage!)
+#define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
+#define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
 
 // definition to get the higher value
 #define MAX(a,b) \
@@ -165,7 +189,7 @@ inline void IRLinterrupt(void);
 
 // special decode function for each protocol
 inline void decodeAll(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeNec(const uint32_t duration);
+template <bool extraAccuracy, bool extended> inline void decodeNec(const uint32_t duration);
 template <bool extraAccuracy> inline void decodePanasonic(const uint32_t duration);
 template <bool extraAccuracy> inline void decodeSony8(const uint32_t duration);
 template <bool extraAccuracy> inline void decodeSony12(const uint32_t duration);
@@ -186,16 +210,23 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 	inline bool IRLdecode(uint32_t duration, uint8_t data[]);
 
 // functions to send the protocol
-//TODO template
-void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command);
-void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
+template <IRType irType>
+inline void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command);
+inline void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
+
+template <uint8_t addressLength, uint8_t commandLength,
+	uint16_t Hz, bool addressFirst,
+	uint16_t markLead, uint16_t spaceLead,
+	uint16_t markZero, uint16_t markOne,
+	uint16_t spaceZero, uint16_t spaceOne>
+	inline void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
 
 // functions to set the pin high or low (with bitbang pwm)
-void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
-void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
+inline void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
+inline void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
 
 //================================================================================
-// Inline Implementations
+// Inline Implementations (receive)
 //================================================================================
 
 template <IRType irType>
@@ -248,23 +279,26 @@ void IRLinterrupt(void){
 		decodeAll(duration);
 		break;
 	case IR_NEC:
-		decodeNec<IR_NO_EXTRA_ACCURACY>(duration);
+		decodeNec<IR_NO_EXTRA_ACCURACY, IR_NORMAL>(duration);
+		break;
+	case IR_NEC_EXTENDED:
+		decodeNec<IR_NO_EXTRA_ACCURACY, IR_EXTENDED>(duration);
 		break;
 	case IR_PANASONIC:
 		decodePanasonic<IR_NO_EXTRA_ACCURACY>(duration);
 		break;
-	//case IR_SONY8:
-	//	decodeSony8<IR_NO_EXTRA_ACCURACY>(duration);
-	//	break;
+		//case IR_SONY8:
+		//	decodeSony8<IR_NO_EXTRA_ACCURACY>(duration);
+		//	break;
 	case IR_SONY12:
 		decodeSony12<IR_NO_EXTRA_ACCURACY>(duration);
 		break;
-	//case IR_SONY15:
-	//	decodeSony15<IR_NO_EXTRA_ACCURACY>(duration);
-	//	break;
-	//case IR_SONY20:
-	//	decodeSony20<IR_NO_EXTRA_ACCURACY>(duration);
-	//	break;
+		//case IR_SONY15:
+		//	decodeSony15<IR_NO_EXTRA_ACCURACY>(duration);
+		//	break;
+		//case IR_SONY20:
+		//	decodeSony20<IR_NO_EXTRA_ACCURACY>(duration);
+		//	break;
 	case IR_RAW:
 		decodeRaw(duration);
 		break;
@@ -273,30 +307,45 @@ void IRLinterrupt(void){
 
 void decodeAll(const uint32_t duration){
 	// go through all known protocols and decode with more (resource unfriendly) accuration
-	decodeNec<IR_EXTRA_ACCURACY>(duration);
+	decodeNec<IR_EXTRA_ACCURACY, IR_EXTENDED>(duration);
 	decodePanasonic<IR_EXTRA_ACCURACY>(duration);
 	decodeSony12<IR_EXTRA_ACCURACY>(duration);
 }
 
-template <bool extraAccuracy> void decodeNec(const uint32_t duration){
+template <bool extraAccuracy, bool extended> void decodeNec(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[NEC_BLOCKS];
+
 	// pass the duration to the decoding function
-	if (IRLdecode <NEC_LENGTH, (NEC_TIMEOUT + NEC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+	bool newInput;
+	if (extraAccuracy) // no accuracy set at the moment, no conflict detected yet
+		newInput = IRLdecode <NEC_LENGTH, (NEC_TIMEOUT + NEC_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(NEC_MARK_LEAD + NEC_SPACE_ONE) / 2, (NEC_SPACE_LEAD + NEC_SPACE_HOLDING) / 2, // markLeadThreshold, spaceLeadThreshold
 		(NEC_SPACE_HOLDING + NEC_SPACE_ONE) / 2, 0, // spaceLeadHoldingThreshold, markThreshold
 		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data)){
+		(duration, data);
+	else
+		newInput = IRLdecode <NEC_LENGTH, (NEC_TIMEOUT + NEC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+		(NEC_MARK_LEAD + NEC_SPACE_ONE) / 2, (NEC_SPACE_LEAD + NEC_SPACE_HOLDING) / 2, // markLeadThreshold, spaceLeadThreshold
+		(NEC_SPACE_HOLDING + NEC_SPACE_ONE) / 2, 0, // spaceLeadHoldingThreshold, markThreshold
+		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2, // spaceThreshold
+		0, 0>// markTimeout, spaceTimeout
+		(duration, data);
+
+	if (newInput){
 		// Check if the protcol's checksum is correct
-		// In some other Nec Protocols the Address has an inverse or not, so we only check the command
-		if (IRLcheckInverse1(data) || IRLcheckHolding(data)){
-			// you could check the address for inverse0 too
-			// but newer devices use an extended address without inverse
-			uint16_t address = (data[0] << 8) | data[1];
-			uint32_t command = ((data[2] << 8) | data[3]) & 0xFFFF;
+		bool holding;
+		if (IRLcheckInverse1(data) || (holding = IRLcheckHolding(data))){
+			// normally NEC also check for the inverse of the address.
+			// newer remotes dont have this because of the wide used protocol all addresses were already used
+			if (!holding && !extended && !IRLcheckInverse0(data))
+				return;
+
+			// save address + command and trigger event
+			uint16_t address = UINT16_AT_OFFSET(data, 0);
+			uint32_t command = UINT16_AT_OFFSET(data, 2);
 			IREvent(IR_NEC, address, command);
-			return;
 		}
 	}
 }
@@ -304,18 +353,29 @@ template <bool extraAccuracy> void decodeNec(const uint32_t duration){
 template <bool extraAccuracy> void decodePanasonic(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[PANASONIC_BLOCKS];
+
 	// pass the duration to the decoding function
-	if (IRLdecode <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+	bool newInput;
+	if (extraAccuracy) // no accuracy set at the moment, no conflict detected yet
+		newInput = IRLdecode <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(PANASONIC_MARK_LEAD + PANASONIC_SPACE_ONE) / 2, (PANASONIC_SPACE_LEAD + PANASONIC_SPACE_ONE) / 2, // markLeadThreshold, spaceLeadThreshold
 		0, 0, // spaceLeadHoldingThreshold, markThreshold
 		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data)){
+		(duration, data);
+	else
+		newInput = IRLdecode <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
+		(PANASONIC_MARK_LEAD + PANASONIC_SPACE_ONE) / 2, (PANASONIC_SPACE_LEAD + PANASONIC_SPACE_ONE) / 2, // markLeadThreshold, spaceLeadThreshold
+		0, 0, // spaceLeadHoldingThreshold, markThreshold
+		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2, // spaceThreshold
+		0, 0>// markTimeout, spaceTimeout
+		(duration, data);
+
+	if (newInput){
 		// Check if the protcol's checksum is correct
 		if (IRLcheckXOR0(data)){
-			uint16_t address = (data[0] << 8) | data[1];
-			uint32_t command = (uint32_t(data[2]) << 24) | (uint32_t(data[3]) << 16) | (uint32_t(data[4]) << 8) | data[5];
-			IREvent(IR_PANASONIC, address, command);
+			uint16_t address = UINT16_AT_OFFSET(data, 0);
+			uint32_t command = UINT32_AT_OFFSET(data, 2);			IREvent(IR_PANASONIC, address, command);
 			return;
 		}
 	}
@@ -325,7 +385,7 @@ template <bool extraAccuracy> void decodeSony12(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[SONY_BLOCKS_12];
 
-		// pass the duration to the decoding function
+	// pass the duration to the decoding function
 	bool newInput;
 	if (extraAccuracy)
 		newInput = IRLdecode <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
@@ -344,9 +404,8 @@ template <bool extraAccuracy> void decodeSony12(const uint32_t duration){
 
 	if (newInput){
 		// protocol has no checksum
-		//TODO LSB
-		uint16_t address = ((data[0] & 0x01) << 4) | data[1] & 0x0F;
-		uint32_t command = data[0] >> 1;
+		uint16_t address = UINT16_AT_OFFSET(data, 0) >> 7;
+		uint32_t command = data[0] & 0x7F;
 		IREvent(IR_SONY12, address, command);
 		return;
 	}
@@ -371,6 +430,7 @@ bool IRLcheckInverse1(uint8_t data[]){
 }
 
 bool IRLcheckHolding(uint8_t data[]){
+	// check if at least the command is always 1
 	if (data[2] == 0xFF && data[3] == 0xFF)
 		return true;
 	else return false;
@@ -383,6 +443,7 @@ bool IRLcheckXOR0(uint8_t data[]){
 	else return false;
 }
 
+// multifunctional template for receiving
 template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
@@ -432,11 +493,12 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 					else length = count - 2;
 
 					// move bits and write 1 or 0 depending on the duration
-					data[length / 8] <<= 1;
+					// 1.7: changed from MSB to LSB. somehow takes a bit more flash but is correct and easier to handle.
+					data[length / 8] >>= 1;
 					if (duration > markThreshold)
-						data[length / 8] |= 0x01;
-					else // normally not needed through the bitshift
-						data[length / 8] &= ~0x01;
+						data[length / 8] |= 0x80;
+					//else // normally not needed through the bitshift
+					//	data[length / 8] &= ~0x80;
 				}
 
 				// check last input (always a mark)
@@ -451,24 +513,24 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 		else{
 			//check Space Lead/Space Holding
 			if (spaceLeadThreshold && count == 2){
-					// normal Space, next reading
-					if (duration > spaceLeadThreshold);
+				// normal Space, next reading
+				if (duration > spaceLeadThreshold);
 
-					// Button holding (if supported by protocol)
-					else if (spaceLeadHoldingThreshold && duration > spaceLeadHoldingThreshold){
-						// set command to 0xFF if button is held down
-						if (irLength == (4 * 8 * 2 + 2)){
-							data[0] = data[1] = 0x00;
-							data[2] = data[3] = 0xFF;
-						}
-						count = 0;
-						return true;
+				// Button holding (if supported by protocol)
+				else if (spaceLeadHoldingThreshold && duration > spaceLeadHoldingThreshold){
+					// set command to 0xFF if button is held down
+					if (irLength == (4 * 8 * 2 + 2)){
+						data[0] = data[1] = 0x00;
+						data[2] = data[3] = 0xFF;
 					}
-					// wrong space
-					else {
-						count = 0;
-						return false;
-					}
+					count = 0;
+					return true;
+				}
+				// wrong space
+				else {
+					count = 0;
+					return false;
+				}
 			}
 			else{
 				// check for timeout if needed (might be a different protocol)
@@ -489,13 +551,13 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 					else length = count - 2;
 
 					// move bits and write 1 or 0 depending on the duration
-					data[length / 8] <<= 1;
+					// 1.7: changed from MSB to LSB. somehow takes a bit more flash but is correct and easier to handle.
+					data[length / 8] >>= 1;
 					if (duration > spaceThreshold)
-						data[length / 8] |= 0x01;
-					else // normally not needed through the bitshift
-						data[length / 8] &= ~0x01;
+						data[length / 8] |= 0x80;
+					//else // normally not needed through the bitshift
+					//	data[length / 8] &= ~0x80;
 				}
-
 			}
 		}
 
@@ -505,6 +567,179 @@ template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshol
 
 	// no valid input (yet)
 	return false;
+}
+
+//================================================================================
+// Inline Implementations (send)
+//================================================================================
+
+template <IRType irType>
+void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
+{
+	// get the port mask and the pointers to the out/mode registers for faster access
+	uint8_t bitMask = digitalPinToBitMask(pin);
+	uint8_t port = digitalPinToPort(pin);
+	volatile uint8_t * outPort = portOutputRegister(port);
+	volatile uint8_t * modePort = portModeRegister(port);
+
+	// set pin to OUTPUT and LOW
+	*modePort |= bitMask;
+	*outPort &= ~bitMask;
+
+	// disable interrupts
+	//uint8_t oldSREG = SREG;
+	//cli();
+
+	switch (irType){
+
+	case IR_NEC:
+		// calculate inverses
+		//address = address & 0xFF | ((~address)<<8)
+	case IR_NEC_EXTENDED:
+		if (command == 0xFFF)
+			// send holding indicator
+			IRLsend<0, 0, NEC_HZ, 0, NEC_MARK_LEAD, NEC_SPACE_HOLDING,
+			0, 0, 0, 0>
+			(outPort, bitMask, address, command);
+		else
+			IRLsend<NEC_ADDRESS_LENGTH, NEC_COMMAND_LENGTH, NEC_HZ, IR_ADDRESS_FIRST, NEC_MARK_LEAD, NEC_SPACE_LEAD,
+			NEC_MARK_ZERO, NEC_MARK_ONE, NEC_SPACE_ZERO, NEC_SPACE_ONE>
+			(outPort, bitMask, address, command);
+		break;
+	case IR_PANASONIC:
+		const int repeat = 1;
+		for (int i = 0; i < repeat; i++)
+			;
+		break;
+	}
+
+	// enable interrupts
+	//SREG = oldSREG;
+
+	// set pin to INPUT again to be save
+	*modePort &= ~bitMask;
+}
+
+// multifunctional template for sending
+template <uint8_t addressLength, uint8_t commandLength,
+	uint16_t Hz, bool addressFirst,
+	uint16_t markLead, uint16_t spaceLead,
+	uint16_t markZero, uint16_t markOne,
+	uint16_t spaceZero, uint16_t spaceOne>
+	void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command){
+
+	// send lead mark
+	if (markLead)
+		IRLmark(Hz, outPort, bitmask, markLead);
+
+	// send lead space
+	if (spaceLead)
+		IRLspace(outPort, bitmask, spaceLead);
+
+	// abort if input values are both the same (sending a holding signal for example)
+	if (markOne != markZero || spaceOne != spaceZero)
+	{
+		// go through all bits
+		for (uint8_t i = 0; i < (addressLength + commandLength); i++){
+			// determine if its a logical one or zero, starting with address or command
+			bool bitToSend;
+			if (addressFirst && i < addressLength || !addressFirst && i >= commandLength){
+				bitToSend = address & 0x01;
+				address >>= 1;
+			}
+			else{
+				bitToSend = command & 0x01;
+				command >>= 1;
+			}
+
+			// send logic mark bits if needed
+			if (markOne != markZero){
+				// modulate if spaces dont have logic, else only every even number
+				if (spaceOne == spaceZero || spaceOne != spaceZero && i % 2 == 0)
+				{
+					if (bitToSend)
+						IRLmark(Hz, outPort, bitmask, markOne);
+					else
+						IRLmark(Hz, outPort, bitmask, markZero);
+				}
+			}
+			else
+				IRLmark(Hz, outPort, bitmask, markOne);
+
+			// send logic space bits if needed
+			if (spaceOne != spaceZero){
+				// modulate if marks dont have logic, else only every odd number
+				if (markOne == markZero || markOne != markZero && i % 2 == 1){
+					if (bitToSend)
+						IRLspace(outPort, bitmask, spaceOne);
+					else
+						IRLspace(outPort, bitmask, spaceZero);
+				}
+			}
+			else
+				IRLspace(outPort, bitmask, spaceOne);
+		}
+	}
+
+	// finish mark
+	IRLmark(Hz, outPort, bitmask, markZero);
+	IRLspace(outPort, bitmask, 0);
+}
+
+void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
+	/*
+	Bitbangs PWM in the given Hz number for the given time
+	________________________________________________________________________________
+	Delay calculation:
+	F_CPU/1.000.000 to get number of cycles/uS
+	/3 to get the number of loops needed for 1ms (1loop = 3 cycles)
+
+	Multiply with the number of ms delay:
+	1/kHz to get the seconds
+	* 1.000.000 to get it in uS
+	/2 to get half of a full pulse
+
+	Substract the while, portmanipulation, loop overhead /3 loop cycles
+
+	F_CPU(16.000.000)            1 * 1.000.000(pulse in uS)   12(overhead)
+	========================== * ========================== - ==============
+	1.000.000 * 3(loop cycles)   Hz * 2(half of a pulse)      3(loop cycles)
+
+	<==>
+
+	F_CPU(16.000.000) - (12(overhead) * Hz * 2(half of a pulse))
+	===========================================================
+	Hz * 2(half of a on/off pulse) * 3(loop cycles)
+
+	________________________________________________________________________________
+	Iterations calculation:
+	Devide time with cycles in while loop
+	Multiply this with the cycles per uS
+	cycles per while loop: 3(loop cycles) * delay + overhead
+
+	time * (F_CPU(16.000.000) / 1.000.000)
+	======================================
+	delay*3(loop cycles) + overhead
+	*/
+
+	const uint32_t loopCycles = 3;
+	const uint32_t overHead = 12; // just a guess from try + error
+	uint8_t delay = (F_CPU - (overHead * Hz * 2UL)) / (Hz * 2UL * loopCycles);
+	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
+
+	while (iterations--){
+		// flip pin state and wait for the calculated time
+		*outPort ^= bitMask;
+		_delay_loop_1(delay);
+	}
+}
+
+void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
+	// Sends an IRLspace for the specified number of microseconds.
+	// A IRLspace is no output, so the PWM output is disabled.
+	*outPort &= ~bitMask; // write pin LOW
+	delayMicroseconds(time);
+	//_delay_loop_2(time*(F_CPU/1000000UL)/4UL);
 }
 
 #endif
