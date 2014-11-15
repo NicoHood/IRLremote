@@ -12,7 +12,7 @@
 #include "IRLremote.h"
 
 // choose any pin to send IR signals
-const int pinSendIR = 2;
+const int pinSendIR = 3;
 
 void setup() {
   // start serial debug in/output

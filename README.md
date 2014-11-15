@@ -1,4 +1,4 @@
-IRLremote 1.6
+IRLremote 1.7
 =============
 
 ![Infrared Picture](header.jpg)
@@ -29,11 +29,10 @@ and should be a replacement of the library (sorry for that ;D).
 * Ask me for more
 
 **Planned features:**
-* More sending functions (for Panasonic, Sony etc)
+* Test sending functions (for Panasonic, Sony etc)
 * Add more protocols
-* Remove/improve bit banging PWM
-* Improve PCInt
-* Switch MSB to LSB
+* Improve bit banging PWM?
+* Improve PCInt?
 * Add Raw dump + sending option
 * Add High/Low compare for unknown protocols
 
@@ -76,11 +75,22 @@ If you choose a single protocol, keep in mind that accuracy is then set very low
 If you want to use more protocols or keep away different IR input devices which might cause problems, see the **advanced custom receiving example**.
 
 The IR_USER IRType is for custom protocols/protocol combinations. See advanced examples.
-There is also an example for raw output and a PCINT version.
+There is also an example for raw output and a PCINT version. **With the basic PCINT version you can also
+decrease flash size even more and be more flexible with your sending pin!**
+
+**Keep in mind that from v1.6 to v1.7 the bit order has changed
+and command and address might be a different value now.**
 
 ### Sending
 
-For sending see the SendSerial/Button examples. But its still under construction.
+**For sending see the SendSerial/Button examples.** You first have to read the codes of your remote with one of the receiving examples.
+Choose your protocol in the sending sketch and use your address and command if choice.
+
+Sending for Panasonic and Sony12 is not confirmed to work, since I have no device here to test.
+Let me know if it works!
+
+**Keep in mind that from v1.6 to v1.7 the bit order has changed
+and command and address might be a different value now.**
 
 ### Adding new protocols
 
@@ -138,10 +148,12 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
-1.7 Release (xx.11.2014)
-* Changed IR output from MSB to correct LSB
-* This improved the overall handling and also reduced the code
+1.7 Release (15.11.2014)
+* Changed IR bit order from MSB to correct LSB
+ * This improved the overall handling and also reduced flash usage
 * Improved, extended sending function
+* Added Receive Send Example
+* Added smaller Basic PCINT function
 
 1.6 Release (14.11.2014)
 * Reworked decoding template

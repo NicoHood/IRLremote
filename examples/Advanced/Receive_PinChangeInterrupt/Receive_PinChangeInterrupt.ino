@@ -17,7 +17,7 @@ void PCattachInterrupt(uint8_t pin, void (*userFunc)(void), int mode);
 void PCdetachInterrupt(uint8_t pin);
 
 // choose your pin (must be on a PCINT pin though)
-const int pinIR = 4;
+const int pinReceiveIR = 4;
 
 // temporary variables to save latest IR input
 uint8_t IRProtocol = 0;
@@ -32,7 +32,7 @@ void setup()
 
   // choose your protocol here to reduce flash/ram/performance
   // see readme for more information
-  PCattachInterrupt(pinIR, IRLinterrupt<IR_ALL>, CHANGE);
+  PCattachInterrupt(pinReceiveIR, IRLinterrupt<IR_ALL>, CHANGE);
 }
 
 void loop() {

@@ -23,8 +23,8 @@
 
 #include "IRLremote.h"
 
-// see readme to choose the right interrupt number
-const int interruptIR = digitalPinToInterrupt(2);
+// see readme to choose the right pin (with an interrupt!) for your Arduino board
+const int pinReceiveIR = digitalPinToInterrupt(2);
 
 const int pinLed = 13;
 unsigned long previousMillis = 0;
@@ -34,7 +34,7 @@ void setup() {
   pinMode(pinLed, OUTPUT);
 
   // choose NEC for this demonstration (most common protocol)
-  IRLbegin<IR_NEC>(interruptIR);
+  IRLbegin<IR_NEC>(pinReceiveIR);
 }
 
 void loop() {

@@ -117,7 +117,6 @@ typedef enum IRType{
 	IR_USER, // 1
 	IR_ALL, // 2
 	IR_NEC, // ...
-	IR_NEC_EXTENDED,
 	IR_PANASONIC,
 	IR_SONY8,
 	IR_SONY12,
@@ -189,7 +188,7 @@ inline void IRLinterrupt(void);
 
 // special decode function for each protocol
 inline void decodeAll(const uint32_t duration);
-template <bool extraAccuracy, bool extended> inline void decodeNec(const uint32_t duration);
+template <bool extraAccuracy> inline void decodeNec(const uint32_t duration);
 template <bool extraAccuracy> inline void decodePanasonic(const uint32_t duration);
 template <bool extraAccuracy> inline void decodeSony8(const uint32_t duration);
 template <bool extraAccuracy> inline void decodeSony12(const uint32_t duration);
@@ -279,10 +278,7 @@ void IRLinterrupt(void){
 		decodeAll(duration);
 		break;
 	case IR_NEC:
-		decodeNec<IR_NO_EXTRA_ACCURACY, IR_NORMAL>(duration);
-		break;
-	case IR_NEC_EXTENDED:
-		decodeNec<IR_NO_EXTRA_ACCURACY, IR_EXTENDED>(duration);
+		decodeNec<IR_NO_EXTRA_ACCURACY>(duration);
 		break;
 	case IR_PANASONIC:
 		decodePanasonic<IR_NO_EXTRA_ACCURACY>(duration);
@@ -307,12 +303,12 @@ void IRLinterrupt(void){
 
 void decodeAll(const uint32_t duration){
 	// go through all known protocols and decode with more (resource unfriendly) accuration
-	decodeNec<IR_EXTRA_ACCURACY, IR_EXTENDED>(duration);
+	decodeNec<IR_EXTRA_ACCURACY>(duration);
 	decodePanasonic<IR_EXTRA_ACCURACY>(duration);
 	decodeSony12<IR_EXTRA_ACCURACY>(duration);
 }
 
-template <bool extraAccuracy, bool extended> void decodeNec(const uint32_t duration){
+template <bool extraAccuracy> void decodeNec(const uint32_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[NEC_BLOCKS];
 
@@ -339,8 +335,9 @@ template <bool extraAccuracy, bool extended> void decodeNec(const uint32_t durat
 		if (IRLcheckInverse1(data) || (holding = IRLcheckHolding(data))){
 			// normally NEC also check for the inverse of the address.
 			// newer remotes dont have this because of the wide used protocol all addresses were already used
-			if (!holding && !extended && !IRLcheckInverse0(data))
-				return;
+			// to make it less complicated its left out and the user can check the command inverse himself if needed
+			//if (!holding && !extended && !IRLcheckInverse0(data))
+			//	return;
 
 			// save address + command and trigger event
 			uint16_t address = UINT16_AT_OFFSET(data, 0);
@@ -587,34 +584,44 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 	*outPort &= ~bitMask;
 
 	// disable interrupts
-	//uint8_t oldSREG = SREG;
-	//cli();
+	uint8_t oldSREG = SREG;
+	cli();
 
 	switch (irType){
 
 	case IR_NEC:
-		// calculate inverses
-		//address = address & 0xFF | ((~address)<<8)
-	case IR_NEC_EXTENDED:
+		// NEC only sends the data once
 		if (command == 0xFFF)
 			// send holding indicator
 			IRLsend<0, 0, NEC_HZ, 0, NEC_MARK_LEAD, NEC_SPACE_HOLDING,
 			0, 0, 0, 0>
 			(outPort, bitMask, address, command);
 		else
+			// send data
 			IRLsend<NEC_ADDRESS_LENGTH, NEC_COMMAND_LENGTH, NEC_HZ, IR_ADDRESS_FIRST, NEC_MARK_LEAD, NEC_SPACE_LEAD,
 			NEC_MARK_ZERO, NEC_MARK_ONE, NEC_SPACE_ZERO, NEC_SPACE_ONE>
 			(outPort, bitMask, address, command);
 		break;
-	case IR_PANASONIC:
-		const int repeat = 1;
-		for (int i = 0; i < repeat; i++)
-			;
+
+	case IR_PANASONIC: //TODO test
+		// send data
+		IRLsend<PANASONIC_ADDRESS_LENGTH, PANASONIC_COMMAND_LENGTH, PANASONIC_HZ, IR_ADDRESS_FIRST, PANASONIC_MARK_LEAD, PANASONIC_SPACE_LEAD,
+			PANASONIC_MARK_ZERO, PANASONIC_MARK_ONE, PANASONIC_SPACE_ZERO, PANASONIC_SPACE_ONE>
+			(outPort, bitMask, address, command);
+		break;
+
+	case IR_SONY12: //TODO test, address -1?
+		// repeat 3 times
+		for (uint8_t i = 0; i < 3; i++)
+			// send data
+			IRLsend<SONY_ADDRESS_LENGTH_12, SONY_COMMAND_LENGTH_12, SONY_HZ, IR_COMMAND_FIRST, SONY_MARK_LEAD, SONY_SPACE_LEAD,
+			SONY_MARK_ZERO, SONY_MARK_ONE, SONY_SPACE_ZERO, SONY_SPACE_ONE>
+			(outPort, bitMask, address, command);
 		break;
 	}
 
 	// enable interrupts
-	//SREG = oldSREG;
+	SREG = oldSREG;
 
 	// set pin to INPUT again to be save
 	*modePort &= ~bitMask;
@@ -682,7 +689,7 @@ template <uint8_t addressLength, uint8_t commandLength,
 	}
 
 	// finish mark
-	IRLmark(Hz, outPort, bitmask, markZero);
+	IRLmark(Hz, outPort, bitmask, markZero); //TODO zero or one for sony?
 	IRLspace(outPort, bitmask, 0);
 }
 

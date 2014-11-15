@@ -2,14 +2,18 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Receive_Blocking
+ IRL Receive_Send_Blocking
  Receives IR signals and blocks until the data is read.
+ On receiving a specific IR input it will send another IR signal out.
  */
 
 #include "IRLremote.h"
 
 // see readme to choose the right pin (with an interrupt!) for your Arduino board
 const int pinReceiveIR = digitalPinToInterrupt(2);
+
+// choose any pin to send IR signals
+const int pinSendIR = 3;
 
 void setup() {
   // start serial debug output
@@ -33,6 +37,17 @@ void loop() {
     Serial.println(IRLgetAddress(), HEX);
     Serial.print("Command:");
     Serial.println(IRLgetCommand(), HEX);
+
+    // check if the input was a specific signal and send another signal out
+    if (IRLgetProtocol() == IR_PANASONIC && IRLgetAddress() == 0x2002 && IRLgetCommand() == 0x813D1CA0) {
+      // send the data, no pin setting to OUTPUT needed
+      Serial.println();
+      Serial.println("Sending...");
+      uint16_t address = 0x6361;
+      uint32_t command = 0xFE01;
+
+      IRLwrite<IR_NEC>(pinSendIR, address, command);
+    }
 
     // resume reading to get new values
     IRLreset();

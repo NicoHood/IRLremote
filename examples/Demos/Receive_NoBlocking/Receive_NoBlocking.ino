@@ -10,7 +10,7 @@
 
 #include "IRLremote.h"
 
-// see readme to choose the right interrupt number
+// see readme to choose the right pin (with an interrupt!) for your Arduino board
 const int interruptIR = digitalPinToInterrupt(2);
 
 // temporary variables to save latest IR input

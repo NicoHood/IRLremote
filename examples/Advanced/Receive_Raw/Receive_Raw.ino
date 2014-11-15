@@ -10,7 +10,7 @@
 #include "IRLremote.h"
 
 // see readme to choose the right pin (with an interrupt!) for your Arduino board
-const int interruptIR = digitalPinToInterrupt(2);
+const int pinReceiveIR = digitalPinToInterrupt(2);
 
 // variables to record raw values
 #define IR_RAW_TIMEOUT 50000
@@ -24,7 +24,7 @@ void setup() {
   Serial.println("Startup");
 
   // set protocol to user to use the decode function below
-  IRLbegin<IR_USER>(interruptIR);
+  IRLbegin<IR_USER>(pinReceiveIR);
 }
 
 void loop() {
