@@ -1,4 +1,4 @@
-IRLremote 1.7
+IRLremote 1.7.1
 =============
 
 ![Infrared Picture](header.jpg)
@@ -148,6 +148,9 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
+1.7.1 Release (15.11.2014)
+* Added 16u2 HoodLoader2 example
+
 1.7 Release (15.11.2014)
 * Changed IR bit order from MSB to correct LSB
  * This improved the overall handling and also reduced flash usage

@@ -130,10 +130,7 @@ typedef enum IRType{
 #define IR_EXTRA_ACCURACY true
 #define IR_NO_EXTRA_ACCURACY false
 
-// definitions for different protocol modes (used in NEC)
-#define IR_EXTENDED true
-#define IR_NORMAL false
-
+// definition for sending to determine what should be send first
 #define IR_ADDRESS_FIRST true
 #define IR_COMMAND_FIRST false
 
