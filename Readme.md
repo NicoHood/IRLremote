@@ -154,6 +154,7 @@ Version History
 * Added always inline macro
 * Changed duration to 16 bit
 * Added easier PCINT map definitions
+* Fixed ARM compilation for receiving (sending is still not working)
 
 1.7.1 Release (15.11.2014)
 * Added 16u2 HoodLoader2 example

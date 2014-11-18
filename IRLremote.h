@@ -25,7 +25,23 @@ THE SOFTWARE.
 #define IRLREMOTE_H
 
 #include <Arduino.h>
+
+// board type detection
+#if defined(__MK20DX128__) || defined(__MK20DX256__)
+#define  IRLREMOTE_ARM
+#define  IRLREMOTE_TEENSY3
+#elif defined(__SAM3X8E__)
+#define  IRLREMOTE_ARM
+#define  IRLREMOTE_DUE
+#else  
+// default to assuming everything else is avr for now
+#define  IRLREMOTE_AVR
+#endif
+
+// delay_basic is only for avrs. with ARM sending is currently not possible
+#ifdef IRLREMOTE_AVR
 #include <util/delay_basic.h>
+#endif
 
 //================================================================================
 // Definitions
@@ -200,7 +216,7 @@ inline bool IRLcheckHolding(uint8_t data[]) __attribute__((always_inline));
 inline bool IRLcheckXOR0(uint8_t data[]) __attribute__((always_inline));
 
 // default decoder helper function
-template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
+template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
 	inline bool IRLdecode(uint16_t duration, uint8_t data[]) __attribute__((always_inline));
@@ -442,7 +458,7 @@ bool IRLcheckXOR0(uint8_t data[]){
 }
 
 // multifunctional template for receiving
-template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
+template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
 	bool IRLdecode(uint16_t duration, uint8_t data[]){
@@ -738,8 +754,11 @@ void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uin
 	while (iterations--){
 		// flip pin state and wait for the calculated time
 		*outPort ^= bitMask;
-		//TODO add ARM exclude, also to the #include avr above
+#ifdef IRLREMOTE_AVR
 		_delay_loop_1(delay);
+#else
+		// ARM TODO?
+#endif
 	}
 }
 

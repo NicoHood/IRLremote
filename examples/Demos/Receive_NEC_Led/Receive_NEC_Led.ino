@@ -10,7 +10,7 @@
 
  Flash usage (Uno):
  BlinkWithoutDelay:   1,006 bytes flash, 15 bytes ram
- IRL Receive NEC Led: 1,566 bytes flash, 26 bytes ram
+ IRL Receive NEC Led: 1,556 bytes flash, 26 bytes ram
 
  Ram usage (Uno):
  4byte attachInterrupt function
