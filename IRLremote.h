@@ -156,10 +156,10 @@ typedef enum IRType{
 
 // attach the interrupt function
 template <IRType irType>
-inline void IRLbegin(const uint8_t interrupt);
+inline void IRLbegin(const uint8_t interrupt) __attribute__((always_inline));
 
 // dettach the interrupt function
-inline void IRLend(const uint8_t interrupt);
+inline void IRLend(const uint8_t interrupt) __attribute__((always_inline));
 
 // variables for IR processing if no user function was set
 extern uint8_t  IRLProtocol;
@@ -167,59 +167,58 @@ extern uint16_t IRLAddress;
 extern uint32_t IRLCommand;
 
 // functions to use if no user function was set
-inline bool IRLavailable(void);
-inline void IRLreset(void);
-inline uint8_t IRLgetProtocol(void);
-inline uint16_t IRLgetAddress(void);
-inline uint32_t IRLgetCommand(void);
+inline bool IRLavailable(void) __attribute__((always_inline));
+inline void IRLreset(void) __attribute__((always_inline));
+inline uint8_t IRLgetProtocol(void) __attribute__((always_inline));
+inline uint16_t IRLgetAddress(void) __attribute__((always_inline));
+inline uint32_t IRLgetCommand(void) __attribute__((always_inline));
 
 // function called on a valid IR event, must be overwritten by the user
 void __attribute__((weak)) IREvent(uint8_t protocol, uint16_t address, uint32_t command);
 
 // optinal user function called when the user wants to implement its own decoding function
-void __attribute__((weak)) decodeIR(const uint32_t duration);
+void __attribute__((weak)) decodeIR(const uint16_t duration);
 
 // called by interrupt CHANGE
 template <IRType irType>
-inline void IRLinterrupt(void);
+inline void IRLinterrupt(void) __attribute__((always_inline));
 
 // special decode function for each protocol
-inline void decodeAll(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeNec(const uint32_t duration);
-template <bool extraAccuracy> inline void decodePanasonic(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeSony8(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeSony12(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeSony15(const uint32_t duration);
-template <bool extraAccuracy> inline void decodeSony20(const uint32_t duration);
-inline void decodeRaw(const uint32_t duration);
+inline void decodeAll(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeNec(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodePanasonic(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeSony8(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeSony12(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeSony15(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeSony20(const uint16_t duration) __attribute__((always_inline));
+inline void decodeRaw(const uint16_t duration) __attribute__((always_inline));
 
 // functions to check if the received data is valid with the protocol checksums
-inline bool IRLcheckInverse0(uint8_t data[]);
-inline bool IRLcheckInverse1(uint8_t data[]);
-inline bool IRLcheckHolding(uint8_t data[]);
-inline bool IRLcheckXOR0(uint8_t data[]);
+inline bool IRLcheckInverse0(uint8_t data[]) __attribute__((always_inline));
+inline bool IRLcheckInverse1(uint8_t data[]) __attribute__((always_inline));
+inline bool IRLcheckHolding(uint8_t data[]) __attribute__((always_inline));
+inline bool IRLcheckXOR0(uint8_t data[]) __attribute__((always_inline));
 
 // default decoder helper function
 template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
-	inline bool IRLdecode(uint32_t duration, uint8_t data[]);
+	inline bool IRLdecode(uint16_t duration, uint8_t data[]) __attribute__((always_inline));
 
 // functions to send the protocol
 template <IRType irType>
-inline void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command);
-inline void IRLwriteNEC(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
+inline void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command) __attribute__((always_inline));
 
 template <uint8_t addressLength, uint8_t commandLength,
 	uint16_t Hz, bool addressFirst,
 	uint16_t markLead, uint16_t spaceLead,
 	uint16_t markZero, uint16_t markOne,
 	uint16_t spaceZero, uint16_t spaceOne>
-	inline void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command);
+	inline void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command) __attribute__((always_inline));
 
 // functions to set the pin high or low (with bitbang pwm)
-inline void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
-inline void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time);
+inline void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) __attribute__((always_inline));
+inline void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) __attribute__((always_inline));
 
 //================================================================================
 // Inline Implementations (receive)
@@ -262,9 +261,14 @@ void IRLinterrupt(void){
 	//save the duration between the last reading
 	static uint32_t lastTime = 0;
 	uint32_t time = micros();
-	uint32_t duration = time - lastTime;
+	uint32_t duration_32 = time - lastTime;
 	lastTime = time;
 
+	// calculate 16 bit duration. On overflow set duration to a clear timeout
+	uint16_t duration = 0xFFFF;
+	if (duration_32 <= 0xFFF)
+		duration = duration_32;
+	
 	// determinate which decode function must be called
 	switch (irType){
 	case IR_USER:
@@ -298,14 +302,14 @@ void IRLinterrupt(void){
 	}
 }
 
-void decodeAll(const uint32_t duration){
+void decodeAll(const uint16_t duration){
 	// go through all known protocols and decode with more (resource unfriendly) accuration
 	decodeNec<IR_EXTRA_ACCURACY>(duration);
 	decodePanasonic<IR_EXTRA_ACCURACY>(duration);
 	decodeSony12<IR_EXTRA_ACCURACY>(duration);
 }
 
-template <bool extraAccuracy> void decodeNec(const uint32_t duration){
+template <bool extraAccuracy> void decodeNec(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[NEC_BLOCKS];
 
@@ -344,7 +348,7 @@ template <bool extraAccuracy> void decodeNec(const uint32_t duration){
 	}
 }
 
-template <bool extraAccuracy> void decodePanasonic(const uint32_t duration){
+template <bool extraAccuracy> void decodePanasonic(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[PANASONIC_BLOCKS];
 
@@ -375,7 +379,7 @@ template <bool extraAccuracy> void decodePanasonic(const uint32_t duration){
 	}
 }
 
-template <bool extraAccuracy> void decodeSony12(const uint32_t duration){
+template <bool extraAccuracy> void decodeSony12(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[SONY_BLOCKS_12];
 
@@ -405,7 +409,7 @@ template <bool extraAccuracy> void decodeSony12(const uint32_t duration){
 	}
 }
 
-void decodeRaw(const uint32_t duration){
+void decodeRaw(const uint16_t duration){
 	//TODO, use advanced raw example instead
 }
 
@@ -441,7 +445,7 @@ bool IRLcheckXOR0(uint8_t data[]){
 template <uint8_t irLength, uint32_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
-	bool IRLdecode(uint32_t duration, uint8_t data[]){
+	bool IRLdecode(uint16_t duration, uint8_t data[]){
 
 	// variables for ir processing
 	static uint8_t count = 0;
@@ -734,6 +738,7 @@ void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uin
 	while (iterations--){
 		// flip pin state and wait for the calculated time
 		*outPort ^= bitMask;
+		//TODO add ARM exclude, also to the #include avr above
 		_delay_loop_1(delay);
 	}
 }

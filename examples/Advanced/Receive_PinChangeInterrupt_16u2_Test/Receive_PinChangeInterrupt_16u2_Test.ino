@@ -22,12 +22,12 @@
 //================================================================================
 
 // PCINT definitions, edit and see datasheets for more information
-// example: pin 8 on Arduino Uno
-#define PCMSK PCMSK0
-#define PCINT PCINT1
-#define PCIE  PCIE0
-#define PCPIN PINB
-#define PCINT_vect PCINT0_vect
+#define PCINT_PIN 3
+#define PCMSK *digitalPinToPCMSK(PCINT_PIN)
+#define PCINT digitalPinToPCMSKbit(PCINT_PIN)
+#define PCIE  digitalPinToPCICRbit(PCINT_PIN)
+#define PCPIN *portInputRegister(digitalPinToPort(PCINT_PIN))
+#define PCINT_vect PCINT0_vect // TODO map somehow to the pin
 #define PCINT_FUNCTION IRLinterrupt<IR_ALL>()
 
 // variable to save the last register state

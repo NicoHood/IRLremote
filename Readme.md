@@ -1,4 +1,4 @@
-IRLremote 1.7.1
+IRLremote 1.7.2
 =============
 
 ![Infrared Picture](header.jpg)
@@ -35,6 +35,8 @@ and should be a replacement of the library (sorry for that ;D).
 * Improve PCInt?
 * Add Raw dump + sending option
 * Add High/Low compare for unknown protocols
+
+[Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
 
 Installation/How to use
 =======================
@@ -148,6 +150,11 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
+1.7.2 Release (18.11.2014)
+* Added always inline macro
+* Changed duration to 16 bit
+* Added easier PCINT map definitions
+
 1.7.1 Release (15.11.2014)
 * Added 16u2 HoodLoader2 example
 
