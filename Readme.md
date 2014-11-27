@@ -1,5 +1,5 @@
-IRLremote 1.7.2
-=============
+IRLremote 1.7.3
+===============
 
 ![Infrared Picture](header.jpg)
 
@@ -7,6 +7,9 @@ New lightweight IR library with different, smarter implementation.
 
 This library is way more efficient than the "standard" IR library from Ken Shirriff 
 and should be a replacement of the library (sorry for that ;D).
+
+*With Arduino IDE you get a compiling error. Add "#define NOT_AN_INTERRUPT -1" to the beginning of the sketch or better use IDE 1.5.8 or higher.
+You can also choose the interrupt number instead of using the pin (0 or 1 for Uno)*
 
 **The main improvements are:**
 * Faster decoding (on the fly)
@@ -33,7 +36,7 @@ and should be a replacement of the library (sorry for that ;D).
 * Add more protocols
 * Improve bit banging PWM?
 * Improve PCInt?
-* Add Raw dump + sending option
+* Add Raw dump + sending option + improve raw function
 * Add High/Low compare for unknown protocols
 
 [Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
@@ -150,6 +153,11 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
+1.7.3 Release (27.11.2014)
+* Fixed critical Typo in decoding function
+* Fixed weak function variable type
+* Updated Raw Example slightly
+
 1.7.2 Release (18.11.2014)
 * Added always inline macro
 * Changed duration to 16 bit

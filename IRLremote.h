@@ -282,7 +282,7 @@ void IRLinterrupt(void){
 
 	// calculate 16 bit duration. On overflow set duration to a clear timeout
 	uint16_t duration = 0xFFFF;
-	if (duration_32 <= 0xFFF)
+	if (duration_32 <= 0xFFFF)
 		duration = duration_32;
 	
 	// determinate which decode function must be called

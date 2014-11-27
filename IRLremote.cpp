@@ -43,7 +43,7 @@ void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
 	IRLProtocol = protocol;
 }
 
-void decodeIR(const uint32_t duration){
+void decodeIR(const uint16_t duration){
 	// add your own protocols here or create your own decoding function
 	// you can overwrite this function in your .ino file
 	decodeAll(duration);

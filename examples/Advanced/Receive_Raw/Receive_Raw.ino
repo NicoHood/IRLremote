@@ -13,7 +13,7 @@
 const int pinReceiveIR = digitalPinToInterrupt(2);
 
 // variables to record raw values
-#define IR_RAW_TIMEOUT 50000
+#define IR_RAW_TIMEOUT 0xFFFF // 65535, max timeout
 #define IR_RAW_BUFFER_SIZE 100
 uint32_t buffer[IR_RAW_BUFFER_SIZE];
 uint8_t count = 0;
@@ -48,7 +48,7 @@ void loop() {
   }
 }
 
-void decodeIR(const uint32_t duration) {
+void decodeIR(const uint16_t duration) {
   // called when directly received an interrupt CHANGE.
   // do not use Serial inside, it can crash your program!
 
@@ -87,8 +87,8 @@ uint8_t RAWIRLavailable(void) {
     // check if reading timed out and save value.
     // saving is needed to abord the check above next time.
     unsigned long duration = micros() - buffer[count];
-    if (duration > IR_RAW_TIMEOUT) {
-      buffer[count++] = duration;
+    if (duration >= IR_RAW_TIMEOUT) {
+      buffer[count++] = IR_RAW_TIMEOUT;
       SREG = oldSREG;
       return count;
     }
