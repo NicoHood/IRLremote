@@ -201,12 +201,12 @@ inline void IRLinterrupt(void) __attribute__((always_inline));
 
 // special decode function for each protocol
 inline void decodeAll(const uint16_t duration) __attribute__((always_inline));
-template <bool extraAccuracy> inline void decodeNec(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeNec(const uint16_t duration);
 template <bool extraAccuracy> inline void decodePanasonic(const uint16_t duration) __attribute__((always_inline));
-template <bool extraAccuracy> inline void decodeSony8(const uint16_t duration) __attribute__((always_inline));
-template <bool extraAccuracy> inline void decodeSony12(const uint16_t duration) __attribute__((always_inline));
-template <bool extraAccuracy> inline void decodeSony15(const uint16_t duration) __attribute__((always_inline));
-template <bool extraAccuracy> inline void decodeSony20(const uint16_t duration) __attribute__((always_inline));
+template <bool extraAccuracy> inline void decodeSony8(const uint16_t duration);
+template <bool extraAccuracy> inline void decodeSony12(const uint16_t duration);
+template <bool extraAccuracy> inline void decodeSony15(const uint16_t duration);
+template <bool extraAccuracy> inline void decodeSony20(const uint16_t duration);
 inline void decodeRaw(const uint16_t duration) __attribute__((always_inline));
 
 // functions to check if the received data is valid with the protocol checksums
@@ -284,7 +284,7 @@ void IRLinterrupt(void){
 	uint16_t duration = 0xFFFF;
 	if (duration_32 <= 0xFFFF)
 		duration = duration_32;
-	
+
 	// determinate which decode function must be called
 	switch (irType){
 	case IR_USER:
