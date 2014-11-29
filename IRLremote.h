@@ -26,6 +26,11 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
+//missing 1.0.6 definition workaround
+#if ARDUINO == 106
+#define NOT_AN_INTERRUPT -1
+#endif
+
 // board type detection
 #if defined(__MK20DX128__) || defined(__MK20DX256__)
 #define  IRLREMOTE_ARM
