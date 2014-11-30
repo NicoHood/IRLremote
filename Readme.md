@@ -8,9 +8,6 @@ New lightweight IR library with different, smarter implementation.
 This library is way more efficient than the "standard" IR library from Ken Shirriff 
 and should be a replacement of the library (sorry for that ;D).
 
-*With Arduino IDE you get a compiling error. Add "#define NOT_AN_INTERRUPT -1" to the beginning of the sketch or better use IDE 1.5.8 or higher.
-You can also choose the interrupt number instead of using the pin (0 or 1 for Uno)*
-
 **The main improvements are:**
 * Faster decoding (on the fly)
 * Huge Ram improvements (13 bytes ram to decode NEC)
