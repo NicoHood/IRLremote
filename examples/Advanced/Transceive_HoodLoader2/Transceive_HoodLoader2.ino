@@ -2,11 +2,12 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Receive_PinChangeInterrupt_16u2_Test
+ IRL Transceive HoodLoader2
  Receives IR signals with custom Pin Change Interrupt function.
 
  This sketch is especially made for the 16u2 combined with the HoodLoader2.
- It lights the TX Led on any valid signal and sends on a special input.
+ It lights the TX Led on any valid signal.
+ RX Led is on when a special signal is received. Then a signal is send out.
  The Receiver is connected to PB1 (SCLK).
  The Transmitter is connected to PB2 (MOSI).
 
@@ -22,13 +23,24 @@
 //================================================================================
 
 // PCINT definitions, edit and see datasheets for more information
-#define PCINT_PIN 3
+#define PCINT_PIN 1
+
 #define PCMSK *digitalPinToPCMSK(PCINT_PIN)
 #define PCINT digitalPinToPCMSKbit(PCINT_PIN)
 #define PCIE  digitalPinToPCICRbit(PCINT_PIN)
 #define PCPIN *portInputRegister(digitalPinToPort(PCINT_PIN))
-#define PCINT_vect PCINT0_vect // TODO map somehow to the pin
-#define PCINT_FUNCTION IRLinterrupt<IR_ALL>()
+
+#if (PCIE == 0)
+#define PCINT_vect PCINT0_vect
+#elif (PCIE == 1)
+#define PCINT_vect PCINT1_vect
+#elif (PCIE == 2)
+#define PCINT_vect PCINT2_vect
+#else
+#error This board doesnt support PCINT ?
+#endif
+
+#define PCINT_FUNCTION IRLinterrupt<IR_ALL>
 
 // variable to save the last register state
 volatile static uint8_t lastRegister;
@@ -55,38 +67,41 @@ void detachPinChangeInterrupt(void) {
 
 ISR(PCINT_vect) {
   // get the new pin states for port, compare with the old state and save new state
+  // this is not needed if you only use a single PCINT pin
+  // to be complete i've added it anyways. The smaller version would be just to call PCINT_FUNCTION();
   uint8_t currRegister = PCPIN;
   uint8_t changedPinMask = currRegister ^ lastRegister;
   lastRegister = currRegister;
 
   // if our needed pin has changed, call the IRL interrupt function
   if (changedPinMask & (1 << PCINT))
-    PCINT_FUNCTION;
+    PCINT_FUNCTION();
 }
 
 //================================================================================
 // Main sketch
 //================================================================================
 
-// workaround for undefined USBCON
-//	General interrupt
+#ifndef USBCON
+// workaround for undefined USBCON has to be placed in every sketch
+// otherwise the timings wont work correctly
 ISR(USB_GEN_vect)
 {
-  uint8_t udint = UDINT;
   UDINT = 0;
-  return;
 }
+#endif
 
 // variable to save the last update
 unsigned long previousMillis = 0;
 
 // choose any pin to send IR signals
-const int pinSendIR = MOSI; // pin2 on 16u2
+const int pinSendIR = 2;
 
 // variable to save a sending trigger
 bool sendNow = false;
 
 void setup() {
+  TX_RX_LED_INIT;
   // set LED to output
   pinMode(LED_BUILTIN_TX, OUTPUT);
   pinMode(LED_BUILTIN_RX, OUTPUT);

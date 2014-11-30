@@ -4,6 +4,11 @@
 
  IRL Receive_PinChangeInterrupt
  Receives IR signals with custom Pin Change Interrupt function.
+ 
+ This is a PCINT implementation with an attach PCINT API only usable with Arduino Uno.
+ I do not recommend to use it, because its very large. This was the first attempt
+ to use PCINT and has now improved with the PCINT Basic example.
+ This sketch is only here for legacy reasons.
 
  See second .ino file (next tab in IDE) for the pinchange implementation.
  This is perfectly usable if you dont want to use your normal interrupts for IRL.

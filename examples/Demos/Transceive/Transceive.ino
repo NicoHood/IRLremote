@@ -2,7 +2,7 @@
  Copyright (c) 2014 NicoHood
  See the readme for credit to other people.
 
- IRL Receive_Send_Blocking
+ IRL Transceive
  Receives IR signals and blocks until the data is read.
  On receiving a specific IR input it will send another IR signal out.
  */
