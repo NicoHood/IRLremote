@@ -86,7 +86,7 @@ void setup()
 {
   // start serial debug output
   Serial.begin(115200);
-  Serial.println(L("Startup"));
+  Serial.println(F("Startup"));
 
   // attach the new PinChangeInterrupt function above
   attachPinChangeInterrupt();
@@ -98,11 +98,11 @@ void loop() {
     // print as much as you want in this function
     // see source to terminate what number is for each protocol
     Serial.println();
-    Serial.print(L("Protocol:"));
+    Serial.print(F("Protocol:"));
     Serial.println(IRLgetProtocol());
-    Serial.print(L("Address:"));
+    Serial.print(F("Address:"));
     Serial.println(IRLgetAddress(), HEX);
-    Serial.print(L("Command:"));
+    Serial.print(F("Command:"));
     Serial.println(IRLgetCommand(), HEX);
 
     // resume reading to get new values
