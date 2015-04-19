@@ -30,7 +30,7 @@
 //================================================================================
 
 // PCINT definitions, edit and see data sheets for more information
-#define PCINT_PIN 11
+#define PCINT_PIN 10
 
 #define PCMSK *digitalPinToPCMSK(PCINT_PIN)
 #define PCINT digitalPinToPCMSKbit(PCINT_PIN)
