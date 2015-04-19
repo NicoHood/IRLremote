@@ -1,12 +1,11 @@
-IRLremote 1.7.3
+IRLremote 1.7.4
 ===============
 
 ![Infrared Picture](header.jpg)
 
 New lightweight IR library with different, smarter implementation.
 
-This library is way more efficient than the "standard" IR library from Ken Shirriff 
-and should be a replacement of the library (sorry for that ;D).
+This library is way more efficient than the "standard" IR library from Ken Shirriff.
 
 **The main improvements are:**
 * Faster decoding (on the fly)
@@ -16,11 +15,11 @@ and should be a replacement of the library (sorry for that ;D).
 * Very accurate even when pointing in different directions
 * Easy to use/Customizable
 * Maximum error correction
-* Uses pin interrupt function/No timer needed
-* PCINT also usable for advanced users
+* Uses PinInterrupt or PinChangeInterrupts/No timer needed
+* Usable on almost any pin
 * Perfect for Attinys
 * Written in C, only uses C++ templates
-* IDE 1.5.8 compatible
+* IDE 1.6.x compatible
 
 **Supported Protocols**
 * NEC
@@ -32,7 +31,6 @@ and should be a replacement of the library (sorry for that ;D).
 * Test sending functions (for Panasonic, Sony etc)
 * Add more protocols
 * Improve bit banging PWM?
-* Improve PCInt?
 * Add Raw dump + sending option + improve raw function
 * Add High/Low compare for unknown protocols
 
@@ -46,12 +44,12 @@ Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/
 
 ### Receiving
 
-See [this reference](http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt) for choosing the right interrupt pin
-(not all pins are usable for decoding).
-If you cannot use one of these pins, you might want to try the advanced PCINT example.
+To use the receiving you have to choose a **[PinInterrupt](http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt)**
+or **[PinChangeInterrupt](https://github.com/NicoHood/PinChangeInterrupt)** pin.
+They work a bit different under the hood but the result for IR is the same.
+In order to use PinChangeInterrupts you also have to [install the library](https://github.com/NicoHood/PinChangeInterrupt).
 
-Try the examples to see how it works.
-**I recommend to check the example ReceiveInterrupt or ReceiveBlocking.**
+Try the examples to see how the API works.
 
 One you know what protocol your remote uses, choose yours from one of these options and change it in the setup():
 ```cpp
@@ -82,6 +80,7 @@ decrease flash size even more and be more flexible with your sending pin!**
 
 **Keep in mind that from v1.6 to v1.7 the bit order has changed
 and command and address might be a different value now.**
+
 
 ### Sending
 
@@ -150,6 +149,14 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
+1.7.4 Release (19.04.2014)
+* Updated examples
+* Added PinChangeInterrupt example
+* Removed NoBlocking API and integrated this into the examples
+* Added IRL_VERSION definition
+* Added library.properties
+* Improved Raw Example
+
 1.7.3 Release (27.11.2014)
 * Fixed critical Typo in decoding function
 * Fixed weak function variable type
@@ -211,7 +218,7 @@ Version History
 * Release and minor fixes
 ```
 
-Licence and Copyright
+License and Copyright
 =====================
 If you use this library for any cool project let me know!
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014 NicoHood
+Copyright (c) 2014-2015 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,26 +21,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <IRLremote.h>
+#include "IRLremote.h"
 
 //================================================================================
 // User function helper
 //================================================================================
 
-// ensure available() returns false
-uint8_t  IRLProtocol = 0;
-uint16_t IRLAddress = 0;
-uint32_t IRLCommand = 0;
+uint32_t IRL_LastTime = 0;
 
-// Called when directly received correct IR Signal
-// Do not use Serial inside, it can crash your Arduino!
 void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
-	// For no user function set we need to pause IR
-	// to not overwrite the actual values until they are read.
-	if (IRLProtocol) return;
-	IRLAddress = address;
-	IRLCommand = command;
-	IRLProtocol = protocol;
+	// Called when directly received correct IR Signal
+	// Do not use Serial inside, it can crash your Arduino!
+	// Should be overwritten by the user.
 }
 
 void decodeIR(const uint16_t duration){

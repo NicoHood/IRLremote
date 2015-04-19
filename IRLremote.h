@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014 NicoHood
+Copyright (c) 2014-2015 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,14 +24,18 @@ THE SOFTWARE.
 #ifndef IRLREMOTE_H
 #define IRLREMOTE_H
 
+// software version
+#define IRL_VERSION 174
+
 #include <Arduino.h>
 
-//missing 1.0.6 definition workaround
-#if ARDUINO == 106
+// missing 1.0.6 definition workaround
+#ifndef NOT_AN_INTERRUPT
 #define NOT_AN_INTERRUPT -1
 #endif
 
 // board type detection
+//TODO
 #if defined(__MK20DX128__) || defined(__MK20DX256__)
 #define  IRLREMOTE_ARM
 #define  IRLREMOTE_TEENSY3
@@ -144,7 +148,6 @@ typedef enum IRType{
 	IR_SONY15,
 	IR_SONY20,
 	// add new protocols here
-	IR_RAW,
 };
 
 // definitions to use decoding functions with extra accuracy
@@ -175,25 +178,6 @@ typedef enum IRType{
 // Prototypes
 //================================================================================
 
-// attach the interrupt function
-template <IRType irType>
-inline void IRLbegin(const uint8_t interrupt) __attribute__((always_inline));
-
-// dettach the interrupt function
-inline void IRLend(const uint8_t interrupt) __attribute__((always_inline));
-
-// variables for IR processing if no user function was set
-extern uint8_t  IRLProtocol;
-extern uint16_t IRLAddress;
-extern uint32_t IRLCommand;
-
-// functions to use if no user function was set
-inline bool IRLavailable(void) __attribute__((always_inline));
-inline void IRLreset(void) __attribute__((always_inline));
-inline uint8_t IRLgetProtocol(void) __attribute__((always_inline));
-inline uint16_t IRLgetAddress(void) __attribute__((always_inline));
-inline uint32_t IRLgetCommand(void) __attribute__((always_inline));
-
 // function called on a valid IR event, must be overwritten by the user
 void __attribute__((weak)) IREvent(uint8_t protocol, uint16_t address, uint32_t command);
 
@@ -212,7 +196,6 @@ template <bool extraAccuracy> inline void decodeSony8(const uint16_t duration);
 template <bool extraAccuracy> inline void decodeSony12(const uint16_t duration);
 template <bool extraAccuracy> inline void decodeSony15(const uint16_t duration);
 template <bool extraAccuracy> inline void decodeSony20(const uint16_t duration);
-inline void decodeRaw(const uint16_t duration) __attribute__((always_inline));
 
 // functions to check if the received data is valid with the protocol checksums
 inline bool IRLcheckInverse0(uint8_t data[]) __attribute__((always_inline));
@@ -245,47 +228,16 @@ inline void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time)
 // Inline Implementations (receive)
 //================================================================================
 
-template <IRType irType>
-void IRLbegin(const uint8_t interrupt){
-	// attach the function that decodes the signals
-	attachInterrupt(interrupt, IRLinterrupt<irType>, CHANGE);
-}
-
-void IRLend(const uint8_t interrupt){
-	// release the interrupt, if its NOT_AN_INTERRUPT the detach function does nothing
-	detachInterrupt(interrupt);
-	// also make sure to call reset() after end() if you use the intern reading functions
-}
-
-bool IRLavailable(void){
-	return IRLProtocol;
-}
-
-void IRLreset(void){
-	IRLProtocol = 0;
-}
-
-uint8_t IRLgetProtocol(void){
-	return IRLProtocol;
-}
-
-uint16_t IRLgetAddress(void){
-	return IRLAddress;
-}
-
-uint32_t IRLgetCommand(void){
-	return IRLCommand;
-}
+extern uint32_t IRL_LastTime;
 
 template <IRType irType>
 void IRLinterrupt(void){
 	//save the duration between the last reading
-	static uint32_t lastTime = 0;
 	uint32_t time = micros();
-	uint32_t duration_32 = time - lastTime;
-	lastTime = time;
+	uint32_t duration_32 = time - IRL_LastTime;
+	IRL_LastTime = time;
 
-	// calculate 16 bit duration. On overflow set duration to a clear timeout
+	// calculate 16 bit duration. On overflow sets duration to a clear timeout
 	uint16_t duration = 0xFFFF;
 	if (duration_32 <= 0xFFFF)
 		duration = duration_32;
@@ -317,9 +269,6 @@ void IRLinterrupt(void){
 		//case IR_SONY20:
 		//	decodeSony20<IR_NO_EXTRA_ACCURACY>(duration);
 		//	break;
-	case IR_RAW:
-		decodeRaw(duration);
-		break;
 	}
 }
 
@@ -428,10 +377,6 @@ template <bool extraAccuracy> void decodeSony12(const uint16_t duration){
 		IREvent(IR_SONY12, address, command);
 		return;
 	}
-}
-
-void decodeRaw(const uint16_t duration){
-	//TODO, use advanced raw example instead
 }
 
 bool IRLcheckInverse0(uint8_t data[]){
