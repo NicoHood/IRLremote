@@ -149,7 +149,7 @@ It is just worth a comparison and might be still useful like the old SoftSerial 
 Version History
 ===============
 ```
-1.7.4 Release (19.04.2014)
+1.7.4 Release (19.04.2015)
 * Updated examples
 * Added PinChangeInterrupt example
 * Removed NoBlocking API and integrated this into the examples
