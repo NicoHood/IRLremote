@@ -2,10 +2,9 @@
  Copyright (c) 2014-2015 NicoHood
  See the readme for credit to other people.
 
- IRL Transceive
+ IRL Receive
 
  Receives IR signals from different protocols and prints them to the Serial monitor.
- On receiving a specific IR input it will send another IR signal out.
  Choose your protocols that should be decoded. Remove the not used ones to save flash/ram/speed.
  You can choose a custom debounce time to not trigger a button two times in a row too fast.
 
@@ -30,7 +29,6 @@
 #include "IRLremote.h"
 // choose a valid PinInterrupt or PinChangeInterrupt* pin of your Arduino board
 #define pinIR 2
-#define pinSendIR 3
 #define IRL_DEBOUCE 300
 CIRLremote<IRL_DEBOUCE, IR_NEC, IR_SONY12, IR_PANASONIC> IRLremote;
 
@@ -80,17 +78,6 @@ void loop() {
     Serial.println(IRLremote.getAddress(), HEX);
     Serial.print(F("Command:"));
     Serial.println(IRLremote.getCommand(), HEX);
-    
-        // check if the input was a specific signal and send another signal out
-    if (IRLremote.getProtocol() == IR_PANASONIC && IRLremote.getAddress() == 0x2002 && IRLremote.getCommand() == 0x813D1CA0) {
-      // send the data, no pin setting to OUTPUT needed
-      Serial.println();
-      Serial.println(F("Sending..."));
-      uint16_t address = 0x6361;
-      uint32_t command = 0xFE01;
-
-      IRLwrite<IR_NEC>(pinSendIR, address, command);
-    }
 
     // release IRLremote for a new reading
     IRLremote.reset();
