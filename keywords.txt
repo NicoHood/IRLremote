@@ -10,24 +10,14 @@
 # Methods and Functions (KEYWORD2)
 #######################################
 
+begin	KEYWORD2
+end	KEYWORD2
+available	KEYWORD2
+getProtocol	KEYWORD2
+getAddress	KEYWORD2
+getCommand	KEYWORD2
+reset	KEYWORD2
 
-IREvent	KEYWORD2
-IRLinterrupt	KEYWORD2
-
-IRLcheckInverse0	KEYWORD2
-IRLcheckInverse1	KEYWORD2
-IRLcheckHolding	KEYWORD2
-IRLcheckXOR0	KEYWORD2
-IRLdecode	KEYWORD2
-
-decodeIR	KEYWORD2
-decodeALL	KEYWORD2
-decodeNec	KEYWORD2
-decodePanasonic	KEYWORD2
-decodeSony8	KEYWORD2
-decodeSony12	KEYWORD2
-decodeSony15	KEYWORD2
-decodeSony20	KEYWORD2
 
 IRLwrite	KEYWORD2
 
@@ -37,6 +27,8 @@ IRLspace	KEYWORD2
 #######################################
 # Instances (KEYWORD2)
 #######################################
+
+IRLremote	KEYWORD1
 
 #######################################
 # Constants (LITERAL1)
@@ -51,9 +43,6 @@ IR_SONY8	LITERAL1
 IR_SONY12	LITERAL1
 IR_SONY15	LITERAL1
 IR_SONY20	LITERAL1
-
-IR_EXTRA_ACCURACY	LITERAL1
-IR_NO_EXTRA_ACCURACY	LITERAL1
 
 IR_ADDRESS_FIRST	LITERAL1
 IR_COMMAND_FIRST	LITERAL1

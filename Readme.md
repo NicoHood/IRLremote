@@ -1,4 +1,4 @@
-IRLremote 1.7.4
+IRLremote 1.8.0
 ===============
 
 ![Infrared Picture](header.jpg)
@@ -18,7 +18,6 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Uses PinInterrupt or PinChangeInterrupts/No timer needed
 * Usable on almost any pin
 * Perfect for Attinys
-* Written in C, only uses C++ templates
 * IDE 1.6.x compatible
 
 **Supported Protocols**
@@ -33,6 +32,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Improve bit banging PWM?
 * Add Raw dump + sending option + improve raw function
 * Add High/Low compare for unknown protocols
+* Raw: add copyable array print version
 
 [Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
 
@@ -102,7 +102,7 @@ Informations about IR protocols can be found [here](http://www.hifi-remote.com/j
 You can also ask me to implement any new protocol, just file it as issue on Github or contact me on my blog.
 
 More projects + contact can be found here:
-http://nicohood.wordpress.com/
+http://www.NicoHood.de
 
 How it works
 ============
@@ -146,9 +146,35 @@ to get maximum optimization.
 This text should not attack the library from Ken. It's a great library with a lot of work and the most used IR library yet.
 It is just worth a comparison and might be still useful like the old SoftSerial against the new one.
 
+Links
+=====
+
+* http://www.mikrocontroller.net/articles/IRMP#Literatur
+* JCV/Panasonic/Japan/KASEIKYO
+ * http://www.mikrocontroller.net/attachment/4246/IR-Protokolle_Diplomarbeit.pdf
+ * http://www.roboternetz.de/phpBB2/files/entwicklung_und_realisierung_einer_universalinfrarotfernbedienung_mit_timerfunktionen.pdf
+* Sony
+ * http://picprojects.org.uk/projects/sirc/sonysirc.pdf
+ * http://www.benryves.com/products/sonyir/
+ * http://www.righto.com/2010/03/understanding-sony-ir-remote-codes-lirc.html
+* NEC
+ * http://techdocs.altium.com/display/FPGA/NEC+Infrared+Transmission+Protocol
+ * http://www.sbprojects.com/knowledge/ir/nec.php
+
 Version History
 ===============
 ```
+1.8.0 Release (xx.xx.2015)
+* Added API as class
+* Fixed NEC Timeout value
+* NEC repeat code now integrated
+* Fixed Sony12 address
+* Added debounce
+* More flexible selection of protocols
+* PinChangeInterrupt library dynamically used
+* Added F() makro for examples
+* Removed older examples
+
 1.7.4 Release (19.04.2015)
 * Updated examples
 * Added PinChangeInterrupt example
