@@ -29,14 +29,14 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
-// delay_basic is only for avrs. With ARM sending is currently not possible
-#ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
-#endif
-
 // include PinChangeInterrupt library if available
 #ifdef PCINT_VERSION
 #include "PinChangeInterrupt.h"
+#endif
+
+// delay_basic is only for avrs. With ARM sending is currently not possible
+#ifdef ARDUINO_ARCH_AVR
+#include <util/delay_basic.h>
 #endif
 
 //================================================================================
@@ -85,7 +85,7 @@ public:
 	static uint32_t getCommand(void);
 	static void reset(void);
 
-private:
+protected:
 	// interrupt function that is attached
 	static void IRLinterrupt(void);
 

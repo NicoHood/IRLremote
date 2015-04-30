@@ -32,19 +32,6 @@ THE SOFTWARE.
 #define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
 #define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
 
-// definition to get the higher value
-#define MAX(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
-
-// definition to get the lower value
-#define MIN(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
-
-
 //================================================================================
 // User Functions
 //================================================================================
@@ -119,6 +106,7 @@ inline uint16_t CIRLremote<debounce, irProtocol...>::
 getAddress(void){
 	// only return if protocol != 0
 	// this is needed to store the old value for button holding
+	//TODO need this check?
 	if (protocol)
 		return address;
 	else
