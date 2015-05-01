@@ -79,11 +79,11 @@ public:
 	bool end(uint8_t pin);
 
 	// user access to the libraries data
-	static bool available(void);
-	static uint8_t getProtocol(void);
-	static uint16_t getAddress(void);
-	static uint32_t getCommand(void);
-	static void reset(void);
+	static bool available(void) __attribute__((always_inline));
+	static uint8_t getProtocol(void) __attribute__((always_inline));
+	static uint16_t getAddress(void) __attribute__((always_inline));
+	static uint32_t getCommand(void) __attribute__((always_inline));
+	static void reset(void) __attribute__((always_inline));
 
 protected:
 	// interrupt function that is attached
@@ -103,7 +103,7 @@ protected:
 	template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 		uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 		uint16_t markTimeout, uint16_t spaceTimeout>
-		static uint8_t IRLdecode(uint16_t duration, uint8_t data[]) __attribute__((always_inline));
+		static bool IRLdecode(uint16_t duration, uint8_t data[], uint8_t &count) __attribute__((always_inline));
 	
 	// variables to save received data
 	static uint8_t protocol;

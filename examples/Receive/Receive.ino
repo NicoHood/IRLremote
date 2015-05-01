@@ -54,7 +54,7 @@ void loop() {
 
     // print protocol number
     Serial.println();
-    Serial.print(F("Protocol:"));
+    Serial.print(F("Protocol: "));
     Serial.print(IRLremote.getProtocol());
 
     // see readme to terminate what number is for each protocol
@@ -74,9 +74,9 @@ void loop() {
     }
 
     // print the protocol data
-    Serial.print(F("Address:"));
+    Serial.print(F("Address: 0x"));
     Serial.println(IRLremote.getAddress(), HEX);
-    Serial.print(F("Command:"));
+    Serial.print(F("Command: 0x"));
     Serial.println(IRLremote.getCommand(), HEX);
 
     // release IRLremote for a new reading
@@ -84,4 +84,3 @@ void loop() {
     digitalWrite(pinLed, LOW);
   }
 }
-

@@ -33,6 +33,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Add Raw dump + sending option + improve raw function
 * Add High/Low compare for unknown protocols
 * Raw: add copyable array print version
+* Implement Sony 8, 15, 20
 
 [Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
 

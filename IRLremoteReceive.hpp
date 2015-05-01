@@ -90,7 +90,11 @@ end(uint8_t pin){
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
 available(void){
+	// TODO if more sony protocols are supported give the protocol some more time to finish or abort
+	//if (micros() - lastEvent > (SONY_MARK_ZERO + SONY_MARK_ONE))
 	return ((protocol > 0) ? true : false);
+	//else
+	//	return false;
 }
 
 
@@ -104,31 +108,31 @@ getProtocol(void){
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint16_t CIRLremote<debounce, irProtocol...>::
 getAddress(void){
-	// only return if protocol != 0
-	// this is needed to store the old value for button holding
-	//TODO need this check?
-	if (protocol)
-		return address;
-	else
-		return 0;
+	// value will be kept after a reset() for button holding
+	// protocol check removed due to more overhead
+	//if (protocol)
+	return address;
+	//else
+	//	return 0;
 }
 
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint32_t CIRLremote<debounce, irProtocol...>::
 getCommand(void){
-	// only return if protocol != 0
-	// this is needed to store the old value for button holding
-	if (protocol)
-		return command;
-	else
-		return 0;
+	// value will be kept after a reset() for button holding
+	// protocol check removed due to more overhead
+	//if (protocol)
+	return command;
+	//else
+	//	return 0;
 }
 
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 reset(void){
+	// the other values are kept after reading for button holding
 	protocol = 0;
 }
 
@@ -156,14 +160,10 @@ IRLinterrupt(void){
 	else
 	{
 		// go through all known protocols and decode with more (resource unfriendly) accuration
-		// order of evaluation of function arguments is not specified.
-		// that's why this compiles with the optimal size.
-		//TODO check if its REALLY always the optimal order
-		nop(
-			(decode<IR_NEC>(duration), 0),
-			(decode<IR_PANASONIC>(duration), 0),
-			(decode<IR_SONY12>(duration), 0)
-			);
+		// reorder the protocols to get the optimal sketch size
+		decode<IR_SONY12>(duration);
+		decode<IR_PANASONIC>(duration);
+		decode<IR_NEC>(duration);
 	}
 }
 
@@ -179,14 +179,18 @@ IREvent(uint8_t p, uint16_t a, uint32_t c) {
 	// do not use Serial inside, it can crash your program!
 
 	// dont update value if we already have a signal
-	//TODO still update if it is a longer sony signal?
-	if (protocol)
+	if (protocol){
+		// check if we have a longer sony signal
+		// TODO also check if sony is selected via the template, only then do this compare
+		//if (protocol == IR_SONY12 && p == IR_SONY15)
+		//	/* continue */;
+		//else
 		return;
+	}
 
 	// check if the command is the same and if the last signal was received too fast
 	// do not save the new time, to not block forever if the user is holding a button
 	// this way you can still realize things like: hold a button to increase the volume
-	//TODO check if command is the same?
 	if (/*(command == c) && */((lastTime - lastEvent) < (debounce * 1000UL)))
 		return;
 
@@ -246,9 +250,10 @@ inline void CIRLremote<debounce, irProtocol...>::
 decodeNec(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[NEC_BLOCKS];
+	static uint8_t count = 0;
 
 	// pass the duration to the decoding function
-	uint8_t newInput;
+	bool newInput;
 	// no accuracy set at the moment, no conflict detected yet
 	// probably due to the checksum
 	//if (sizeof...(irProtocol) != 1)
@@ -257,16 +262,18 @@ decodeNec(const uint16_t duration){
 		(NEC_SPACE_HOLDING + NEC_SPACE_ONE) / 2, 0, // spaceLeadHoldingThreshold, markThreshold
 		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data);
+		(duration, data, count);
 	//else
 
-	if (newInput == 2)
-		buttonHolding<IR_NEC>();
 
-	else if (newInput){
+	if (newInput){
+		// check for button holding
+		if (count == 2)
+			buttonHolding<IR_NEC>();
+
 		// Check if the protcol's checksum is correct
 		// check if byte 0 and is the inverse of byte 1
-		if (uint8_t((data[2] ^ (~data[3]))) == 0x00){
+		else if (uint8_t((data[2] ^ (~data[3]))) == 0x00){
 			// normally NEC also check for the inverse of the address.
 			// newer remotes dont have this because of the wide used protocol all addresses were already used
 			// to make it less complicated its left out and the user can check the command inverse himself if needed
@@ -279,6 +286,9 @@ decodeNec(const uint16_t duration){
 			uint32_t command = UINT16_AT_OFFSET(data, 2);
 			IREvent(IR_NEC, address, command);
 		}
+
+		// reset reading
+		count = 0;
 	}
 }
 
@@ -288,16 +298,17 @@ inline void CIRLremote<debounce, irProtocol...>::
 decodePanasonic(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[PANASONIC_BLOCKS];
+	static uint8_t count = 0;
 
 	// pass the duration to the decoding function
-	uint8_t newInput;
+	bool newInput;
 	//if (sizeof...(irProtocol) != 1) // no accuracy set at the moment, no conflict detected yet
 	newInput = IRLdecode <PANASONIC_LENGTH, (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(PANASONIC_MARK_LEAD + PANASONIC_SPACE_ONE) / 2, (PANASONIC_SPACE_LEAD + PANASONIC_SPACE_ONE) / 2, // markLeadThreshold, spaceLeadThreshold
 		0, 0, // spaceLeadHoldingThreshold, markThreshold
 		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data);
+		(duration, data, count);
 	//else
 
 	if (newInput){
@@ -307,7 +318,7 @@ decodePanasonic(const uint16_t duration){
 			//uint8_t XOR = data[0] ^ data[1];
 			//if ((XOR & 0x0F ^ (XOR >> 4)) != 0x00)
 			//	return;
-			
+
 			// address represents vendor(16)
 			uint16_t address = UINT16_AT_OFFSET(data, 0);
 
@@ -316,6 +327,9 @@ decodePanasonic(const uint16_t duration){
 			uint32_t command = UINT32_AT_OFFSET(data, 2);			IREvent(IR_PANASONIC, address, command);
 			return;
 		}
+
+		// reset reading
+		count = 0;
 	}
 }
 
@@ -325,9 +339,10 @@ inline void CIRLremote<debounce, irProtocol...>::
 decodeSony12(const uint16_t duration){
 	// temporary buffer to hold bytes for decoding this protocol
 	static uint8_t data[SONY_BLOCKS_12];
+	static uint8_t count = 0;
 
 	// pass the duration to the decoding function
-	uint8_t newInput;
+	bool newInput;
 	// 1st extra accuracy solution
 	if (sizeof...(irProtocol) != 1)
 		newInput = IRLdecode <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
@@ -335,14 +350,14 @@ decodeSony12(const uint16_t duration){
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, SONY_MARK_ONE>// markTimeout, spaceTimeout
-		(duration, data);
+		(duration, data, count);
 	else
 		newInput = IRLdecode <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data);
+		(duration, data, count);
 
 	if (newInput){
 		// protocol has no checksum
@@ -356,7 +371,9 @@ decodeSony12(const uint16_t duration){
 		// 2nd extra accuracy solution
 		//if ((sizeof...(irProtocol) != 1) && (address || command))
 		IREvent(IR_SONY12, address, command);
-		return;
+
+		// reset reading
+		count = 0;
 	}
 }
 
@@ -365,11 +382,8 @@ template <uint32_t debounce, IRType ...irProtocol>
 template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 	uint16_t markTimeout, uint16_t spaceTimeout>
-	inline uint8_t CIRLremote<debounce, irProtocol...>::
-	IRLdecode(uint16_t duration, uint8_t data[]){
-
-	// variables for ir processing
-	static uint8_t count = 0;
+	inline bool CIRLremote<debounce, irProtocol...>::
+	IRLdecode(uint16_t duration, uint8_t data[], uint8_t &count){
 
 	// if timeout always start next possible reading and abort any pending readings
 	if (duration >= timeoutThreshold)
@@ -422,7 +436,8 @@ template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshol
 
 				// check last input (always a mark)
 				if (count > irLength){
-					count = 0;
+					// reset by decoding function
+					//count = 0;
 					return true;
 				}
 			}
@@ -437,10 +452,10 @@ template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshol
 
 				// Button holding (if supported by protocol)
 				else if (spaceLeadHoldingThreshold && duration > spaceLeadHoldingThreshold){
-					// call the holding function after (return 2)
-					//TODO improve return value
-					count = 0;
-					return 2;
+					// call the holding function after
+					// count not reseted to read it afterwards
+					//count = 0;
+					return true;
 				}
 				// wrong space
 				else {
