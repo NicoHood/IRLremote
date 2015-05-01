@@ -318,7 +318,6 @@ decodePanasonic(const uint16_t duration){
 			// command represents (MSB to LSB):
 			// vendor parity(4), genre1(4), genre2(4), data(10), ID(2), parity(8)
 			uint32_t command = UINT32_AT_OFFSET(dataPanasonic, 2);			IREvent(IR_PANASONIC, address, command);
-			return;
 		}
 
 		// reset reading
