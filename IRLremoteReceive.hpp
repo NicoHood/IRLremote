@@ -151,20 +151,17 @@ IRLinterrupt(void){
 	if (duration_32 <= 0xFFFF)
 		duration = duration_32;
 
+	// go through all known protocols and decode if they are selected
 	// check if the user specified the protocols
-	if (sizeof...(irProtocol) > 0)
-	{
-		// decode all specified protocols
-		nop((decode<irProtocol>(duration), 0)...);
-	}
-	else
-	{
-		// go through all known protocols and decode with more (resource unfriendly) accuration
-		// reorder the protocols to get the optimal sketch size
-		decode<IR_SONY12>(duration);
-		decode<IR_PANASONIC>(duration);
-		decode<IR_NEC>(duration);
-	}
+	// reorder the protocols to get the optimal sketch size
+	if (protocolAvailable<IR_SONY12>())
+		decodeSony12(duration);
+	if (protocolAvailable<IR_PANASONIC>())
+		decodePanasonic(duration);
+	if (protocolAvailable<IR_NEC>())
+		decodeNec(duration);
+	if (protocolAvailable<IR_SONY20>())
+		decodeSony20(duration);
 }
 
 
@@ -232,19 +229,21 @@ buttonHolding(void){
 
 template <uint32_t debounce, IRType ...irProtocol>
 template <IRType ir>
-inline void CIRLremote<debounce, irProtocol...>::
-decode(uint16_t duration){
-	if (ir == IR_NEC)
-		decodeNec(duration);
+inline bool CIRLremote<debounce, irProtocol...>::
+protocolAvailable(void) {
+	if (sizeof...(irProtocol) == 0)
+		return true;
 
-	else if (ir == IR_PANASONIC)
-		decodePanasonic(duration);
+	// unroll all used protocols in array and check if its the needed one
+	bool inArray[]{
+		((irProtocol == ir) ? true : false)...
+	};
 
-	else if (ir == IR_SONY12)
-		decodeSony12(duration);
-
-	else if (ir == IR_SONY20)
-		decodeSony20(duration);
+	// go through all protocols and check if the needed one is there
+	for (uint8_t i = 0; i < sizeof...(irProtocol); i++)
+		if (inArray[i] == true)
+			return true;
+	return false;
 }
 
 

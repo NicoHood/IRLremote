@@ -94,7 +94,7 @@ protected:
 	template <IRType ir> static void buttonHolding(void);
 
 	// decode functions
-	template <IRType ir> static void decode(uint16_t duration) __attribute__((always_inline));
+	template <IRType ir> static bool protocolAvailable(void) __attribute__((always_inline));
 	static void decodeNec(const uint16_t duration) __attribute__((always_inline));
 	static void decodePanasonic(const uint16_t duration) __attribute__((always_inline));
 	static void decodeSony12(const uint16_t duration) __attribute__((always_inline));
@@ -105,7 +105,7 @@ protected:
 		uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 		uint16_t markTimeout, uint16_t spaceTimeout>
 		static bool IRLdecode(uint16_t duration, uint8_t data[], uint8_t &count) __attribute__((always_inline));
-	
+
 	// variables to save received data
 	static uint8_t protocol;
 	static uint16_t address;
@@ -117,11 +117,6 @@ protected:
 
 	//TODO
 	static uint32_t k[30];
-
-	static void nop(...) {
-		// little hack to take as many arguments as possible
-		// to execute several functions for the analogPins
-	}
 };
 
 // implementation inline, moved to another .hpp file
