@@ -98,6 +98,7 @@ protected:
 	static void decodeNec(const uint16_t duration) __attribute__((always_inline));
 	static void decodePanasonic(const uint16_t duration) __attribute__((always_inline));
 	static void decodeSony12(const uint16_t duration) __attribute__((always_inline));
+	static void decodeSony20(const uint16_t duration) __attribute__((always_inline));
 
 	// multifunctional template for receiving
 	template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,

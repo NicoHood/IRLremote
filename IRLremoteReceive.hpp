@@ -242,6 +242,9 @@ decode(uint16_t duration){
 
 	else if (ir == IR_SONY12)
 		decodeSony12(duration);
+
+	else if (ir == IR_SONY20)
+		decodeSony20(duration);
 }
 
 
@@ -264,7 +267,6 @@ decodeNec(const uint16_t duration){
 		0, 0>// markTimeout, spaceTimeout
 		(duration, data, count);
 	//else
-
 
 	if (newInput){
 		// check for button holding
@@ -371,6 +373,47 @@ decodeSony12(const uint16_t duration){
 		// 2nd extra accuracy solution
 		//if ((sizeof...(irProtocol) != 1) && (address || command))
 		IREvent(IR_SONY12, address, command);
+
+		// reset reading
+		count = 0;
+	}
+}
+
+
+template <uint32_t debounce, IRType ...irProtocol>
+inline void CIRLremote<debounce, irProtocol...>::
+decodeSony20(const uint16_t duration){
+	// temporary buffer to hold bytes for decoding this protocol
+	static uint8_t data[SONY_BLOCKS_20];
+	static uint8_t count = 0;
+
+	// pass the duration to the decoding function
+	bool newInput;
+	// 1st extra accuracy solution
+	if (sizeof...(irProtocol) != 1)
+		newInput = IRLdecode <SONY_LENGTH_20, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
+		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
+		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
+		0, // spaceThreshold
+		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, SONY_MARK_ONE>// markTimeout, spaceTimeout
+		(duration, data, count);
+	else
+		newInput = IRLdecode <SONY_LENGTH_20, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
+		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
+		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
+		0, // spaceThreshold
+		0, 0>// markTimeout, spaceTimeout
+		(duration, data, count);
+
+	if (newInput){
+		// protocol has no checksum
+		uint8_t upper5Bits = ((data[2] >> 2) & 0x3E);
+		uint8_t lsb = (data[0] >> 7) & 0x01;
+		uint16_t address = (upper5Bits << 8) | (data[1] << 1) | lsb;
+		uint32_t command = data[0] & 0x7F;
+		// 2nd extra accuracy solution
+		//if ((sizeof...(irProtocol) != 1) && (address || command))
+		IREvent(IR_SONY20, address, command);
 
 		// reset reading
 		count = 0;
