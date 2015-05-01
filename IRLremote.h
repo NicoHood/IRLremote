@@ -115,6 +115,17 @@ protected:
 	static uint32_t lastTime;
 	static uint32_t lastEvent;
 
+	// temporary buffer to hold bytes for decoding the protocols
+	// not all of them are compiled, only the used ones
+	static uint8_t dataNec[NEC_BLOCKS];
+	static uint8_t countNec;
+	static uint8_t dataPanasonic[PANASONIC_BLOCKS];
+	static uint8_t countPanasonic;
+	static uint8_t dataSony12[SONY_BLOCKS_12];
+	static uint8_t countSony12;
+	static uint8_t dataSony20[SONY_BLOCKS_20];
+	static uint8_t countSony20;
+
 	//TODO
 	static uint32_t k[30];
 };

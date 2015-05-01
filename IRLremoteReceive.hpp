@@ -250,10 +250,6 @@ protocolAvailable(void) {
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 decodeNec(const uint16_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[NEC_BLOCKS];
-	static uint8_t count = 0;
-
 	// pass the duration to the decoding function
 	bool newInput;
 	// no accuracy set at the moment, no conflict detected yet
@@ -264,17 +260,17 @@ decodeNec(const uint16_t duration){
 		(NEC_SPACE_HOLDING + NEC_SPACE_ONE) / 2, 0, // spaceLeadHoldingThreshold, markThreshold
 		(NEC_SPACE_ONE + NEC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataNec, countNec);
 	//else
 
 	if (newInput){
 		// check for button holding
-		if (count == 2)
+		if (countNec == 2)
 			buttonHolding<IR_NEC>();
 
 		// Check if the protcol's checksum is correct
 		// check if byte 0 and is the inverse of byte 1
-		else if (uint8_t((data[2] ^ (~data[3]))) == 0x00){
+		else if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00){
 			// normally NEC also check for the inverse of the address.
 			// newer remotes dont have this because of the wide used protocol all addresses were already used
 			// to make it less complicated its left out and the user can check the command inverse himself if needed
@@ -283,13 +279,13 @@ decodeNec(const uint16_t duration){
 			//	return;
 
 			// save address + command and trigger event
-			uint16_t address = UINT16_AT_OFFSET(data, 0);
-			uint32_t command = UINT16_AT_OFFSET(data, 2);
+			uint16_t address = UINT16_AT_OFFSET(dataNec, 0);
+			uint32_t command = UINT16_AT_OFFSET(dataNec, 2);
 			IREvent(IR_NEC, address, command);
 		}
 
 		// reset reading
-		count = 0;
+		countNec = 0;
 	}
 }
 
@@ -297,10 +293,6 @@ decodeNec(const uint16_t duration){
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 decodePanasonic(const uint16_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[PANASONIC_BLOCKS];
-	static uint8_t count = 0;
-
 	// pass the duration to the decoding function
 	bool newInput;
 	//if (sizeof...(irProtocol) != 1) // no accuracy set at the moment, no conflict detected yet
@@ -309,28 +301,28 @@ decodePanasonic(const uint16_t duration){
 		0, 0, // spaceLeadHoldingThreshold, markThreshold
 		(PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataPanasonic, countPanasonic);
 	//else
 
 	if (newInput){
 		// Check if the protcol's checksum is correct
-		if (uint8_t(data[2] ^ data[3] ^ data[4]) == data[5]){
+		if (uint8_t(dataPanasonic[2] ^ dataPanasonic[3] ^ dataPanasonic[4]) == dataPanasonic[5]){
 			// check vendor parity nibble (optional)
 			//uint8_t XOR = data[0] ^ data[1];
 			//if ((XOR & 0x0F ^ (XOR >> 4)) != 0x00)
 			//	return;
 
 			// address represents vendor(16)
-			uint16_t address = UINT16_AT_OFFSET(data, 0);
+			uint16_t address = UINT16_AT_OFFSET(dataPanasonic, 0);
 
 			// command represents (MSB to LSB):
 			// vendor parity(4), genre1(4), genre2(4), data(10), ID(2), parity(8)
-			uint32_t command = UINT32_AT_OFFSET(data, 2);			IREvent(IR_PANASONIC, address, command);
+			uint32_t command = UINT32_AT_OFFSET(dataPanasonic, 2);			IREvent(IR_PANASONIC, address, command);
 			return;
 		}
 
 		// reset reading
-		count = 0;
+		countPanasonic = 0;
 	}
 }
 
@@ -338,10 +330,6 @@ decodePanasonic(const uint16_t duration){
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 decodeSony12(const uint16_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[SONY_BLOCKS_12];
-	static uint8_t count = 0;
-
 	// pass the duration to the decoding function
 	bool newInput;
 	// 1st extra accuracy solution
@@ -351,30 +339,30 @@ decodeSony12(const uint16_t duration){
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, SONY_MARK_ONE>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataSony12, countSony12);
 	else
 		newInput = IRLdecode <SONY_LENGTH_12, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataSony12, countSony12);
 
 	if (newInput){
 		// protocol has no checksum
-		uint8_t upper4Bits = ((data[1] >> 3) & 0x1E);
-		if (data[0] & 0x80)
+		uint8_t upper4Bits = ((dataSony12[1] >> 3) & 0x1E);
+		if (dataSony12[0] & 0x80)
 			upper4Bits |= 0x01;
 		else
 			upper4Bits &= ~0x01;
 		uint16_t address = upper4Bits;
-		uint32_t command = data[0] & 0x7F;
+		uint32_t command = dataSony12[0] & 0x7F;
 		// 2nd extra accuracy solution
 		//if ((sizeof...(irProtocol) != 1) && (address || command))
 		IREvent(IR_SONY12, address, command);
 
 		// reset reading
-		count = 0;
+		countSony12 = 0;
 	}
 }
 
@@ -382,10 +370,6 @@ decodeSony12(const uint16_t duration){
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 decodeSony20(const uint16_t duration){
-	// temporary buffer to hold bytes for decoding this protocol
-	static uint8_t data[SONY_BLOCKS_20];
-	static uint8_t count = 0;
-
 	// pass the duration to the decoding function
 	bool newInput;
 	// 1st extra accuracy solution
@@ -395,27 +379,27 @@ decodeSony20(const uint16_t duration){
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, SONY_MARK_ONE>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataSony20, countSony20);
 	else
 		newInput = IRLdecode <SONY_LENGTH_20, (SONY_TIMEOUT + SONY_MARK_LEAD) / 2, // irLength, timeoutThreshold
 		(SONY_MARK_LEAD + SONY_MARK_ONE) / 2, 0, // markLeadThreshold, spaceLeadThreshold
 		0, (SONY_MARK_ONE + SONY_MARK_ZERO) / 2, // spaceLeadHoldingThreshold, markThreshold
 		0, // spaceThreshold
 		0, 0>// markTimeout, spaceTimeout
-		(duration, data, count);
+		(duration, dataSony20, countSony20);
 
 	if (newInput){
 		// protocol has no checksum
-		uint8_t upper5Bits = ((data[2] >> 2) & 0x3E);
-		uint8_t lsb = (data[0] >> 7) & 0x01;
-		uint16_t address = (upper5Bits << 8) | (data[1] << 1) | lsb;
-		uint32_t command = data[0] & 0x7F;
+		uint8_t upper5Bits = ((dataSony20[2] >> 2) & 0x3E);
+		uint8_t lsb = (dataSony20[0] >> 7) & 0x01;
+		uint16_t address = (upper5Bits << 8) | (dataSony20[1] << 1) | lsb;
+		uint32_t command = dataSony20[0] & 0x7F;
 		// 2nd extra accuracy solution
 		//if ((sizeof...(irProtocol) != 1) && (address || command))
 		IREvent(IR_SONY20, address, command);
 
 		// reset reading
-		count = 0;
+		countSony20 = 0;
 	}
 }
 
@@ -566,6 +550,38 @@ address = 0;
 template <uint32_t debounce, IRType ...irProtocol>
 uint32_t CIRLremote<debounce, irProtocol...>::
 command = 0;
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+countNec = 0;
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+dataNec[NEC_BLOCKS] = { 0 };
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+countPanasonic = 0;
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+dataPanasonic[PANASONIC_BLOCKS] = { 0 };
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+countSony12 = 0;
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+dataSony12[SONY_BLOCKS_12] = { 0 };
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+countSony20 = 0;
+
+template <uint32_t debounce, IRType ...irProtocol>
+uint8_t CIRLremote<debounce, irProtocol...>::
+dataSony20[SONY_BLOCKS_20] = { 0 };
 
 template <uint32_t debounce, IRType ...irProtocol>
 uint32_t CIRLremote<debounce, irProtocol...>::
