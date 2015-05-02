@@ -25,7 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 // software version
-#define IRL_VERSION 180
+#define IRL_VERSION 181
 
 #include <Arduino.h>
 
@@ -63,6 +63,13 @@ typedef enum IRType{
 	// add new protocols here
 };
 
+typedef struct IR_data_t{
+	// variables to save received data
+	uint8_t protocol;
+	uint16_t address;
+	uint32_t command;
+};
+
 
 //================================================================================
 // Receive
@@ -78,26 +85,27 @@ public:
 	bool begin(uint8_t pin);
 	bool end(uint8_t pin);
 
-	// user access to the libraries data
-	static bool available(void) __attribute__((always_inline));
+	//TODO remove
 	static uint8_t getProtocol(void) __attribute__((always_inline));
 	static uint16_t getAddress(void) __attribute__((always_inline));
 	static uint32_t getCommand(void) __attribute__((always_inline));
 	static void reset(void) __attribute__((always_inline));
+
+	// user access to the libraries data
+	static bool available(void) __attribute__((always_inline));
+	static IR_data_t read(void); __attribute__((always_inline));
 
 protected:
 	// interrupt function that is attached
 	static void IRLinterrupt(void);
 
 	// event functions on a valid protocol
-	static void IREvent(uint8_t p, uint16_t a, uint32_t c);
-	template <IRType ir> static void buttonHolding(void);
+	static void IREvent(uint8_t p);
 
 	// decode functions
-	template <IRType ir> static bool protocolAvailable(void) __attribute__((always_inline));
-	static void decodeNec(const uint16_t duration) __attribute__((always_inline));
-	static void decodePanasonic(const uint16_t duration) __attribute__((always_inline));
-	static void decodeSony12(const uint16_t duration) __attribute__((always_inline));
+	static uint8_t decodeNec(const uint16_t duration) __attribute__((always_inline));
+	static uint8_t decodePanasonic(const uint16_t duration) __attribute__((always_inline));
+	static uint8_t decodeSony12(const uint16_t duration) __attribute__((always_inline));
 	static void decodeSony20(const uint16_t duration) __attribute__((always_inline));
 
 	// multifunctional template for receiving
@@ -108,8 +116,6 @@ protected:
 
 	// variables to save received data
 	static uint8_t protocol;
-	static uint16_t address;
-	static uint32_t command;
 
 	// time values for the last interrupt and the last valid protocol
 	static uint32_t lastTime;
@@ -126,8 +132,28 @@ protected:
 	static uint8_t dataSony20[SONY_BLOCKS_20];
 	static uint8_t countSony20;
 
-	//TODO
-	static uint32_t k[30];
+	// todo move to hpp, change names
+	// thanks to hs_ from the ##c++ channel on freenode
+	template <IRType ...Ns>
+	struct is_in;
+
+	template <IRType N, IRType M, IRType ...Ns>
+	struct is_in < N, M, Ns... >
+	{
+		static const bool value = (N == M) || is_in<N, Ns...>::value;
+	};
+
+	template <IRType N, IRType M>
+	struct is_in < N, M > {
+		static const bool value = (N == M);
+	};
+
+	template <IRType N>
+	struct is_in < N > {
+		// always return true (use any protocol) if no arguemnts were passed
+		static const bool value = true;
+	};
+
 };
 
 // implementation inline, moved to another .hpp file

@@ -1,4 +1,4 @@
-IRLremote 1.8.0
+IRLremote 1.8.1
 ===============
 
 ![Infrared Picture](header.jpg)
@@ -18,7 +18,7 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Uses PinInterrupt or PinChangeInterrupts/No timer needed
 * Usable on almost any pin
 * Perfect for Attinys
-* IDE 1.6.x compatible
+* IDE 1.6.x compatible (not 1.0.5 compatible)
 
 **Supported Protocols**
 * NEC
@@ -165,7 +165,7 @@ Links
 Version History
 ===============
 ```
-1.8.0 Release (xx.xx.2015)
+1.8.1 Release (xx.xx.2015)
 * Added API as class
 * Fixed NEC Timeout value
 * NEC repeat code now integrated
@@ -175,6 +175,9 @@ Version History
 * PinChangeInterrupt library dynamically used
 * Added F() makro for examples
 * Removed older examples
+* Removed the general decoding function to improve decoding functionality
+* New inputs are generated at runtime, saves flash and ram
+* Faster interrupt if valid signal was received
 
 1.7.4 Release (19.04.2015)
 * Updated examples

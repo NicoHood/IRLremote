@@ -13,11 +13,7 @@
 begin	KEYWORD2
 end	KEYWORD2
 available	KEYWORD2
-getProtocol	KEYWORD2
-getAddress	KEYWORD2
-getCommand	KEYWORD2
-reset	KEYWORD2
-
+read	KEYWORD2
 
 IRLwrite	KEYWORD2
 
