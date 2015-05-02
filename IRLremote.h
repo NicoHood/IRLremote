@@ -85,12 +85,6 @@ public:
 	bool begin(uint8_t pin);
 	bool end(uint8_t pin);
 
-	//TODO remove
-	static uint8_t getProtocol(void) __attribute__((always_inline));
-	static uint16_t getAddress(void) __attribute__((always_inline));
-	static uint32_t getCommand(void) __attribute__((always_inline));
-	static void reset(void) __attribute__((always_inline));
-
 	// user access to the libraries data
 	static bool available(void) __attribute__((always_inline));
 	static IR_data_t read(void); __attribute__((always_inline));
@@ -99,20 +93,17 @@ protected:
 	// interrupt function that is attached
 	static void IRLinterrupt(void);
 
-	// event functions on a valid protocol
-	static void IREvent(uint8_t p);
-
 	// decode functions
 	static uint8_t decodeNec(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodePanasonic(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodeSony12(const uint16_t duration) __attribute__((always_inline));
 	static void decodeSony20(const uint16_t duration) __attribute__((always_inline));
 
-	// multifunctional template for receiving
-	template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
-		uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
-		uint16_t markTimeout, uint16_t spaceTimeout>
-		static bool IRLdecode(uint16_t duration, uint8_t data[], uint8_t &count) __attribute__((always_inline));
+	//// multifunctional template for receiving
+	//template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
+	//	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
+	//	uint16_t markTimeout, uint16_t spaceTimeout>
+	//	static bool IRLdecode(uint16_t duration, uint8_t data[], uint8_t &count) __attribute__((always_inline));
 
 	// variables to save received data
 	static uint8_t protocol;

@@ -99,70 +99,6 @@ available(void){
 
 
 template <uint32_t debounce, IRType ...irProtocol>
-inline void CIRLremote<debounce, irProtocol...>::
-IRLinterrupt(void){
-	// block if another protocol is already recognized
-	if (protocol)
-		return;
-
-	// function called by the interrupt
-	//save the duration between the last reading
-	uint32_t time = micros();
-	uint32_t duration_32 = time - lastTime;
-	lastTime = time;
-
-	// calculate 16 bit duration. On overflow sets duration to a clear timeout
-	uint16_t duration = 0xFFFF;
-	if (duration_32 <= 0xFFFF)
-		duration = duration_32;
-
-	// go through all known protocols and decode if they are selected
-	// check if the user specified the protocols
-	// reorder the protocols to get the optimal sketch size
-
-	uint8_t p = 0;
-
-	//TODO return a bool for each function and abort interrupt if any returns true.
-	// then check for the protocol here and block. keep in mind the sony 12 -> 20 protocol
-	if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNec(duration)))
-		;
-	else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)))
-		;
-	else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)))
-		;
-	//TODO better sony 12, 20 support
-	//if (is_in<IR_SONY20, irProtocol...>::value)
-	//	decodeSony20(duration);
-
-	if (p)
-		IREvent(p);
-}
-
-
-//================================================================================
-// Event Functions
-//================================================================================
-
-template <uint32_t debounce, IRType ...irProtocol>
-inline void CIRLremote<debounce, irProtocol...>::
-IREvent(uint8_t p){
-	// check if the last signal was received too fast
-	// do not save the new time, to not block forever if the user is holding a button
-	// this way you can still realize things like: hold a button to increase the volume
-	if ((lastTime - lastEvent) < (debounce * 1000UL))
-		return;
-
-	// update values
-	lastEvent = lastTime;
-	protocol = p;
-}
-
-
-//================================================================================
-// Decode Functions
-//================================================================================
-
-template <uint32_t debounce, IRType ...irProtocol>
 inline IR_data_t CIRLremote<debounce, irProtocol...>::
 read(void) {
 	//TODO maybe disable interrupts for the sony stuff later on
@@ -211,6 +147,65 @@ read(void) {
 	// return the new protocol information to the user
 	return data;
 }
+
+
+//================================================================================
+// Interrupt Function
+//================================================================================
+
+template <uint32_t debounce, IRType ...irProtocol>
+inline void CIRLremote<debounce, irProtocol...>::
+IRLinterrupt(void){
+	// block if another protocol is already recognized
+	if (protocol)
+		return;
+
+	// function called by the interrupt
+	//save the duration between the last reading
+	uint32_t time = micros();
+	uint32_t duration_32 = time - lastTime;
+	lastTime = time;
+
+	// calculate 16 bit duration. On overflow sets duration to a clear timeout
+	uint16_t duration = 0xFFFF;
+	if (duration_32 <= 0xFFFF)
+		duration = duration_32;
+
+	// go through all known protocols and decode if they are selected
+	// check if the user specified the protocols
+	// reorder the protocols to get the optimal sketch size
+
+	uint8_t p = 0;
+
+	//TODO return a bool for each function and abort interrupt if any returns true.
+	// then check for the protocol here and block. keep in mind the sony 12 -> 20 protocol
+	if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNec(duration)))
+		;
+	else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)))
+		;
+	else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)))
+		;
+	//TODO better sony 12, 20 support
+	//if (is_in<IR_SONY20, irProtocol...>::value)
+	//	decodeSony20(duration);
+
+	if (p){
+		// check if the last signal was received too fast
+		// do not save the new time, to not block forever if the user is holding a button
+		// this way you can still realize things like: hold a button to increase the volume
+		if ((lastTime - lastEvent) < (debounce * 1000UL))
+			return;
+
+		// update values
+		lastEvent = lastTime;
+		protocol = p;
+	}
+}
+
+
+//================================================================================
+// Decode Functions
+//================================================================================
 
 
 template <uint32_t debounce, IRType ...irProtocol>
