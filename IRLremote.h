@@ -94,6 +94,7 @@ protected:
 	static void IRLinterrupt(void);
 
 	// decode functions
+	static uint8_t decodeNecOnly(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodeNec(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodePanasonic(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodeSony12(const uint16_t duration) __attribute__((always_inline));

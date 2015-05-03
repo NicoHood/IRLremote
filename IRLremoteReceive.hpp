@@ -32,6 +32,7 @@ THE SOFTWARE.
 #define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
 #define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
 
+
 //================================================================================
 // User Functions
 //================================================================================
@@ -46,14 +47,23 @@ CIRLremote(void){
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
 begin(uint8_t pin){
+	// by default use the CHANGE flag
+	uint8_t flag = CHANGE;
+
+	// use different flags if only a single protocol is selected
+	if (sizeof...(irProtocol) == 1){
+		if (is_in<IR_NEC, irProtocol...>::value)
+			flag = FALLING;
+	}
+
 	// try to attach PinInterrupt first
 	if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT)
-		attachInterrupt(digitalPinToInterrupt(pin), IRLinterrupt, CHANGE);
+		attachInterrupt(digitalPinToInterrupt(pin), IRLinterrupt, flag);
 
 	// if PCINT library used, try to attach it
 #ifdef PCINT_VERSION
 	else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT)
-		attachPCINT(digitalPinToPCINT(pin), IRLinterrupt, CHANGE);
+		attachPCINT(digitalPinToPCINT(pin), IRLinterrupt, flag);
 #endif
 
 	// return an error if none of them work
@@ -90,11 +100,8 @@ end(uint8_t pin){
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
 available(void){
-	// TODO if more sony protocols are supported give the protocol some more time to finish or abort
-	//if (micros() - lastEvent > (SONY_MARK_ZERO + SONY_MARK_ONE))
+	// if a protocol is saved we have received new data
 	return ((protocol > 0) ? true : false);
-	//else
-	//	return false;
 }
 
 
@@ -179,12 +186,17 @@ IRLinterrupt(void){
 
 	//TODO return a bool for each function and abort interrupt if any returns true.
 	// then check for the protocol here and block. keep in mind the sony 12 -> 20 protocol
-	if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNec(duration)))
-		;
-	else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)))
-		;
-	else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)))
-		;
+	if (sizeof...(irProtocol) == 1){
+		// special optimized decoding functions if only a single protocol is selected
+		// uses a different interrupt setting most of the time (FALLING instead of CHANGE)
+		if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNecOnly(duration)));
+		else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)));
+		else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)));
+	}
+	else if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNec(duration)));
+	else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)));
+	else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)));
+
 	//TODO better sony 12, 20 support
 	//if (is_in<IR_SONY20, irProtocol...>::value)
 	//	decodeSony20(duration);
@@ -206,6 +218,96 @@ IRLinterrupt(void){
 //================================================================================
 // Decode Functions
 //================================================================================
+
+
+template <uint32_t debounce, IRType ...irProtocol>
+inline uint8_t CIRLremote<debounce, irProtocol...>::
+decodeNecOnly(const uint16_t duration){
+	// this decoding function only works on FALLING
+
+	// no special accuracy set at the moment, no conflict detected yet
+	// due to the checksum we got a good recognition
+	const uint8_t irLength = NEC_LENGTH / 2;
+	const uint16_t timeoutThreshold = (NEC_TIMEOUT + NEC_MARK_LEAD + NEC_SPACE_LEAD) / 2;
+	const uint16_t leadThreshold = (NEC_MARK_LEAD + NEC_SPACE_LEAD + NEC_MARK_LEAD + NEC_SPACE_HOLDING) / 2;
+	const uint16_t leadHoldingThreshold = (NEC_MARK_LEAD + NEC_SPACE_HOLDING + NEC_MARK_ONE + NEC_SPACE_ONE) / 2;
+	const uint16_t threshold = (NEC_MARK_ONE + NEC_SPACE_ONE + NEC_MARK_ZERO + NEC_SPACE_ZERO) / 2;
+
+	// if timeout always start next possible reading and abort any pending readings
+	if (duration >= timeoutThreshold)
+		countNec = 0;
+
+	// on a reset (error in decoding) we are waiting for a timeout to start a new reading again
+	// this is to not conflict with other protocols while they are sending 0/1
+	// which might be similar to a lead in this protocol
+	else if (countNec == 0)
+		return 0;
+
+	// check Mark Lead (needs a timeout or a correct signal)
+	else if (countNec == 1){
+		// wrong lead
+		if (duration < leadHoldingThreshold){
+			countNec = 0;
+			return 0;
+		}
+		else if (duration < leadThreshold){
+			// reset reading
+			countNec = 0;
+
+			// call the holding function after
+			// count not resetted to read it afterwards
+			// next mark ignored due to detecting techniques
+			//TODO comment
+			// check if the command is the same and if the last signal was received too fast
+			// do not save the new time, to not block forever if the user is holding a button
+			// this way you can still realize things like: hold a button to increase the volume
+			if ((lastTime - lastEvent) < (debounce * 1000UL + NEC_TIMEOUT_REPEAT))
+				return IR_NEC;
+
+			// last signal was too long ago
+			else
+				return 0;
+		}
+		// else normal lead, next reading
+	}
+
+	// pulses (mark + space)
+	else{
+		// check different logical space pulses
+
+		// get number of the Bits (starting from zero)
+		// substract the first lead pulse
+		uint8_t length = countNec - 2;
+
+		// move bits and write 1 or 0 depending on the duration
+		// 1.7: changed from MSB to LSB. somehow takes a bit more flash but is correct and easier to handle.
+		dataNec[length / 8] >>= 1;
+		// set bit if it's a logical 1. Setting zero not needed due to bitshifting.
+		if (duration >= threshold)
+			dataNec[length / 8] |= 0x80;
+
+		// last bit (stop bit)
+		if (countNec >= irLength){
+			// reset reading
+			countNec = 0;
+
+			// Check if the protcol's checksum is correct (byte 0 is the inverse of byte 1)
+			// normally NEC also check for the inverse of the address (byte 2 is the inverse of byte 3)
+			// newer remotes don't have this because of the wide used protocol all addresses were already used
+			// to make it less complicated it's left out and the user can check the command inverse himself if needed
+			if ((uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00) /*&& (uint8_t((data[0] ^ (~data[1]))) != 0x00)*/)
+				// new input, now check for debounce
+				return IR_NEC;
+
+			// checksum incorrect
+			else
+				return 0;
+		}
+	}
+
+	// next reading, no errors
+	countNec++;
+}
 
 
 template <uint32_t debounce, IRType ...irProtocol>
@@ -262,7 +364,7 @@ decodeNec(const uint16_t duration){
 				return IR_NEC;
 
 			// last signal was too long ago
-			else 
+			else
 				return 0;
 		}
 		// else normal Space, next reading
@@ -282,7 +384,7 @@ decodeNec(const uint16_t duration){
 			return IR_NEC;
 
 		// checksum incorrect
-		else 
+		else
 			return 0;
 	}
 
