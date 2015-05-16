@@ -31,7 +31,7 @@ THE SOFTWARE.
 //NEC
 //IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*)
 // Lead + Space logic
-#define NEC_HZ				38400UL
+#define NEC_HZ				38000UL
 #define NEC_PULSE			564UL
 #define NEC_BLOCKS			4
 #define NEC_ADDRESS_LENGTH	16

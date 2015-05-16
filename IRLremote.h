@@ -68,6 +68,8 @@ typedef struct IR_data_t{
 	uint8_t protocol;
 	uint16_t address;
 	uint32_t command;
+
+	//TODO add nec struct/panasonic with id, checsum etc
 };
 
 
@@ -96,6 +98,7 @@ protected:
 	// decode functions
 	static uint8_t decodeNecOnly(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodeNec(const uint16_t duration) __attribute__((always_inline));
+	static uint8_t decodePanasonicOnly(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodePanasonic(const uint16_t duration) __attribute__((always_inline));
 	static uint8_t decodeSony12(const uint16_t duration) __attribute__((always_inline));
 	static void decodeSony20(const uint16_t duration) __attribute__((always_inline));

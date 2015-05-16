@@ -51,8 +51,10 @@ begin(uint8_t pin){
 	uint8_t flag = CHANGE;
 
 	// use different flags if only a single protocol is selected
+	// does not apply to all protocols, such as sony (dont have a stop bit)
 	if (sizeof...(irProtocol) == 1){
-		if (is_in<IR_NEC, irProtocol...>::value)
+		if (is_in<IR_NEC, irProtocol...>::value
+			|| is_in<IR_PANASONIC, irProtocol...>::value)
 			flag = FALLING;
 	}
 
@@ -191,7 +193,7 @@ IRLinterrupt(void){
 		// uses a different interrupt setting most of the time (FALLING instead of CHANGE)
 		if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNecOnly(duration)));
 		else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)));
-		else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonic(duration)));
+		else if (is_in<IR_PANASONIC, irProtocol...>::value && (p = decodePanasonicOnly(duration)));
 	}
 	else if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNec(duration)));
 	else if (is_in<IR_SONY12, irProtocol...>::value && (p = decodeSony12(duration)));
@@ -218,7 +220,6 @@ IRLinterrupt(void){
 //================================================================================
 // Decode Functions
 //================================================================================
-
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
@@ -255,8 +256,7 @@ decodeNecOnly(const uint16_t duration){
 			countNec = 0;
 
 			// call the holding function after
-			// count not resetted to read it afterwards
-			// next mark ignored due to detecting techniques
+			// next mark (stop bit) ignored due to detecting techniques
 			//TODO comment
 			// check if the command is the same and if the last signal was received too fast
 			// do not save the new time, to not block forever if the user is holding a button
@@ -408,6 +408,77 @@ decodeNec(const uint16_t duration){
 
 	// next reading, no errors
 	countNec++;
+}
+
+
+template <uint32_t debounce, IRType ...irProtocol>
+inline uint8_t CIRLremote<debounce, irProtocol...>::
+decodePanasonicOnly(const uint16_t duration){
+	// no accuracy set at the moment, no conflict detected yet
+	// due to the checksum we got a good recognition
+	const uint8_t irLength = PANASONIC_LENGTH/2;
+	const uint16_t timeoutThreshold = (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD + PANASONIC_SPACE_LEAD) / 2;
+	const uint16_t leadThreshold = (PANASONIC_MARK_LEAD + PANASONIC_SPACE_LEAD + PANASONIC_MARK_ONE + PANASONIC_SPACE_ONE) / 2;
+	const uint16_t threshold = (PANASONIC_MARK_ONE + PANASONIC_MARK_ZERO + PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2;
+
+	// if timeout always start next possible reading and abort any pending readings
+	if (duration >= timeoutThreshold)
+		countPanasonic = 0;
+
+	// on a reset (error in decoding) we are waiting for a timeout to start a new reading again
+	// this is to not conflict with other protocols while they are sending 0/1
+	// which might be similar to a lead in this protocol
+	else if (countPanasonic == 0)
+		return 0;
+
+	// check Mark Lead (needs a timeout or a correct signal)
+	else if (countPanasonic == 1){
+		// wrong lead
+		if (duration < leadThreshold){
+			countPanasonic = 0;
+			return 0;
+		}
+		// else normal lead, next reading
+	}
+
+	// pulses (mark + space)
+	else {
+		// check different logical space pulses
+
+		// get number of the Space Bits (starting from zero)
+		// only save every 2nd value, substract the first two lead pulses
+		uint8_t length = countPanasonic - 2;
+
+		// move bits and write 1 or 0 depending on the duration
+		// 1.7: changed from MSB to LSB. somehow takes a bit more flash but is correct and easier to handle.
+		dataPanasonic[length / 8] >>= 1;
+		// set bit if it's a logical 1. Setting zero not needed due to bitshifting.
+		if (duration >= threshold)
+			dataPanasonic[length / 8] |= 0x80;
+
+
+		// last mark (stop bit)
+		if (countPanasonic >= irLength){
+			// reset reading
+			countPanasonic = 0;
+
+			// Check if the protcol's checksum is correct
+			if (uint8_t(dataPanasonic[2] ^ dataPanasonic[3] ^ dataPanasonic[4]) == dataPanasonic[5])
+				// check vendor parity nibble (optional)
+				//uint8_t XOR = data[0] ^ data[1];
+				//if ((XOR & 0x0F ^ (XOR >> 4)) != 0x00)
+				//	return 0;
+				// new input, now check for debounce
+				return IR_PANASONIC;
+
+			// checksum incorrect
+			else
+				return 0;
+		}
+	}
+
+	// next reading, no errors
+	countPanasonic++;
 }
 
 

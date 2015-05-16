@@ -32,7 +32,7 @@
 #define pinIR 2
 #define pinSendIR 3
 #define IRL_DEBOUCE 300
-CIRLremote<IRL_DEBOUCE, IR_NEC, IR_SONY12, IR_PANASONIC> IRLremote;
+CIRLremote<IRL_DEBOUCE, IR_NEC, IR_PANASONIC, IR_SONY12> IRLremote;
 
 #define pinLed LED_BUILTIN
 
@@ -54,13 +54,16 @@ void loop() {
     // light Led
     digitalWrite(pinLed, HIGH);
 
+    // get the new data from the remote
+    IR_data_t data = IRLremote.read();
+
     // print protocol number
     Serial.println();
-    Serial.print(F("Protocol:"));
-    Serial.print(IRLremote.getProtocol());
+    Serial.print(F("Protocol: "));
+    Serial.print(data.protocol);
 
     // see readme to terminate what number is for each protocol
-    switch (IRLremote.getProtocol()) {
+    switch (data.protocol) {
       case IR_NEC:
         Serial.println(F(" NEC"));
         break;
@@ -76,13 +79,14 @@ void loop() {
     }
 
     // print the protocol data
-    Serial.print(F("Address:"));
-    Serial.println(IRLremote.getAddress(), HEX);
-    Serial.print(F("Command:"));
-    Serial.println(IRLremote.getCommand(), HEX);
-    
-        // check if the input was a specific signal and send another signal out
-    if (IRLremote.getProtocol() == IR_PANASONIC && IRLremote.getAddress() == 0x2002 && IRLremote.getCommand() == 0x813D1CA0) {
+    Serial.print(F("Address: 0x"));
+    Serial.println(data.address, HEX);
+    Serial.print(F("Command: 0x"));
+    Serial.println(data.command, HEX);
+
+
+    // check if the input was a specific signal and send another signal out
+    if (data.protocol == IR_PANASONIC && data.address == 0x2002 && data.command == 0x813D1CA0) {
       // send the data, no pin setting to OUTPUT needed
       Serial.println();
       Serial.println(F("Sending..."));
@@ -92,8 +96,7 @@ void loop() {
       IRLwrite<IR_NEC>(pinSendIR, address, command);
     }
 
-    // release IRLremote for a new reading
-    IRLremote.reset();
+    // turn Led off after printing the data
     digitalWrite(pinLed, LOW);
   }
 }
