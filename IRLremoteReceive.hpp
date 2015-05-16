@@ -39,22 +39,22 @@ THE SOFTWARE.
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline CIRLremote<debounce, irProtocol...>::
-CIRLremote(void){
+CIRLremote(void) {
 	// empty
 }
 
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
-begin(uint8_t pin){
+begin(uint8_t pin) {
 	// by default use the CHANGE flag
 	uint8_t flag = CHANGE;
 
 	// use different flags if only a single protocol is selected
 	// does not apply to all protocols, such as sony (dont have a stop bit)
-	if (sizeof...(irProtocol) == 1){
+	if (sizeof...(irProtocol) == 1) {
 		if (is_in<IR_NEC, irProtocol...>::value
-			|| is_in<IR_PANASONIC, irProtocol...>::value)
+		        || is_in<IR_PANASONIC, irProtocol...>::value)
 			flag = FALLING;
 	}
 
@@ -79,7 +79,7 @@ begin(uint8_t pin){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
-end(uint8_t pin){
+end(uint8_t pin) {
 	// try to detach PinInterrupt first
 	if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT)
 		detachInterrupt(digitalPinToInterrupt(pin));
@@ -101,7 +101,7 @@ end(uint8_t pin){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline bool CIRLremote<debounce, irProtocol...>::
-available(void){
+available(void) {
 	// if a protocol is saved we have received new data
 	return ((protocol > 0) ? true : false);
 }
@@ -114,19 +114,20 @@ read(void) {
 	uint16_t address = 0;
 	uint32_t command = 0;
 
-	if (is_in<IR_NEC, irProtocol...>::value && protocol == IR_NEC){
+	if (is_in<IR_NEC, irProtocol...>::value && protocol == IR_NEC) {
 		// save address + command
 		address = UINT16_AT_OFFSET(dataNec, 0);
 		command = UINT16_AT_OFFSET(dataNec, 2);
 	}
-	else if (is_in<IR_PANASONIC, irProtocol...>::value && protocol == IR_PANASONIC){
+	else if (is_in<IR_PANASONIC, irProtocol...>::value && protocol == IR_PANASONIC) {
 		// address represents vendor(16)
 		address = UINT16_AT_OFFSET(dataPanasonic, 0);
 
 		// command represents (MSB to LSB):
 		// vendor parity(4), genre1(4), genre2(4), data(10), ID(2), parity(8)
-		command = UINT32_AT_OFFSET(dataPanasonic, 2);	}
-	else if (is_in<IR_SONY12, irProtocol...>::value && protocol == IR_SONY12){
+		command = UINT32_AT_OFFSET(dataPanasonic, 2);
+	}
+	else if (is_in<IR_SONY12, irProtocol...>::value && protocol == IR_SONY12) {
 		// protocol has no checksum
 		uint8_t upper4Bits = ((dataSony12[1] >> 3) & 0x1E);
 		if (dataSony12[0] & 0x80)
@@ -164,7 +165,7 @@ read(void) {
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
-IRLinterrupt(void){
+IRLinterrupt(void) {
 	// block if another protocol is already recognized
 	if (protocol)
 		return;
@@ -188,7 +189,7 @@ IRLinterrupt(void){
 
 	//TODO return a bool for each function and abort interrupt if any returns true.
 	// then check for the protocol here and block. keep in mind the sony 12 -> 20 protocol
-	if (sizeof...(irProtocol) == 1){
+	if (sizeof...(irProtocol) == 1) {
 		// special optimized decoding functions if only a single protocol is selected
 		// uses a different interrupt setting most of the time (FALLING instead of CHANGE)
 		if (is_in<IR_NEC, irProtocol...>::value && (p = decodeNecOnly(duration)));
@@ -203,7 +204,7 @@ IRLinterrupt(void){
 	//if (is_in<IR_SONY20, irProtocol...>::value)
 	//	decodeSony20(duration);
 
-	if (p){
+	if (p) {
 		// check if the last signal was received too fast
 		// do not save the new time, to not block forever if the user is holding a button
 		// this way you can still realize things like: hold a button to increase the volume
@@ -223,7 +224,7 @@ IRLinterrupt(void){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
-decodeNecOnly(const uint16_t duration){
+decodeNecOnly(const uint16_t duration) {
 	// this decoding function only works on FALLING
 
 	// no special accuracy set at the moment, no conflict detected yet
@@ -245,13 +246,13 @@ decodeNecOnly(const uint16_t duration){
 		return 0;
 
 	// check Mark Lead (needs a timeout or a correct signal)
-	else if (countNec == 1){
+	else if (countNec == 1) {
 		// wrong lead
-		if (duration < leadHoldingThreshold){
+		if (duration < leadHoldingThreshold) {
 			countNec = 0;
 			return 0;
 		}
-		else if (duration < leadThreshold){
+		else if (duration < leadThreshold) {
 			// reset reading
 			countNec = 0;
 
@@ -272,7 +273,7 @@ decodeNecOnly(const uint16_t duration){
 	}
 
 	// pulses (mark + space)
-	else{
+	else {
 		// check different logical space pulses
 
 		// get number of the Bits (starting from zero)
@@ -287,7 +288,7 @@ decodeNecOnly(const uint16_t duration){
 			dataNec[length / 8] |= 0x80;
 
 		// last bit (stop bit)
-		if (countNec >= irLength){
+		if (countNec >= irLength) {
 			// reset reading
 			countNec = 0;
 
@@ -312,7 +313,7 @@ decodeNecOnly(const uint16_t duration){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
-decodeNec(const uint16_t duration){
+decodeNec(const uint16_t duration) {
 	// no special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
 	const uint8_t irLength = NEC_LENGTH;
@@ -333,23 +334,23 @@ decodeNec(const uint16_t duration){
 		return 0;
 
 	// check Mark Lead (needs a timeout or a correct signal)
-	else if (countNec == 1){
+	else if (countNec == 1) {
 		// wrong lead
-		if (duration < markLeadThreshold){
+		if (duration < markLeadThreshold) {
 			countNec = 0;
 			return 0;
 		}
 	}
 
 	//check Space Lead/Space Holding
-	else if (countNec == 2){
+	else if (countNec == 2) {
 		// wrong space
-		if (duration < spaceLeadHoldingThreshold){
+		if (duration < spaceLeadHoldingThreshold) {
 			countNec = 0;
 			return 0;
 		}
 
-		else if (duration < spaceLeadThreshold){
+		else if (duration < spaceLeadThreshold) {
 			// reset reading
 			countNec = 0;
 
@@ -371,7 +372,7 @@ decodeNec(const uint16_t duration){
 	}
 
 	// last mark (stop bit)
-	else if (countNec > irLength){
+	else if (countNec > irLength) {
 		// reset reading
 		countNec = 0;
 
@@ -389,7 +390,7 @@ decodeNec(const uint16_t duration){
 	}
 
 	// Space pulses (even numbers)
-	else if (countNec % 2 == 0){
+	else if (countNec % 2 == 0) {
 		// check different logical space pulses
 
 		// get number of the Space Bits (starting from zero)
@@ -413,10 +414,10 @@ decodeNec(const uint16_t duration){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
-decodePanasonicOnly(const uint16_t duration){
+decodePanasonicOnly(const uint16_t duration) {
 	// no accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
-	const uint8_t irLength = PANASONIC_LENGTH/2;
+	const uint8_t irLength = PANASONIC_LENGTH / 2;
 	const uint16_t timeoutThreshold = (PANASONIC_TIMEOUT + PANASONIC_MARK_LEAD + PANASONIC_SPACE_LEAD) / 2;
 	const uint16_t leadThreshold = (PANASONIC_MARK_LEAD + PANASONIC_SPACE_LEAD + PANASONIC_MARK_ONE + PANASONIC_SPACE_ONE) / 2;
 	const uint16_t threshold = (PANASONIC_MARK_ONE + PANASONIC_MARK_ZERO + PANASONIC_SPACE_ONE + PANASONIC_SPACE_ZERO) / 2;
@@ -432,9 +433,9 @@ decodePanasonicOnly(const uint16_t duration){
 		return 0;
 
 	// check Mark Lead (needs a timeout or a correct signal)
-	else if (countPanasonic == 1){
+	else if (countPanasonic == 1) {
 		// wrong lead
-		if (duration < leadThreshold){
+		if (duration < leadThreshold) {
 			countPanasonic = 0;
 			return 0;
 		}
@@ -458,7 +459,7 @@ decodePanasonicOnly(const uint16_t duration){
 
 
 		// last mark (stop bit)
-		if (countPanasonic >= irLength){
+		if (countPanasonic >= irLength) {
 			// reset reading
 			countPanasonic = 0;
 
@@ -484,7 +485,7 @@ decodePanasonicOnly(const uint16_t duration){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
-decodePanasonic(const uint16_t duration){
+decodePanasonic(const uint16_t duration) {
 	// no accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
 	const uint8_t irLength = PANASONIC_LENGTH;
@@ -504,18 +505,18 @@ decodePanasonic(const uint16_t duration){
 		return 0;
 
 	// check Mark Lead (needs a timeout or a correct signal)
-	else if (countPanasonic == 1){
+	else if (countPanasonic == 1) {
 		// wrong lead
-		if (duration < markLeadThreshold){
+		if (duration < markLeadThreshold) {
 			countPanasonic = 0;
 			return 0;
 		}
 	}
 
 	//check Space Lead/Space Holding
-	else if (countPanasonic == 2){
+	else if (countPanasonic == 2) {
 		// wrong space
-		if (duration < spaceLeadThreshold){
+		if (duration < spaceLeadThreshold) {
 			countPanasonic = 0;
 			return 0;
 		}
@@ -523,7 +524,7 @@ decodePanasonic(const uint16_t duration){
 	}
 
 	// last mark (stop bit)
-	else if (countPanasonic > irLength){
+	else if (countPanasonic > irLength) {
 		// reset reading
 		countPanasonic = 0;
 
@@ -542,7 +543,7 @@ decodePanasonic(const uint16_t duration){
 	}
 
 	// Space pulses (even numbers)
-	else if (countPanasonic % 2 == 0){
+	else if (countPanasonic % 2 == 0) {
 		// check different logical space pulses
 
 		// get number of the Space Bits (starting from zero)
@@ -566,7 +567,7 @@ decodePanasonic(const uint16_t duration){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline uint8_t CIRLremote<debounce, irProtocol...>::
-decodeSony12(const uint16_t duration){
+decodeSony12(const uint16_t duration) {
 	// spaceTimeout gives some better accuracy, since we dont have a checksum here.
 	// also set markTimeout if needed.
 	const uint8_t irLength = SONY_LENGTH_12;
@@ -588,21 +589,21 @@ decodeSony12(const uint16_t duration){
 		return 0;
 
 	// check pulses for mark/space and lead + logical 0/1 seperate
-	else{
+	else {
 		// Mark pulses (odd numbers)
-		if (countSony12 % 2 == 1){
+		if (countSony12 % 2 == 1) {
 			// check Mark Lead (needs a timeout or a correct signal)
-			if (countSony12 == 1){
+			if (countSony12 == 1) {
 				// wrong lead
-				if (duration < markLeadThreshold){
+				if (duration < markLeadThreshold) {
 					countSony12 = 0;
 					return 0;
 				}
 			}
 
-			else{
+			else {
 				// check for timeout if needed (might be a different protocol)
-				if (markTimeout && duration > markTimeout){
+				if (markTimeout && duration > markTimeout) {
 					countSony12 = 0;
 					return 0;
 				}
@@ -621,7 +622,7 @@ decodeSony12(const uint16_t duration){
 					dataSony12[length / 8] |= 0x80;
 
 				// check last input (always a mark)
-				if (countSony12 > irLength){
+				if (countSony12 > irLength) {
 					// reset reading
 					countSony12 = 0;
 
@@ -632,12 +633,12 @@ decodeSony12(const uint16_t duration){
 		}
 
 		// Space pulses (even numbers)
-		else{
+		else {
 			// check for timeout if needed (might be a different protocol)
 			// we could only check the lead or all data,
 			// since the pulse should be always the same for lead and data
 			// all data gives better errorcorrection and takes less flash
-			if (spaceTimeout && duration > spaceTimeout){
+			if (spaceTimeout && duration > spaceTimeout) {
 				countSony12 = 0;
 				return 0;
 			}
@@ -651,7 +652,7 @@ decodeSony12(const uint16_t duration){
 
 template <uint32_t debounce, IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
-decodeSony20(const uint16_t duration){
+decodeSony20(const uint16_t duration) {
 	//// pass the duration to the decoding function
 	//bool newInput;
 	//// 1st extra accuracy solution

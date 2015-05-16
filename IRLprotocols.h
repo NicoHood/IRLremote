@@ -81,8 +81,8 @@ Panasonic pulse demonstration:
 
 //SONY 8, 12, 15, 20
 //IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:8,^22200)
-//IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:5,^45m)+ 
-//IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:8,^45m)+ 
+//IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:5,^45m)+
+//IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:8,^45m)+
 //IRP notation: {40k,600}<1,-1|2,-1>(4,-1,F:7,D:5,S:8,^45m) +
 // Lead + Mark logic
 #define SONY_HZ					40000

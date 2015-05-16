@@ -50,7 +50,7 @@ THE SOFTWARE.
 #define NOT_AN_INTERRUPT -1
 #endif
 
-typedef enum IRType{
+typedef enum IRType {
 	IR_NO_PROTOCOL, // 0
 	IR_USER, // 1
 	IR_ALL, // 2
@@ -63,7 +63,7 @@ typedef enum IRType{
 	// add new protocols here
 };
 
-typedef struct IR_data_t{
+typedef struct IR_data_t {
 	// variables to save received data
 	uint8_t protocol;
 	uint16_t address;
@@ -79,7 +79,7 @@ typedef struct IR_data_t{
 
 // variadic template to choose the specific protocols that should be used
 template <uint32_t debounce, IRType ...irProtocol>
-class CIRLremote{
+class CIRLremote {
 public:
 	CIRLremote(void);
 
@@ -164,11 +164,11 @@ template <IRType irType>
 inline void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command) __attribute__((always_inline));
 
 template <uint8_t addressLength, uint8_t commandLength,
-	uint16_t Hz, bool addressFirst,
-	uint16_t markLead, uint16_t spaceLead,
-	uint16_t markZero, uint16_t markOne,
-	uint16_t spaceZero, uint16_t spaceOne>
-	inline void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command) __attribute__((always_inline));
+          uint16_t Hz, bool addressFirst,
+          uint16_t markLead, uint16_t spaceLead,
+          uint16_t markZero, uint16_t markOne,
+          uint16_t spaceZero, uint16_t spaceOne>
+inline void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command) __attribute__((always_inline));
 
 // functions to set the pin high or low (with bitbang pwm)
 inline void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) __attribute__((always_inline));
