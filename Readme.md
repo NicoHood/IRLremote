@@ -158,6 +158,7 @@ Links
  * http://picprojects.org.uk/projects/sirc/sonysirc.pdf
  * http://www.benryves.com/products/sonyir/
  * http://www.righto.com/2010/03/understanding-sony-ir-remote-codes-lirc.html
+ * http://mc.mikrocontroller.com/de/IR-Protokolle.php#SIRCS
 * NEC
  * http://techdocs.altium.com/display/FPGA/NEC+Infrared+Transmission+Protocol
  * http://www.sbprojects.com/knowledge/ir/nec.php
@@ -178,6 +179,7 @@ Version History
 * Removed the general decoding function to improve decoding functionality
 * New inputs are generated at runtime, saves flash and ram
 * Faster interrupt if valid signal was received
+* Improved NEC sending
 
 1.7.4 Release (19.04.2015)
 * Updated examples
