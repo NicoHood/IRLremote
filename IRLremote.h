@@ -44,6 +44,7 @@ THE SOFTWARE.
 //================================================================================
 
 #include "IRLprotocols.h"
+#include "IRLkeycodes.h"
 
 // missing 1.0.6 definition workaround
 #ifndef NOT_AN_INTERRUPT
