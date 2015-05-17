@@ -56,6 +56,8 @@ typedef enum IRType {
 	IR_USER, // 1
 	IR_ALL, // 2
 	IR_NEC, // ...
+	IR_NEC_EXTENDED,
+	IR_NEC_REPEAT,
 	IR_PANASONIC,
 	IR_SONY8,
 	IR_SONY12,
@@ -91,6 +93,8 @@ public:
 	// user access to the libraries data
 	static bool available(void) __attribute__((always_inline));
 	static IR_data_t read(void); __attribute__((always_inline));
+
+	// TODO get time functions
 
 protected:
 	// interrupt function that is attached

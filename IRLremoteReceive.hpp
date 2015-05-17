@@ -114,7 +114,8 @@ read(void) {
 	uint16_t address = 0;
 	uint32_t command = 0;
 
-	if (is_in<IR_NEC, irProtocol...>::value && protocol == IR_NEC) {
+	if (is_in<IR_NEC, irProtocol...>::value &&
+	        protocol == IR_NEC || protocol == IR_NEC_EXTENDED || protocol == IR_NEC_REPEAT) {
 		// save address + command
 		address = UINT16_AT_OFFSET(dataNec, 0);
 		command = UINT16_AT_OFFSET(dataNec, 2);
@@ -211,6 +212,15 @@ IRLinterrupt(void) {
 		if ((lastTime - lastEvent) < (debounce * 1000UL))
 			return;
 
+		if (p == IR_NEC_REPEAT) {
+			// check if the command is the same and if the last signal was received too fast
+			// do not save the new time, to not block forever if the user is holding a button
+			// this way you can still realize things like: hold a button to increase the volume
+
+			if ((lastTime - lastEvent) >= (debounce * 1000UL + NEC_TIMEOUT_REPEAT))
+				return;
+		}
+
 		// update values
 		lastEvent = lastTime;
 		protocol = p;
@@ -256,18 +266,9 @@ decodeNecOnly(const uint16_t duration) {
 			// reset reading
 			countNec = 0;
 
-			// call the holding function after
+			// received a Nec Repeat signal
 			// next mark (stop bit) ignored due to detecting techniques
-			//TODO comment
-			// check if the command is the same and if the last signal was received too fast
-			// do not save the new time, to not block forever if the user is holding a button
-			// this way you can still realize things like: hold a button to increase the volume
-			if ((lastTime - lastEvent) < (debounce * 1000UL + NEC_TIMEOUT_REPEAT))
-				return IR_NEC;
-
-			// last signal was too long ago
-			else
-				return 0;
+			return IR_NEC_REPEAT;
 		}
 		// else normal lead, next reading
 	}
@@ -296,9 +297,13 @@ decodeNecOnly(const uint16_t duration) {
 			// normally NEC also check for the inverse of the address (byte 2 is the inverse of byte 3)
 			// newer remotes don't have this because of the wide used protocol all addresses were already used
 			// to make it less complicated it's left out and the user can check the command inverse himself if needed
-			if ((uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00) /*&& (uint8_t((data[0] ^ (~data[1]))) != 0x00)*/)
-				// new input, now check for debounce
-				return IR_NEC;
+			if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
+			{
+				// TODO if normal mode + extended wanted, also add in the 2nd decode function
+				if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
+					return IR_NEC;
+				return IR_NEC_EXTENDED;
+			}
 
 			// checksum incorrect
 			else
@@ -354,19 +359,9 @@ decodeNec(const uint16_t duration) {
 			// reset reading
 			countNec = 0;
 
-			// call the holding function after
-			// count not resetted to read it afterwards
-			// next mark ignored due to detecting techniques
-			//TODO comment
-			// check if the command is the same and if the last signal was received too fast
-			// do not save the new time, to not block forever if the user is holding a button
-			// this way you can still realize things like: hold a button to increase the volume
-			if ((lastTime - lastEvent) < (debounce * 1000UL + NEC_TIMEOUT_REPEAT))
-				return IR_NEC;
-
-			// last signal was too long ago
-			else
-				return 0;
+			// received a Nec Repeat signal
+			// next mark (stop bit) ignored due to detecting techniques
+			return IR_NEC_REPEAT;
 		}
 		// else normal Space, next reading
 	}
@@ -380,9 +375,12 @@ decodeNec(const uint16_t duration) {
 		// normally NEC also check for the inverse of the address (byte 2 is the inverse of byte 3)
 		// newer remotes don't have this because of the wide used protocol all addresses were already used
 		// to make it less complicated it's left out and the user can check the command inverse himself if needed
-		if ((uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00) /*&& (uint8_t((data[0] ^ (~data[1]))) != 0x00)*/)
-			// new input, now check for debounce
-			return IR_NEC;
+		if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
+		{
+			if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
+				return IR_NEC;
+			return IR_NEC_EXTENDED;
+		}
 
 		// checksum incorrect
 		else
