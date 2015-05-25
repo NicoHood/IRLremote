@@ -70,27 +70,27 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 	uint8_t oldSREG = SREG;
 	cli();
 
-	switch (irType){
+	switch (irType) {
 
 	case IR_NEC:
 		// NEC only sends the data once
 		if (command == 0xFFF)
 			// send holding indicator
 			IRLsend<0, 0, NEC_HZ, 0, NEC_MARK_LEAD, NEC_SPACE_HOLDING,
-			0, 0, 0, 0>
-			(outPort, bitMask, address, command);
+			        0, 0, 0, 0>
+			        (outPort, bitMask, address, command);
 		else
 			// send data
 			IRLsend<NEC_ADDRESS_LENGTH, NEC_COMMAND_LENGTH, NEC_HZ, IR_ADDRESS_FIRST, NEC_MARK_LEAD, NEC_SPACE_LEAD,
-			NEC_MARK_ZERO, NEC_MARK_ONE, NEC_SPACE_ZERO, NEC_SPACE_ONE>
-			(outPort, bitMask, address, command);
+			        NEC_MARK_ZERO, NEC_MARK_ONE, NEC_SPACE_ZERO, NEC_SPACE_ONE>
+			        (outPort, bitMask, address, command);
 		break;
 
 	case IR_PANASONIC: //TODO test
 		// send data
 		IRLsend<PANASONIC_ADDRESS_LENGTH, PANASONIC_COMMAND_LENGTH, PANASONIC_HZ, IR_ADDRESS_FIRST, PANASONIC_MARK_LEAD, PANASONIC_SPACE_LEAD,
-			PANASONIC_MARK_ZERO, PANASONIC_MARK_ONE, PANASONIC_SPACE_ZERO, PANASONIC_SPACE_ONE>
-			(outPort, bitMask, address, command);
+		        PANASONIC_MARK_ZERO, PANASONIC_MARK_ONE, PANASONIC_SPACE_ZERO, PANASONIC_SPACE_ONE>
+		        (outPort, bitMask, address, command);
 		break;
 
 	case IR_SONY12: //TODO test, address -1?
@@ -98,8 +98,8 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 		for (uint8_t i = 0; i < 3; i++)
 			// send data
 			IRLsend<SONY_ADDRESS_LENGTH_12, SONY_COMMAND_LENGTH_12, SONY_HZ, IR_COMMAND_FIRST, SONY_MARK_LEAD, SONY_SPACE_LEAD,
-			SONY_MARK_ZERO, SONY_MARK_ONE, SONY_SPACE_ZERO, SONY_SPACE_ONE>
-			(outPort, bitMask, address, command);
+			        SONY_MARK_ZERO, SONY_MARK_ONE, SONY_SPACE_ZERO, SONY_SPACE_ONE>
+			        (outPort, bitMask, address, command);
 		break;
 	}
 
@@ -112,11 +112,11 @@ void IRLwrite(const uint8_t pin, uint16_t address, uint32_t command)
 
 // multifunctional template for sending
 template <uint8_t addressLength, uint8_t commandLength,
-	uint16_t Hz, bool addressFirst,
-	uint16_t markLead, uint16_t spaceLead,
-	uint16_t markZero, uint16_t markOne,
-	uint16_t spaceZero, uint16_t spaceOne>
-	void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command){
+          uint16_t Hz, bool addressFirst,
+          uint16_t markLead, uint16_t spaceLead,
+          uint16_t markZero, uint16_t markOne,
+          uint16_t spaceZero, uint16_t spaceOne>
+void IRLsend(volatile uint8_t * outPort, uint8_t bitmask, uint16_t address, uint32_t command) {
 
 	// send lead mark
 	if (markLead)
@@ -130,20 +130,20 @@ template <uint8_t addressLength, uint8_t commandLength,
 	if (markOne != markZero || spaceOne != spaceZero)
 	{
 		// go through all bits
-		for (uint8_t i = 0; i < (addressLength + commandLength); i++){
+		for (uint8_t i = 0; i < (addressLength + commandLength); i++) {
 			// determine if its a logical one or zero, starting with address or command
 			bool bitToSend;
-			if (addressFirst && i < addressLength || !addressFirst && i >= commandLength){
+			if (addressFirst && i < addressLength || !addressFirst && i >= commandLength) {
 				bitToSend = address & 0x01;
 				address >>= 1;
 			}
-			else{
+			else {
 				bitToSend = command & 0x01;
 				command >>= 1;
 			}
 
 			// send logic mark bits if needed
-			if (markOne != markZero){
+			if (markOne != markZero) {
 				// modulate if spaces dont have logic, else only every even number
 				if (spaceOne == spaceZero || spaceOne != spaceZero && i % 2 == 0)
 				{
@@ -157,9 +157,9 @@ template <uint8_t addressLength, uint8_t commandLength,
 				IRLmark(Hz, outPort, bitmask, markOne);
 
 			// send logic space bits if needed
-			if (spaceOne != spaceZero){
+			if (spaceOne != spaceZero) {
 				// modulate if marks dont have logic, else only every odd number
-				if (markOne == markZero || markOne != markZero && i % 2 == 1){
+				if (markOne == markZero || markOne != markZero && i % 2 == 1) {
 					if (bitToSend)
 						IRLspace(outPort, bitmask, spaceOne);
 					else
@@ -215,18 +215,117 @@ void IRLmark(const uint16_t Hz, volatile uint8_t * outPort, uint8_t bitMask, uin
 	const uint32_t loopCycles = 3;
 	const uint32_t overHead = 12; // just a guess from try + error
 	uint8_t delay = (F_CPU - (overHead * Hz * 2UL)) / (Hz * 2UL * loopCycles);
-	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
+	uint16_t iterations = (time * (F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
 
-	while (iterations--){
+	// modulate IR signal
+	while (iterations--) {
 		// flip pin state and wait for the calculated time
 		*outPort ^= bitMask;
 #ifdef ARDUINO_ARCH_AVR
+		// loop
 		_delay_loop_1(delay);
 #else
 		// ARM TODO?
 #endif
 	}
+
+	// register uint8_t temp;
+	// asm volatile (
+	//     // flip pin state
+	//     ".L%=_iteration_loop:\n"
+	//     "ld %[temp], %a[outPort]\n" // (2) read the pin (happens before the 2 cycles)
+	//     "eor %[temp], %[bitMask]\n" // (1) XOR value
+	//     "st %a[outPort],%[temp]\n"	// (2) flip pin state TODO happens before or after the 2 cycles
+
+	//     // wait some time to modulate the Hz
+	//     "mov %[temp],%[delay]\n"	// (1) load delay value into temp
+	//     ".L%=_delay_loop:\n"
+	//     "dec %[temp]\n"				// (1) decrement 1 from delay counter
+	//     "brne .L%=_delay_loop\n"	// (1/2) wait until delay is over
+
+	//     // check if all pulses have been sent
+
+	//     //TODO set pin low
+	//     "eor %[bitMask], %[bitMask]\n" // (1) XOR value
+	//     "ld %[temp], %a[outPort]\n" // (2) read the pin (happens before the 2 cycles)
+	//     "and %[temp], %[bitMask]\n" // (1) AND value
+	//     "st %a[outPort],%[temp]\n"	// (2) set pin low TODO happens before or after the 2 cycles
+
+	//     //MOVF    NumL, F; Test lo byte
+	//     //BTFSC   STATUS, Z; Skip if not zero
+	//     //DECF    NumH, F; Decrement hi byte
+	//     //DECF    NumL, F; Decrement lo byte
+
+	//     // decrement low byte
+	//     // check if low byte is 255
+	//     // if yes decrement high byte
+	//     // check if high byte is zero, if yes and function
+	//     // if no decrement
+	//     // jump to loop above
+	//     // end of loop
+
+	//     // ----------
+	//     // outputs:
+	//     : [outPort] "+e" (outPort), // (read and write)
+	//     [temp] "=&r" (temp), // (output only)
+
+	//     // inputs:
+	//     : [delay] "r" (delay),
+	//     [bitMask] "r" (bitMask)
+
+	//     // no clobbers
+	// ); // end of asm volatile
 }
+//}
+//
+//	// abort if input values are both the same (sending a holding signal for example)
+//	if (markOne != markZero || spaceOne != spaceZero)
+//	{
+//		// go through all bits
+//		for (uint8_t i = 0; i < (addressLength + commandLength); i++){
+//     5f4:	8c e2       	ldi	r24, 0x2C	; 44
+//     5f6:	90 e0       	ldi	r25, 0x00	; 0
+//     5f8:	01 97       	sbiw	r24, 0x01	; 1
+//	const uint32_t overHead = 12; // just a guess from try + error
+//	uint8_t delay = (F_CPU - (overHead * Hz * 2UL)) / (Hz * 2UL * loopCycles);
+//	uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
+//
+//	// modulate IR signal
+//	while (iterations--){
+//     5fa:	39 f0       	breq	.+14     	; 0x60a <loop+0x204>
+//		// flip pin state and wait for the calculated time
+//		*outPort ^= bitMask;
+//
+//     //5fc:	28 81       	ld	r18, Y
+//     //5fe:	27 25       	eor	r18, r7
+//     //600:	28 83       	st	Y, r18
+//
+//     602:	25 2d       	mov	r18, r5
+//     604:	2a 95       	dec	r18
+//     606:	f1 f7       	brne	.-4      	; 0x604 <loop+0x1fe>
+//     608:	f7 cf       	rjmp	.-18     	; 0x5f8 <loop+0x1f2>
+//
+//	 const uint32_t loopCycles = 3;
+//	 const uint32_t overHead = 12; // just a guess from try + error
+//	 uint8_t delay = (F_CPU - (overHead * Hz * 2UL)) / (Hz * 2UL * loopCycles);
+//	 uint16_t iterations = (time*(F_CPU / 1000000UL)) / (delay * loopCycles + overHead);
+//
+//	 // modulate IR signal
+//	 while (iterations--){
+//		 // flip pin state and wait for the calculated time
+//		 *outPort ^= bitMask;
+//		 //5fc:	28 81       	ld	r18, Y
+//		 //5fe:	27 25       	eor	r18, r7
+//		 //600:	28 83       	st	Y, r18
+//
+//#ifdef ARDUINO_ARCH_AVR
+//		 // loop
+//		 _delay_loop_1(delay);
+//#else
+//		 // ARM TODO?
+//#endif
+//	 }
+//	}
 
 void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
 	// Sends an IRLspace for the specified number of microseconds.
@@ -235,3 +334,15 @@ void IRLspace(volatile uint8_t * outPort, uint8_t bitMask, uint16_t time) {
 	delayMicroseconds(time);
 	//_delay_loop_2(time*(F_CPU/1000000UL)/4UL);
 }
+
+//
+//template<const uint16_t Hz>
+//void IRLsend(volatile uint8_t* outPort, volatile uint8_t* inPort uint8_t bitMask, uint16_t timeMark, uint16_ timeSpace){
+//
+//	uint16_t iterations = timeMark;
+//
+//	while (iterations){
+//		*inPort |= bitMask;
+//	}
+//}
+

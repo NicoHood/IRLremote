@@ -36,6 +36,7 @@ CIRLremote<IRL_DEBOUCE, IR_NEC, IR_PANASONIC, IR_SONY12> IRLremote;
 
 void setup() {
   // start serial debug output
+  while(!Serial);
   Serial.begin(115200);
   Serial.println(F("Startup"));
 
