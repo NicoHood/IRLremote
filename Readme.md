@@ -180,6 +180,7 @@ Version History
 * New inputs are generated at runtime, saves flash and ram
 * Faster interrupt if valid signal was received
 * Improved NEC sending
+* Added to Arduino IDE 1.6.x library manager
 
 1.7.4 Release (19.04.2015)
 * Updated examples
