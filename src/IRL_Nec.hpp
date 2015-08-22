@@ -1,30 +1,63 @@
+/*
+Copyright (c) 2014-2015 NicoHood
+See the readme for credit to other people.
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-// variadic template to choose the specific protocols that should be used
-//template <uint32_t debounce>
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Include guard
+#pragma once
+
+//================================================================================
+// Protocol Definitions
+//================================================================================
+
+//NEC
+//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*)
+// Lead + Space logic
+#define NEC_HZ				38000UL
+#define NEC_PULSE			564UL
+#define NEC_BLOCKS			4
+#define NEC_ADDRESS_LENGTH	16
+#define NEC_COMMAND_LENGTH	16
+#define NEC_LENGTH			(2 + NEC_BLOCKS * 8 * 2) // 2 for lead + space, each block has 8bits: mark and space
+#define NEC_TIMEOUT			(NEC_PULSE * 78UL)
+#define NEC_TIMEOUT_HOLDING (NEC_PULSE * 173UL)
+#define NEC_TIMEOUT_REPEAT	(NEC_TIMEOUT + NEC_MARK_LEAD + NEC_SPACE_LEAD \
+							+ NEC_MARK_ZERO * 16UL + NEC_MARK_ONE * 16UL \
+							+ NEC_SPACE_ZERO * 16UL + NEC_SPACE_ONE * 16UL)
+#define NEC_MARK_LEAD		(NEC_PULSE * 16UL)
+#define NEC_SPACE_LEAD		(NEC_PULSE * 8UL)
+#define NEC_SPACE_HOLDING	(NEC_PULSE * 4UL)
+#define NEC_MARK_ZERO		(NEC_PULSE * 1UL)
+#define NEC_MARK_ONE		(NEC_PULSE * 1UL)
+#define NEC_SPACE_ZERO		(NEC_PULSE * 1UL)
+#define NEC_SPACE_ONE		(NEC_PULSE * 3UL)
+
+//================================================================================
+// Decoding Class
+//================================================================================
+
 class CIRLNec {
 public:
 	CIRLNec(void){
 		// Empty	
-	}
-
-	bool begin(uint8_t pin) {
-		// try to attach PinInterrupt first
-		if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT)
-			attachInterrupt(digitalPinToInterrupt(pin), decodeNecOnly, FALLING);
-
-		// if PCINT library used, try to attach it
-	#ifdef PCINT_VERSION
-		else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT)
-			attachPCINT(digitalPinToPCINT(pin), decodeNecOnly, FALLING);
-	#endif
-
-		// return an error if none of them work
-		else
-			return false;
-
-		// if it passes the attach function everything went okay.
-		return true;
 	}
 
 
@@ -61,8 +94,8 @@ public:
 	static void reset(void){
 		countNec = 0;
 		// Only reset if we were the protocol which caused the event
-		if(available())
-			IRLProtocol &= ~IR_NEW_PROTOCOL;
+		//if(available())
+		//	IRLProtocol &= ~IR_NEW_PROTOCOL;
 	}
 
 	static inline uint8_t getSingleFlag(void){
@@ -78,9 +111,7 @@ public:
 	template <uint32_t debounce>
 	static inline void decodeSingle2(uint16_t duration) __attribute__((always_inline));
 	
-	
-	//TODO
-	//template <uint32_t debounce>
+
 	static inline void decodeSingle(uint16_t duration, const uint32_t debounce) __attribute__((always_inline)){
 
 		// no special accuracy set at the moment, no conflict detected yet
@@ -118,7 +149,9 @@ public:
 				if ((IRLLastTime - IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
 					return;
 					
-				uint8_t protocol = IRLProtocol | IR_NEW_PROTOCOL;
+					//TODO check last protocol (only for multiple protocol decoding
+					// on wrong reading reset protocol
+				//uint8_t protocol = IRLProtocol | IR_NEW_PROTOCOL;
 
 				// received a Nec Repeat signal
 				// next mark (stop bit) ignored due to detecting techniques

@@ -28,28 +28,6 @@ THE SOFTWARE.
 // Protocol Definitions
 //================================================================================
 
-//NEC
-//IRP notation: {38.4k,564}<1,-1|1,-3>(16,-8,D:8,S:8,F:8,~F:8,1,-78,(16,-4,1,-173)*)
-// Lead + Space logic
-#define NEC_HZ				38000UL
-#define NEC_PULSE			564UL
-#define NEC_BLOCKS			4
-#define NEC_ADDRESS_LENGTH	16
-#define NEC_COMMAND_LENGTH	16
-#define NEC_LENGTH			(2 + NEC_BLOCKS * 8 * 2) // 2 for lead + space, each block has 8bits: mark and space
-#define NEC_TIMEOUT			(NEC_PULSE * 78UL)
-#define NEC_TIMEOUT_HOLDING (NEC_PULSE * 173UL)
-#define NEC_TIMEOUT_REPEAT	(NEC_TIMEOUT + NEC_MARK_LEAD + NEC_SPACE_LEAD \
-							+ NEC_MARK_ZERO * 16UL + NEC_MARK_ONE * 16UL \
-							+ NEC_SPACE_ZERO * 16UL + NEC_SPACE_ONE * 16UL)
-#define NEC_MARK_LEAD		(NEC_PULSE * 16UL)
-#define NEC_SPACE_LEAD		(NEC_PULSE * 8UL)
-#define NEC_SPACE_HOLDING	(NEC_PULSE * 4UL)
-#define NEC_MARK_ZERO		(NEC_PULSE * 1UL)
-#define NEC_MARK_ONE		(NEC_PULSE * 1UL)
-#define NEC_SPACE_ZERO		(NEC_PULSE * 1UL)
-#define NEC_SPACE_ONE		(NEC_PULSE * 3UL)
-
 //PANASONIC
 //IRP notation: {37k,432}<1,-1|1,-3>(8,-4,3:8,1:8,D:8,S:8,F:8,(D^S^F):8,1,-173)+
 // Lead + Space logic
