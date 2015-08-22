@@ -39,17 +39,19 @@ THE SOFTWARE.
 #include <util/delay_basic.h>
 #endif
 
+
+#include "IRLprotocols.h"
+#include "IRLkeycodes.h"
+
 //================================================================================
 // Definitions
 //================================================================================
 
-//TODO make this invisible from the .ino sketch
-extern uint8_t IRLProtocol;
+// Definition to convert an uint8_t array to an uint16_t/uint32_t at any position (thx timeage!)
+#define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
+#define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
 
-// Time values for the last interrupt and the last valid protocol
-extern uint32_t IRLLastTime;
-extern uint32_t IRLLastEvent;
-
+// Enum as unique number for each protocol
 typedef enum IRType {
 	IR_NO_PROTOCOL = 0x00,
 	// If MSB is not sells the last received protocol is still saved
@@ -69,8 +71,9 @@ typedef enum IRType {
 	// add new protocols here
 };
 
+// Struct that is returned by the read() function
 typedef struct IR_data_t {
-	// variables to save received data
+	// Variables to save received data
 	uint8_t protocol;
 	uint16_t address;
 	uint32_t command;
@@ -78,14 +81,31 @@ typedef struct IR_data_t {
 	//TODO add nec struct/panasonic with id, checsum etc
 };
 
-// definition to convert an uint8_t array to an uint16_t/uint32_t at any position (thx timeage!)
-#define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
-#define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
+// Class to hold the data for all other classes
+// This is needed to avoid global variables that everyone can access
+// Since the protocols also need to use this data but the IRLremote class
+// is a template there is no way to get this data back without passing
+// a pointer. This data class is only accessible by the friend classes themselve.
+class CIRLData{
+public:
+	CIRLData(){
+		// Empty
+	}
 
-#include "IRLprotocols.h"
-#include "IRLkeycodes.h"
+private:
 
-#include "IRL_Nec.hpp"
+	// Only main remote and protocols are allowed to access this data
+	template<uint32_t debounce, typename ...protocols>
+	friend class CIRLremote;
+	friend class CIRLNec;
+
+	// Data that all protocols need for decoding
+	static uint8_t IRLProtocol;
+	
+	// Time values for the last interrupt and the last valid protocol
+	static uint32_t IRLLastTime;
+	static uint32_t IRLLastEvent;
+};
 
 //================================================================================
 // Receive
@@ -113,20 +133,13 @@ private:
 	static inline void nop(...) {
 		// Little hack to take as many arguments as possible
 	}
-
-	//TODO add protocols as friends, move time var inside class and hide it via private
-	friend class CIRLNec;
-	//static uint8_t protocol;
 };
 
 // Implementation inline, moved to another .hpp file
 #include "IRLremoteReceive.hpp"
 
-//template <uint32_t debounce,typename ...protocols>
-//uint8_t CIRLremote<debounce,protocols...>::
-//protocol = 0;
-
-
+// Include all protocol implementations
+#include "IRL_Nec.hpp"
 
 //================================================================================
 // Transmit

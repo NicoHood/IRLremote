@@ -93,7 +93,7 @@ bool CIRLremote<debounce, protocols...>::
 available(void)
 {
 	// This if construct saves flash
-	if(IRLProtocol & IR_NEW_PROTOCOL)
+	if(CIRLData::IRLProtocol & IR_NEW_PROTOCOL)
 		return true;
 	else 
 		return false;
@@ -129,8 +129,8 @@ interrupt(void)
 
 	// Save the duration between the last reading
 	uint32_t time = micros();
-	uint32_t duration_32 = time - IRLLastTime;
-	IRLLastTime = time;
+	uint32_t duration_32 = time - CIRLData::IRLLastTime;
+	CIRLData::IRLLastTime = time;
 
 	// Calculate 16 bit duration. On overflow sets duration to a clear timeout
 	uint16_t duration = 0xFFFF;
@@ -154,14 +154,14 @@ interrupt(void)
 	{
 		// Do not save the new time, to not block forever if the user is holding a button.
 		// This way you can still realize things like: hold a button to increase the volume
-		if ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL)){
+		if ((CIRLData::IRLLastTime - CIRLData::IRLLastEvent) < (debounce * 1000UL)){
 			// Last input received too fast, ignore this one
-			IRLProtocol &= ~IR_NEW_PROTOCOL;
+			CIRLData::IRLProtocol &= ~IR_NEW_PROTOCOL;
 			return;
 		}
 
 		// New valid signal, save new time
-		IRLLastEvent = IRLLastTime;
+		CIRLData::IRLLastEvent = CIRLData::IRLLastTime;
 	}
 }
 
