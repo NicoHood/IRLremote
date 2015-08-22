@@ -48,8 +48,18 @@ THE SOFTWARE.
 #define NOT_AN_INTERRUPT -1
 #endif
 
+//TODO make this invisible from the .ino sketch
+extern uint8_t IRLProtocol;
+
+// Time values for the last interrupt and the last valid protocol
+extern uint32_t IRLLastTime;
+extern uint32_t IRLLastEvent;
+
 typedef enum IRType {
-	IR_NO_PROTOCOL, // 0
+	IR_NO_PROTOCOL = 0x00,
+	
+	// MSB tells that the protocol was read
+	IR_NEW_PROTOCOL = 0x80,
 	IR_USER, // 1
 	IR_ALL, // 2
 	IR_NEC, // ...
@@ -71,6 +81,36 @@ typedef struct IR_data_t {
 
 	//TODO add nec struct/panasonic with id, checsum etc
 };
+//template <typename First>
+//static inline void IRLInterrupt (void);
+/*
+template <void (*T)(int &)>
+void IRLInterrupt (void){
+	// Block if an (other) protocol is already recognized
+	if (IRLProtocol)
+		return;
+
+	// Save the duration between the last reading
+	uint32_t time = micros();
+	uint32_t duration_32 = time - IRLLastTime;
+	IRLLastTime = time;
+
+	// calculate 16 bit duration. On overflow sets duration to a clear timeout
+	uint16_t duration = 0xFFFF;
+	if (duration_32 <= 0xFFFF)
+		duration = duration_32;
+}*/
+
+/*
+typedef void(ttt)(uint16_t);
+// http://stackoverflow.com/questions/1174169/function-passed-as-template-argument
+// non-type (function pointer) template parameter
+template<void funct(uint16_t)>
+static inline void IRLInterrupt() { 
+funct(6); 
+
+}
+*/
 
 // definition to convert an uint8_t array to an uint16_t/uint32_t at any position (thx timeage!)
 #define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
@@ -79,10 +119,126 @@ typedef struct IR_data_t {
 #include "IRLprotocols.h"
 #include "IRLkeycodes.h"
 
+#include "IRL_Nec.hpp"
+
 //================================================================================
 // Receive
 //================================================================================
+	
+//TODO debounce template
+template<typename p, typename ...protocols>
+class CIRLremote {
+public:
+	CIRLremote(void){}
+	
+	bool begin(uint8_t pin) 
+	{
+		// For single protocols use a different flag
+		uint8_t flag = CHANGE;
+		if(sizeof...(protocols) == 1){
+			uint8_t flags [] = { protocols::getSingleFlag()... };
+			flag = flags[0];
+		}
+	
+		// Try to attach PinInterrupt first
+		if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
+			attachInterrupt(digitalPinToInterrupt(pin), IRLInterrupt, flag);
+			return true;
+		}
 
+		// If PinChangeInterrupt library is used, try to attach it
+#ifdef PCINT_VERSION
+		else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
+			attachPCINT(digitalPinToPCINT(pin), IRLInterrupt, flag);
+			return true;
+		}
+#endif
+
+		// Return an error if none of them work (pin has no Pin(Change)Interrupt)
+		return false;
+	}
+	friend class CIRLNec;
+//private:
+
+
+	static bool available(void){
+		// This if construct saves flash
+		if(IRLProtocol & IR_NEW_PROTOCOL)
+			return true;
+		else 
+			return false;
+	}
+	
+	static inline void IRLInterrupt() { 
+		// Block if the protocol is already recognized
+		if (available())
+			return;
+const uint32_t debounce = 300; //TODO should be under 1 second
+		// Save the duration between the last reading
+		uint32_t time = micros();
+		uint32_t duration_32 = time - IRLLastTime;
+		IRLLastTime = time;
+
+		// calculate 16 bit duration. On overflow sets duration to a clear timeout
+		uint16_t duration = 0xFFFF;
+		if (duration_32 <= 0xFFFF)
+			duration = duration_32;
+			
+		if(sizeof...(protocols) == 1){
+			nop((protocols::decodeSingle(duration, debounce), 0)...);
+			//nop((protocols::template decodeSingle2<debounce>(duration), 0)...);
+		}
+		else{
+			nop((protocols::decode(duration), 0)...);
+		}
+		//CIRLNec::test<3>();
+		nop((protocols::template test<333>(), 0)...);
+		
+		p::template test<333>();
+		
+		if (debounce && available()) {
+			// check if the last signal was received too fast
+			// do not save the new time, to not block forever if the user is holding a button
+			// this way you can still realize things like: hold a button to increase the volume
+			if ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL)){
+				IRLProtocol &= ~IR_NEW_PROTOCOL;
+				return;
+			}
+
+			// update values
+			IRLLastEvent = IRLLastTime;
+		}
+		
+		//TODO add protocols as friends, move time var inside class and hide it via private
+	}
+	
+	static IR_data_t read(void){
+		// TODO check better methode with multiple protocols
+		//IR_data_t data = { 0 };
+		//nop((protocols::read(&data), 0)...);
+		IR_data_t data [] = { protocols::read()... };
+		
+		// Return the new protocol information to the user
+		return data[0];
+	}
+	
+	static inline void nop(...) {
+		// Little hack to take as many arguments as possible
+	}
+	//TODO
+private:
+	friend class CIRLNec;
+	static uint8_t protocol;
+};
+
+
+
+template <typename p,typename ...protocols>
+uint8_t CIRLremote<p,protocols...>::
+protocol = 0;
+
+
+/*
 // variadic template to choose the specific protocols that should be used
 template <uint32_t debounce, IRType ...irProtocol>
 class CIRLremote {
@@ -100,7 +256,7 @@ public:
 	// TODO get time functions
 	static CIRL_NEC Nec;
 
-protected:
+//protected:
 	// interrupt function that is attached
 	static void IRLinterrupt(void);
 
@@ -162,7 +318,7 @@ protected:
 
 // implementation inline, moved to another .hpp file
 #include "IRLremoteReceive.hpp"
-
+*/
 
 //================================================================================
 // Transmit
