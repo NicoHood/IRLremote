@@ -28,22 +28,21 @@ THE SOFTWARE.
 // User Functions
 //================================================================================
 
-template<uint32_t debounce, typename ...protocols>
-CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+CIRLremote<debounce, protocol, protocols...>::
 CIRLremote(void) {
 	// Empty
 }
 
 
-template<uint32_t debounce, typename ...protocols>
-bool CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+bool CIRLremote<debounce, protocol, protocols...>::
 begin(uint8_t pin)
 {
 	// For single protocols use a different flag
 	uint8_t flag = CHANGE;
-	if(sizeof...(protocols) == 1){
-		uint8_t flags [] = { protocols::getSingleFlag()... };
-		flag = flags[0];
+	if(sizeof...(protocols) == 0){
+		flag = protocol::getSingleFlag();
 	}
 
 	// Try to attach PinInterrupt first
@@ -65,8 +64,8 @@ begin(uint8_t pin)
 }
 
 
-template<uint32_t debounce, typename ...protocols>
-bool CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+bool CIRLremote<debounce, protocol, protocols...>::
 end(uint8_t pin)
 {
 	// Try to detach PinInterrupt first
@@ -88,26 +87,27 @@ end(uint8_t pin)
 }
 
 
-template<uint32_t debounce, typename ...protocols>
-bool CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+bool CIRLremote<debounce, protocol, protocols...>::
 available(void)
 {
 	// This if construct saves flash
-	if(CIRLData::IRLProtocol & IR_NEW_PROTOCOL)
+	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return true;
 	else 
 		return false;
 }
 
 
-template<uint32_t debounce, typename ...protocols>
-IR_data_t CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+IR_data_t CIRLremote<debounce, protocol, protocols...>::
 read(void)
 {
 	// If nothing was received return an empty struct
 	IR_data_t data = { 0 };
 	
 	// Only the received protocol will write data into the struct
+	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
 	
 	// Return the new protocol information to the user
@@ -119,8 +119,8 @@ read(void)
 // Interrupt Function
 //================================================================================
 
-template<uint32_t debounce, typename ...protocols>
-void CIRLremote<debounce, protocols...>::
+template<uint32_t debounce, typename protocol, typename ...protocols>
+void CIRLremote<debounce, protocol, protocols...>::
 interrupt(void) 
 { 
 	// Block if the protocol is already recognized
@@ -129,8 +129,8 @@ interrupt(void)
 
 	// Save the duration between the last reading
 	uint32_t time = micros();
-	uint32_t duration_32 = time - CIRLData::IRLLastTime;
-	CIRLData::IRLLastTime = time;
+	uint32_t duration_32 = time - IRLLastTime;
+	IRLLastTime = time;
 
 	// Calculate 16 bit duration. On overflow sets duration to a clear timeout
 	uint16_t duration = 0xFFFF;
@@ -138,14 +138,15 @@ interrupt(void)
 		duration = duration_32;
 	
 	// Call the decoding functions(s).
-	if(sizeof...(protocols) == 1){
+	if(sizeof...(protocols) == 0){
 		// For a single protocol use a simpler decode function
 		// to get maximum speed + recognition and minimum flash size
-		nop((protocols::decodeSingle(duration, debounce), 0)...);
-		//nop((protocols::template decodeSingle2<debounce>(duration), 0)...);
+		protocol::decodeSingle(duration, debounce);
+		//protocol::template decodeSingle2<debounce>(duration);
 	}
 	else{
 		// Try to call all protocols decode functions
+		protocol::decode(duration);
 		nop((protocols::decode(duration), 0)...);
 	}
 	
@@ -154,14 +155,14 @@ interrupt(void)
 	{
 		// Do not save the new time, to not block forever if the user is holding a button.
 		// This way you can still realize things like: hold a button to increase the volume
-		if ((CIRLData::IRLLastTime - CIRLData::IRLLastEvent) < (debounce * 1000UL)){
+		if ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL)){
 			// Last input received too fast, ignore this one
-			CIRLData::IRLProtocol &= ~IR_NEW_PROTOCOL;
+			IRLProtocol &= ~IR_NEW_PROTOCOL;
 			return;
 		}
 
 		// New valid signal, save new time
-		CIRLData::IRLLastEvent = CIRLData::IRLLastTime;
+		IRLLastEvent = IRLLastTime;
 	}
 }
 

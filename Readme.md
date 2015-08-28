@@ -1,4 +1,4 @@
-IRLremote 1.8.1
+IRLremote 1.9.0
 ===============
 
 ![Infrared Picture](header.jpg)
@@ -166,7 +166,7 @@ Links
 Version History
 ===============
 ```
-1.8.1 Release (xx.xx.2015)
+1.9.0 Release (xx.xx.2015)
 * Added API as class
 * Fixed NEC Timeout value
 * NEC repeat code now integrated
@@ -181,6 +181,7 @@ Version History
 * Faster interrupt if valid signal was received
 * Improved NEC sending
 * Added to Arduino IDE 1.6.x library manager
+* Some other complex library structure changes
 
 1.7.4 Release (19.04.2015)
 * Updated examples

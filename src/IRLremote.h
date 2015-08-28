@@ -40,7 +40,8 @@ THE SOFTWARE.
 #endif
 
 
-#include "IRLprotocols.h"
+#include "IRLprotocols.h" //TODO remove
+// Include pre recorded IR codes from IR remotes
 #include "IRLkeycodes.h"
 
 //================================================================================
@@ -92,12 +93,7 @@ public:
 		// Empty
 	}
 
-private:
-
-	// Only main remote and protocols are allowed to access this data
-	template<uint32_t debounce, typename ...protocols>
-	friend class CIRLremote;
-	friend class CIRLNec;
+protected:
 
 	// Data that all protocols need for decoding
 	static uint8_t IRLProtocol;
@@ -111,9 +107,8 @@ private:
 // Receive
 //================================================================================
 	
-//TODO debounce template
-template<uint32_t debounce, typename ...protocols>
-class CIRLremote {
+template<uint32_t debounce, typename protocol, typename ...protocols>
+class CIRLremote : public CIRLData{
 public:
 	CIRLremote(void);
 	

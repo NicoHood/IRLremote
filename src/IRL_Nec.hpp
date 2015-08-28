@@ -54,20 +54,21 @@ THE SOFTWARE.
 // Decoding Class
 //================================================================================
 
-class CIRLNec {
+template<uint32_t debounce>
+class CIRLNec : public CIRLData{
 public:
 	CIRLNec(void){
 		// Empty	
 	}
 	
 	// Hide anything that is inside this class so the user dont accidently uses this class
-	template<uint32_t debounce, typename ...protocols>
+	template<uint32_t debounce, typename protocol, typename ...protocols>
 	friend class CIRLremote;
 	
 private:
 	static inline bool available(void){
 		// Only return a value if this protocol has new data
-		if(CIRLData::IRLProtocol == IR_NEC || CIRLData::IRLProtocol == IR_NEC_EXTENDED || CIRLData::IRLProtocol == IR_NEC_REPEAT)
+		if(IRLProtocol == IR_NEC || IRLProtocol == IR_NEC_EXTENDED || IRLProtocol == IR_NEC_REPEAT)
 			return true;
 		else
 			return false;	
@@ -78,11 +79,11 @@ private:
 		if(available()){
 			// Reset protocol for new reading
 			// Do this above so protocol numbers start at 1, not 129
-			CIRLData::IRLProtocol &= ~IR_NEW_PROTOCOL;
+			IRLProtocol &= ~IR_NEW_PROTOCOL;
 
 			data->address = UINT16_AT_OFFSET(dataNec, 0);
 			data->command = UINT16_AT_OFFSET(dataNec, 2);
-			data->protocol = CIRLData::IRLProtocol;
+			data->protocol = IRLProtocol;
 		}
 	}
 
@@ -129,16 +130,16 @@ private:
 
 				// Check if last event timed out long enough
 				// to not trigger wrong buttons (1 Nec signal timespawn)
-				if ((CIRLData::IRLLastTime - CIRLData::IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
+				if ((IRLLastTime - IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
 					return;
 					
 					//TODO check last protocol (only for multiple protocol decoding
 					// on wrong reading reset protocol
-				//uint8_t protocol = CIRLData::IRLProtocol | IR_NEW_PROTOCOL;
+				//uint8_t protocol = IRLProtocol | IR_NEW_PROTOCOL;
 
 				// received a Nec Repeat signal
 				// next mark (stop bit) ignored due to detecting techniques
-				CIRLData::IRLProtocol = IR_NEC_REPEAT;
+				IRLProtocol = IR_NEC_REPEAT;
 				return;
 			}
 			// else normal lead, next reading
@@ -172,11 +173,11 @@ private:
 				{
 					// TODO if normal mode + extended wanted, also add in the 2nd decode function
 					if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
-						CIRLData::IRLProtocol = IR_NEC;
+						IRLProtocol = IR_NEC;
 						return;
 					}
 					else{
-						CIRLData::IRLProtocol = IR_NEC_EXTENDED;
+						IRLProtocol = IR_NEC_EXTENDED;
 						return;
 					}
 				}
@@ -195,13 +196,13 @@ private:
 		// This function is called by Pin(Change)Interrupt and only works on FALLING.
 
 		// Block if the protocol is already recognized
-		if (CIRLData::IRLProtocol)
+		if (IRLProtocol)
 			return;
 
 		// Save the duration between the last reading
 		uint32_t time = micros();
-		uint32_t duration_32 = time - CIRLData::IRLLastTime;
-		CIRLData::IRLLastTime = time;
+		uint32_t duration_32 = time - IRLLastTime;
+		IRLLastTime = time;
 
 		// calculate 16 bit duration. On overflow sets duration to a clear timeout
 		uint16_t duration = 0xFFFF;
@@ -240,7 +241,7 @@ private:
 
 				// received a Nec Repeat signal
 				// next mark (stop bit) ignored due to detecting techniques
-				CIRLData::IRLProtocol = IR_NEC_REPEAT;
+				IRLProtocol = IR_NEC_REPEAT;
 				return;
 			}
 			// else normal lead, next reading
@@ -274,11 +275,11 @@ private:
 				{
 					// TODO if normal mode + extended wanted, also add in the 2nd decode function
 					if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
-						CIRLData::IRLProtocol = IR_NEC;
+						IRLProtocol = IR_NEC;
 						return;
 					}
 					else{
-						CIRLData::IRLProtocol = IR_NEC_EXTENDED;
+						IRLProtocol = IR_NEC_EXTENDED;
 						return;
 					}
 				}
@@ -336,7 +337,7 @@ private:
 
 				// received a Nec Repeat signal
 				// next mark (stop bit) ignored due to detecting techniques
-				CIRLData::IRLProtocol = IR_NEC_REPEAT;
+				IRLProtocol = IR_NEC_REPEAT;
 				return;
 			}
 			// else normal Space, next reading
@@ -354,11 +355,11 @@ private:
 			if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
 			{
 				if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
-					CIRLData::IRLProtocol = IR_NEC;
+					IRLProtocol = IR_NEC;
 					return;
 				}
 				else{
-					CIRLData::IRLProtocol = IR_NEC_EXTENDED;
+					IRLProtocol = IR_NEC_EXTENDED;
 					return;
 				}
 			}
@@ -432,14 +433,14 @@ template <uint32_t debounce> void CIRLNec::decodeSingle2(uint16_t duration)
 
 				// Check if last event timed out long enough
 				// to not trigger wrong buttons (1 Nec signal timespawn)
-				if ((CIRLData::IRLLastTime - CIRLData::IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
+				if ((IRLLastTime - IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
 					return;
 					
-				uint8_t protocol = CIRLData::IRLProtocol | IR_NEW_PROTOCOL;
+				uint8_t protocol = IRLProtocol | IR_NEW_PROTOCOL;
 
 				// received a Nec Repeat signal
 				// next mark (stop bit) ignored due to detecting techniques
-				CIRLData::IRLProtocol = IR_NEC_REPEAT;
+				IRLProtocol = IR_NEC_REPEAT;
 				return;
 			}
 			// else normal lead, next reading
@@ -473,11 +474,11 @@ template <uint32_t debounce> void CIRLNec::decodeSingle2(uint16_t duration)
 				{
 					// TODO if normal mode + extended wanted, also add in the 2nd decode function
 					if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
-						CIRLData::IRLProtocol = IR_NEC;
+						IRLProtocol = IR_NEC;
 						return;
 					}
 					else{
-						CIRLData::IRLProtocol = IR_NEC_EXTENDED;
+						IRLProtocol = IR_NEC_EXTENDED;
 						return;
 					}
 				}
@@ -491,3 +492,13 @@ template <uint32_t debounce> void CIRLNec::decodeSingle2(uint16_t duration)
 		// next reading, no errors
 		countNec++;
 	}
+/*
+
+bool CIRLNec::available(void)
+{
+	// Only return a value if this protocol has new data
+	if(IRLProtocol == IR_NEC || IRLProtocol == IR_NEC_EXTENDED || IRLProtocol == IR_NEC_REPEAT)
+		return true;
+	else
+		return false;	
+}*/
