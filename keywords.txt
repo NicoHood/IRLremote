@@ -6,25 +6,21 @@
 # Datatypes (KEYWORD1)
 #######################################
 
+IRLremote	KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
+IR_data_t   KEYWORD2
 begin	KEYWORD2
 end	KEYWORD2
 available	KEYWORD2
 read	KEYWORD2
 
 IRLwrite	KEYWORD2
-
 IRLmark	KEYWORD2
 IRLspace	KEYWORD2
-
-#######################################
-# Instances (KEYWORD2)
-#######################################
-
-IRLremote	KEYWORD1
 
 #######################################
 # Constants (LITERAL1)
@@ -34,6 +30,8 @@ IR_NO_PROTOCOL	LITERAL1
 IR_USER	LITERAL1
 IR_ALL	LITERAL1
 IR_NEC	LITERAL1
+IR_NEC_EXTENDED	LITERAL1
+IR_NEC_REPEAT	LITERAL1
 IR_PANASONIC	LITERAL1
 IR_SONY8	LITERAL1
 IR_SONY12	LITERAL1

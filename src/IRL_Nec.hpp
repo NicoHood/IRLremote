@@ -54,9 +54,9 @@ THE SOFTWARE.
 // Decoding Class
 //================================================================================
 
-class CIRLNec : public CIRLData{
+class Nec : public CIRLData{
 public:
-	CIRLNec(void){
+	Nec(void){
 		// Empty	
 	}
 	
@@ -65,29 +65,28 @@ public:
 	friend class CIRLremote;
 	
 private:
-	static inline uint8_t getSingleFlag(void);
-	static inline bool available(void);
-	static inline void read(IR_data_t* data);
+	static inline uint8_t getSingleFlag(void) __attribute__((always_inline));
+	static inline bool available(void) __attribute__((always_inline));
+	static inline void read(IR_data_t* data) __attribute__((always_inline));
 
-
+	// Decode functions for a single protocol/multiprotocol for less/more accuration
 	static inline void decodeSingle(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
-
 	static inline void decode(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
 
 protected:
 	// Temporary buffer to hold bytes for decoding the protocols
 	// not all of them are compiled, only the used ones
-	static uint8_t dataNec[NEC_BLOCKS];
 	static uint8_t countNec;
+	static uint8_t dataNec[NEC_BLOCKS];
 };
 
 
-uint8_t CIRLNec::getSingleFlag(void){
+uint8_t Nec::getSingleFlag(void){
 	return FALLING;
 }
 
 
-bool CIRLNec::available(void)
+bool Nec::available(void)
 {
 	// Only return a value if this protocol has new data
 	if(IRLProtocol == IR_NEC || IRLProtocol == IR_NEC_EXTENDED || IRLProtocol == IR_NEC_REPEAT)
@@ -97,21 +96,20 @@ bool CIRLNec::available(void)
 }
 
 
-void CIRLNec::read(IR_data_t* data){
+void Nec::read(IR_data_t* data){
 	// Only (over)write new data if this protocol received any data
 	if(available()){
-		// Reset protocol for new reading
-		// Do this above so protocol numbers start at 1, not 129
-		IRLProtocol &= ~IR_NEW_PROTOCOL;
-
 		data->address = UINT16_AT_OFFSET(dataNec, 0);
 		data->command = UINT16_AT_OFFSET(dataNec, 2);
 		data->protocol = IRLProtocol;
+		
+		// Reset protocol for new reading
+		IRLProtocol &= ~IR_NEW_PROTOCOL;
 	}
 }
 
 
-void CIRLNec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
+void Nec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
 
 	// No special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
@@ -183,19 +181,13 @@ void CIRLNec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
 			if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
 			{
 				// TODO if normal mode + extended wanted, also add in the 2nd decode function
-				if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
+				if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
 					IRLProtocol = IR_NEC;
-					return;
-				}
-				else{
+				else
 					IRLProtocol = IR_NEC_EXTENDED;
-					return;
-				}
 			}
 
-			// checksum incorrect
-			else
-				return;
+			return;
 		}
 	}
 
@@ -204,7 +196,7 @@ void CIRLNec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
 }
 
 
-void CIRLNec::decode(const uint16_t &duration, const uint32_t &debounce) {
+void Nec::decode(const uint16_t &duration, const uint32_t &debounce) {
 	// no special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
 	const uint8_t irLength = NEC_LENGTH;
@@ -273,19 +265,13 @@ void CIRLNec::decode(const uint16_t &duration, const uint32_t &debounce) {
 		// to make it less complicated it's left out and the user can check the command inverse himself if needed
 		if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
 		{
-			if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00)){
+			if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
 				IRLProtocol = IR_NEC;
-				return;
-			}
-			else{
+			else
 				IRLProtocol = IR_NEC_EXTENDED;
-				return;
-			}
 		}
 
-		// checksum incorrect
-		else
-			return;
+		return;
 	}
 
 	// Space pulses (even numbers)

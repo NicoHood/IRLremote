@@ -39,8 +39,6 @@ THE SOFTWARE.
 #include <util/delay_basic.h>
 #endif
 
-
-#include "IRLprotocols.h" //TODO remove
 // Include pre recorded IR codes from IR remotes
 #include "IRLkeycodes.h"
 
@@ -135,6 +133,8 @@ private:
 
 // Include all protocol implementations
 #include "IRL_Nec.hpp"
+#include "IRL_Panasonic.hpp"
+#include "IRL_Sony.hpp"
 
 //================================================================================
 // Transmit
