@@ -146,8 +146,8 @@ interrupt(void)
 	}
 	else{
 		// Try to call all protocols decode functions
-		protocol::decode(duration);
-		nop((protocols::decode(duration), 0)...);
+		protocol::decode(duration, debounce);
+		nop((protocols::decode(duration, debounce), 0)...);
 	}
 	
 	// Check if the last signal was received too fast.
