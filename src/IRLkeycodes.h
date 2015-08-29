@@ -28,7 +28,8 @@ THE SOFTWARE.
 // Protek 9700 Series
 //================================================================================
 
-#define IRL_PROTEK_PROTOCOL		IR_NEC
+#define IRL_PROTEK_PROTOCOL		IR_NEC_EXTENDED
+#define IRL_PROTEK_REPEAT		IR_NEC_REPEAT
 #define IRL_PROTEK_ADDRESS		0x2222
 
 #define IRL_PROTEK_POWER		0xFD02

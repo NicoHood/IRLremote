@@ -60,26 +60,26 @@ void loop() {
     // print protocol number
     Serial.println();
     Serial.print(F("Protocol: "));
-    Serial.print(data.protocol);
 
     // see readme to terminate what number is for each protocol
     switch (data.protocol) {
       case IR_NEC:
-        Serial.println(F(" NEC"));
+        Serial.println(F("NEC"));
         break;
       case IR_NEC_EXTENDED:
-        Serial.println(F(" NEC Extended"));
+        Serial.println(F("NEC Extended"));
         break;
       case IR_NEC_REPEAT:
-        Serial.println(F(" NEC Repeat"));
+        Serial.println(F("NEC Repeat"));
         break;
       case IR_PANASONIC:
-        Serial.println(F(" Panasonic"));
+        Serial.println(F("Panasonic"));
         break;
       case IR_SONY12:
-        Serial.println(F(" Sony12"));
+        Serial.println(F("Sony12"));
         break;
       default:
+        Serial.print(data.protocol);
         Serial.println(F(" Unknown"));
         break;
     }

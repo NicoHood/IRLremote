@@ -94,11 +94,11 @@ public:
 protected:
 
 	// Data that all protocols need for decoding
-	static uint8_t IRLProtocol;
+	static volatile uint8_t IRLProtocol;
 	
 	// Time values for the last interrupt and the last valid protocol
-	static uint32_t IRLLastTime;
-	static uint32_t IRLLastEvent;
+	static volatile uint32_t IRLLastTime;
+	static volatile uint32_t IRLLastEvent;
 };
 
 //================================================================================
@@ -117,6 +117,10 @@ public:
 	// User access to the library data
 	static inline bool available(void);
 	static inline IR_data_t read(void);
+	
+	// Time control
+	static inline uint32_t lastEvent(void);
+	static inline uint32_t timeout(void);
 
 private:
 	
