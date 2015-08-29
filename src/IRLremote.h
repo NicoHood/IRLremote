@@ -97,7 +97,7 @@ protected:
 	static volatile uint8_t IRLProtocol;
 	
 	// Time values for the last interrupt and the last valid protocol
-	static volatile uint32_t IRLLastTime;
+	static uint32_t IRLLastTime;
 	static volatile uint32_t IRLLastEvent;
 };
 
@@ -122,7 +122,7 @@ public:
 	static inline uint32_t lastEvent(void);
 	static inline uint32_t timeout(void);
 
-private:
+protected:
 	
 	// Interrupt function that is attached
 	static inline void interrupt(void);

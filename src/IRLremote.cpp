@@ -39,5 +39,5 @@ uint8_t Sony::countSony = 0;
 uint8_t Sony::dataSony[SONY_BLOCKS_12] = { 0 };
 
 volatile uint8_t CIRLData::IRLProtocol = IR_NO_PROTOCOL;
-volatile uint32_t CIRLData::IRLLastTime = 0;
+uint32_t CIRLData::IRLLastTime = 0;
 volatile uint32_t CIRLData::IRLLastEvent = 0;

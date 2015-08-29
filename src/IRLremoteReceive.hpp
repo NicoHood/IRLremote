@@ -107,8 +107,10 @@ read(void)
 	IR_data_t data = { 0 };
 	
 	// Only the received protocol will write data into the struct
+	cli();
 	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
+	sei();
 	
 	// Return the new protocol information to the user
 	return data;
@@ -166,7 +168,6 @@ interrupt(void)
 		// For a single protocol use a simpler decode function
 		// to get maximum speed + recognition and minimum flash size
 		protocol::decodeSingle(duration, debounce);
-		//protocol::template decodeSingle2<debounce>(duration);
 	}
 	else{
 		// Try to call all protocols decode functions
