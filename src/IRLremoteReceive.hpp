@@ -108,8 +108,12 @@ read(void)
 	
 	// Only the received protocol will write data into the struct
 	cli();
+	uint8_t oldSREG = SREG;
+	
 	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
+	
+	SREG = oldSREG;
 	sei();
 	
 	// Return the new protocol information to the user
@@ -123,8 +127,13 @@ lastEvent(void)
 {
 	// Return last event time (in micros)
 	cli();
+	uint8_t oldSREG = SREG;
+	
 	uint32_t time = IRLLastEvent;
+	
+	SREG = oldSREG;
 	sei();
+	
 	return time; 
 }
 
@@ -135,8 +144,13 @@ timeout(void)
 {
 	// Return time between last event time (in micros)
 	cli();
+	uint8_t oldSREG = SREG;
+	
 	uint32_t timeout = micros() - IRLLastEvent;
+	
+	SREG = oldSREG;
 	sei();
+	
 	return timeout; 
 }
 
