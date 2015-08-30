@@ -190,11 +190,11 @@ interrupt(void)
 	}
 	
 	// Check if the last signal was received too fast.
-	if (debounce && available()) 
+	if (available()) 
 	{
 		// Do not save the new time, to not block forever if the user is holding a button.
 		// This way you can still realize things like: hold a button to increase the volume
-		if ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL)){
+		if (debounce && ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL))){
 			// Last input received too fast, ignore this one
 			IRLProtocol &= ~IR_NEW_PROTOCOL;
 			return;

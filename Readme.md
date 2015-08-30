@@ -182,6 +182,7 @@ Version History
 * Improved NEC sending
 * Added to Arduino IDE 1.6.x library manager
 * Some other complex library structure changes
+* Made reading interrupt save
 
 1.7.4 Release (19.04.2015)
 * Updated examples
