@@ -94,7 +94,7 @@ protected:
 
 
 uint8_t Sony::getSingleFlag(void){
-	return RISING; //TODO
+	return CHANGE; //TODO change to RISING and implement function
 }
 
 
@@ -129,7 +129,7 @@ void Sony::read(IR_data_t* data){
 
 void Sony::decodeSingle(const uint16_t &duration){
 	// not implemented TODO
-	#warning "Sony Single is not implemented yet."
+	decode(duration);
 }
 
 
