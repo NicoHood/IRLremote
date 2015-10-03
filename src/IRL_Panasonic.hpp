@@ -107,7 +107,7 @@ void Panasonic::read(IR_data_t* data){
 	// Only (over)write new data if this protocol received any data
 	if(available()){
 		data->address = ((uint16_t)dataPanasonic[1] << 8) | ((uint16_t)dataPanasonic[0]);
-		data->command = ((uint32_t)dataPanasonic[5] << 24) | ((uint32_t)dataPanasonic[4] << 16) 
+		data->command = ((uint32_t)dataPanasonic[5] << 24) | ((uint32_t)dataPanasonic[4] << 16)
 						| ((uint32_t)dataPanasonic[3] << 8) | ((uint32_t)dataPanasonic[2]);
 		data->protocol = IRLProtocol;
 		
