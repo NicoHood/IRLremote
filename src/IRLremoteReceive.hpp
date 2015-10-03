@@ -104,7 +104,7 @@ IR_data_t CIRLremote<protocol, protocols...>::
 read(void)
 {
 	// If nothing was received return an empty struct
-	IR_data_t data = { 0 };
+	IR_data_t data = IR_data_t();
 	
 	// Only the received protocol will write data into the struct
 	cli();

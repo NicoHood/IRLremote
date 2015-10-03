@@ -46,12 +46,8 @@ THE SOFTWARE.
 // Definitions
 //================================================================================
 
-// Definition to convert an uint8_t array to an uint16_t/uint32_t at any position (thx timeage!)
-#define UINT16_AT_OFFSET(p_to_8, offset)    ((uint16_t)*((const uint16_t *)((p_to_8)+(offset))))
-#define UINT32_AT_OFFSET(p_to_8, offset)    ((uint32_t)*((const uint32_t *)((p_to_8)+(offset))))
-
 // Enum as unique number for each protocol
-typedef enum IRType {
+enum IRType {
 	IR_NO_PROTOCOL = 0x00,
 	// If MSB is not sells the last received protocol is still saved
 	
@@ -71,7 +67,7 @@ typedef enum IRType {
 };
 
 // Struct that is returned by the read() function
-typedef struct IR_data_t {
+struct IR_data_t {
 	// Variables to save received data
 	uint8_t protocol;
 	uint16_t address;
