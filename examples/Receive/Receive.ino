@@ -30,8 +30,7 @@
 #include "IRLremote.h"
 // choose a valid PinInterrupt or PinChangeInterrupt* pin of your Arduino board
 #define pinIR 2
-#define IRL_DEBOUCE 300
-CIRLremote<IRL_DEBOUCE, Nec, Panasonic, Sony> IRLremote;
+CIRLremote<Nec, Panasonic, Sony> IRLremote;
 
 #define pinLed LED_BUILTIN
 

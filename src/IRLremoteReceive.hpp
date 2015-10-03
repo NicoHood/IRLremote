@@ -28,15 +28,15 @@ THE SOFTWARE.
 // User Functions
 //================================================================================
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+CIRLremote<protocol, protocols...>::
 CIRLremote(void) {
 	// Empty
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-bool CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+bool CIRLremote<protocol, protocols...>::
 begin(uint8_t pin)
 {
 	// For single protocols use a different flag
@@ -64,8 +64,8 @@ begin(uint8_t pin)
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-bool CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+bool CIRLremote<protocol, protocols...>::
 end(uint8_t pin)
 {
 	// Try to detach PinInterrupt first
@@ -87,8 +87,8 @@ end(uint8_t pin)
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-bool CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+bool CIRLremote<protocol, protocols...>::
 available(void)
 {
 	// This if construct saves flash
@@ -99,8 +99,8 @@ available(void)
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-IR_data_t CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+IR_data_t CIRLremote<protocol, protocols...>::
 read(void)
 {
 	// If nothing was received return an empty struct
@@ -121,8 +121,8 @@ read(void)
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-uint32_t CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+uint32_t CIRLremote<protocol, protocols...>::
 lastEvent(void)
 {
 	// Return last event time (in micros)
@@ -138,8 +138,8 @@ lastEvent(void)
 }
 
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-uint32_t CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+uint32_t CIRLremote<protocol, protocols...>::
 timeout(void)
 {
 	// Return time between last event time (in micros)
@@ -159,8 +159,8 @@ timeout(void)
 // Interrupt Function
 //================================================================================
 
-template<uint32_t debounce, typename protocol, typename ...protocols>
-void CIRLremote<debounce, protocol, protocols...>::
+template<typename protocol, typename ...protocols>
+void CIRLremote<protocol, protocols...>::
 interrupt(void) 
 { 
 	// Block if the protocol is already recognized
@@ -181,26 +181,16 @@ interrupt(void)
 	if(sizeof...(protocols) == 0){
 		// For a single protocol use a simpler decode function
 		// to get maximum speed + recognition and minimum flash size
-		protocol::decodeSingle(duration, debounce);
+		protocol::decodeSingle(duration);
 	}
 	else{
 		// Try to call all protocols decode functions
-		protocol::decode(duration, debounce);
-		nop((protocols::decode(duration, debounce), 0)...);
+		protocol::decode(duration);
+		nop((protocols::decode(duration), 0)...);
 	}
 	
-	// Check if the last signal was received too fast.
-	if (available()) 
-	{
-		// Do not save the new time, to not block forever if the user is holding a button.
-		// This way you can still realize things like: hold a button to increase the volume
-		if (debounce && ((IRLLastTime - IRLLastEvent) < (debounce * 1000UL))){
-			// Last input received too fast, ignore this one
-			IRLProtocol &= ~IR_NEW_PROTOCOL;
-			return;
-		}
-
-		// New valid signal, save new time
+	// New valid signal, save new time
+	if (available()) {
 		IRLLastEvent = IRLLastTime;
 	}
 }

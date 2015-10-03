@@ -61,7 +61,7 @@ public:
 	}
 	
 	// Hide anything that is inside this class so the user dont accidently uses this class
-	template<uint32_t debounce, typename protocol, typename ...protocols>
+	template<typename protocol, typename ...protocols>
 	friend class CIRLremote;
 	
 private:
@@ -70,8 +70,8 @@ private:
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
 
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
-	static inline void decodeSingle(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
-	static inline void decode(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
+	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
+	static inline void decode(const uint16_t &duration) __attribute__((always_inline));
 
 protected:
 	// Temporary buffer to hold bytes for decoding the protocols
@@ -109,7 +109,7 @@ void Nec::read(IR_data_t* data){
 }
 
 
-void Nec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
+void Nec::decodeSingle(const uint16_t &duration){
 
 	// No special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
@@ -143,7 +143,7 @@ void Nec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
 
 			// Check if last event timed out long enough
 			// to not trigger wrong buttons (1 Nec signal timespawn)
-			if ((IRLLastTime - IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
+			if ((IRLLastTime - IRLLastEvent) >= NEC_TIMEOUT_REPEAT)
 				return;
 			
 			// received a Nec Repeat signal
@@ -196,7 +196,7 @@ void Nec::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
 }
 
 
-void Nec::decode(const uint16_t &duration, const uint32_t &debounce) {
+void Nec::decode(const uint16_t &duration) {
 	// no special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
 	const uint8_t irLength = NEC_LENGTH;
@@ -239,7 +239,7 @@ void Nec::decode(const uint16_t &duration, const uint32_t &debounce) {
 
 			// Check if last event timed out long enough
 			// to not trigger wrong buttons (1 Nec signal timespawn)
-			if ((IRLLastTime - IRLLastEvent) >= ((debounce * 1000UL) + NEC_TIMEOUT_REPEAT))
+			if ((IRLLastTime - IRLLastEvent) >= NEC_TIMEOUT_REPEAT)
 				return;
 			
 			//TODO check last protocol (only for multiple protocol decoding

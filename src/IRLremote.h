@@ -105,7 +105,7 @@ protected:
 // Receive
 //================================================================================
 	
-template<uint32_t debounce, typename protocol, typename ...protocols>
+template<typename protocol, typename ...protocols>
 class CIRLremote : public CIRLData{
 public:
 	CIRLremote(void);

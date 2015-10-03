@@ -73,7 +73,7 @@ public:
 	}
 	
 	// Hide anything that is inside this class so the user dont accidently uses this class
-	template<uint32_t debounce, typename protocol, typename ...protocols>
+	template<typename protocol, typename ...protocols>
 	friend class CIRLremote;
 	
 private:
@@ -82,8 +82,8 @@ private:
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
 
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
-	static inline void decodeSingle(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
-	static inline void decode(const uint16_t &duration, const uint32_t &debounce) __attribute__((always_inline));
+	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
+	static inline void decode(const uint16_t &duration) __attribute__((always_inline));
 
 protected:
 	// Temporary buffer to hold bytes for decoding the protocols
@@ -127,12 +127,12 @@ void Sony::read(IR_data_t* data){
 }
 
 
-void Sony::decodeSingle(const uint16_t &duration, const uint32_t &debounce){
+void Sony::decodeSingle(const uint16_t &duration){
 	// not implemented TODO
 }
 
 
-void Sony::decode(const uint16_t &duration, const uint32_t &debounce) {
+void Sony::decode(const uint16_t &duration) {
 	// spaceTimeout gives some better accuracy, since we dont have a checksum here.
 	// also set markTimeout if needed.
 	const uint8_t irLength = SONY_LENGTH_12;
@@ -219,7 +219,7 @@ void Sony::decode(const uint16_t &duration, const uint32_t &debounce) {
 /*
 
 
-template <uint32_t debounce, IRType ...irProtocol>
+template <IRType ...irProtocol>
 inline void CIRLremote<debounce, irProtocol...>::
 decodeSony20(const uint16_t duration) {
 	//// pass the duration to the decoding function
@@ -257,7 +257,7 @@ decodeSony20(const uint16_t duration) {
 
 //
 //
-//template <uint32_t debounce, IRType ...irProtocol>
+//template <IRType ...irProtocol>
 //template <uint8_t irLength, uint16_t timeoutThreshold, uint16_t markLeadThreshold, uint16_t spaceLeadThreshold,
 //	uint16_t spaceLeadHoldingThreshold, uint16_t markThreshold, uint16_t spaceThreshold,
 //	uint16_t markTimeout, uint16_t spaceTimeout>
