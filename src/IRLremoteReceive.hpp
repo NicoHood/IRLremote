@@ -118,7 +118,6 @@ read(void)
 	nop((protocols::read(&data), 0)...);
 	
 	SREG = oldSREG;
-	sei();
 	
 	// Return the new protocol information to the user
 	return data;
@@ -136,7 +135,6 @@ lastEvent(void)
 	uint32_t time = IRLLastEvent;
 	
 	SREG = oldSREG;
-	sei();
 	
 	return time; 
 }
@@ -153,7 +151,6 @@ timeout(void)
 	uint32_t timeout = micros() - IRLLastEvent;
 	
 	SREG = oldSREG;
-	sei();
 	
 	return timeout; 
 }
