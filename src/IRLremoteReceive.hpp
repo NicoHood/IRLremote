@@ -122,8 +122,8 @@ read(void)
 	IR_data_t data = IR_data_t();
 	
 	// Only the received protocol will write data into the struct
-	cli();
 	uint8_t oldSREG = SREG;
+	cli();
 	
 	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
@@ -143,8 +143,8 @@ uint32_t CIRLremote<protocol, protocols...>::
 lastEvent(void)
 {
 	// Return last event time (in micros)
-	cli();
 	uint8_t oldSREG = SREG;
+	cli();
 	
 	uint32_t time = IRLLastEvent;
 	
@@ -159,8 +159,8 @@ uint32_t CIRLremote<protocol, protocols...>::
 timeout(void)
 {
 	// Return time between last event time (in micros)
-	cli();
 	uint8_t oldSREG = SREG;
+	cli();
 	
 	uint32_t timeout = micros() - IRLLastEvent;
 	
