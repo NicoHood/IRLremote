@@ -13,27 +13,29 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Huge Flash improvements (less than 1kb flash to decode NEC)
 * Receiving and sending possible
 * Very accurate even when pointing in different directions
-* Easy to use/Customizable
+* Easy to use/customizable
 * Maximum error correction
 * Uses PinInterrupt or PinChangeInterrupts/No timer needed
 * Usable on almost any pin
 * Perfect for Attinys
+* All mainstream protocols supported
+* Very accurate hash decoding for unknown protocols
 * IDE 1.6.x compatible (not 1.0.5 compatible)
 
 **Supported Protocols**
 * NEC
-* Panasonic 
+* Panasonic
 * Sony 12
+* Hash (For any unknown protocol)
+* RawIR (For dumping the raw data)
 * Ask me for more
 
 **Planned features:**
 * Test sending functions (for Panasonic, Sony etc)
-* Add more protocols
+* Add more protocols (RC06)
 * Improve bit banging PWM?
-* Add Raw dump + sending option + improve raw function
-* Add High/Low compare for unknown protocols
-* Raw: add copyable array print version
-* Implement Sony 8, 15, 20
+* Add Raw dump sending option
+* Implement Sony 15, 20 properly
 
 [Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
 
@@ -50,57 +52,26 @@ or **[PinChangeInterrupt](https://github.com/NicoHood/PinChangeInterrupt)** pin.
 They work a bit different under the hood but the result for IR is the same.
 In order to use PinChangeInterrupts you also have to [install the library](https://github.com/NicoHood/PinChangeInterrupt).
 
-Try the examples to see how the API works.
+**Try the examples to see how the API works.**
 
-One you know what protocol your remote uses, choose yours from one of these options and change it in the setup():
-```cpp
-typedef enum IRType{
-	IR_NO_PROTOCOL, // 0
-	IR_USER, // 1
-	IR_ALL, // 2
-	IR_NEC, // ...
-	IR_PANASONIC,
-	IR_SONY8, // soon
-	IR_SONY12,
-	IR_SONY15, // soon
-	IR_SONY20, // soon
-	// add new protocols here
-	IR_RAW,
-};
-```
-Each protocol number (Serial output in the examples) is equal to one of these names, starting from zero.
-So if you get protocol 3 this means its NEC. By default the library tries to decode all known protocols.
-
-**You can save a lot of ram/flash/performance by using a fixed protocol** like IR_NEC instead of IR_ALL in the begin function.
-If you choose a single protocol, keep in mind that accuracy is then set very low to get **maximal recognition and less code size**.
-If you want to use more protocols or keep away different IR input devices which might cause problems, see the **advanced custom receiving example**.
-
-The IR_USER IRType is for custom protocols/protocol combinations. See advanced examples.
-There is also an example for raw output and a PCINT version. **With the basic PCINT version you can also
-decrease flash size even more and be more flexible with your sending pin!**
-
-**Keep in mind that from v1.6 to v1.7 the bit order has changed
-and command and address might be a different value now.**
-
+**You can save a lot of ram/flash/performance by using a fixed protocol** like NEC instead of all together.
+If you choose a single protocol, keep in mind that accuracy
+is then set to get **maximal recognition, more speed and less code size**.
 
 ### Sending
 
-**For sending see the SendSerial/Button examples.** You first have to read the codes of your remote with one of the receiving examples.
+**For sending see the SendSerial/Button examples.**
+Sending is currently **beta**. The library focusses more on decoding, rather than sending.
+You first have to read the codes of your remote with one of the receiving examples.
 Choose your protocol in the sending sketch and use your address and command if choice.
 
 Sending for Panasonic and Sony12 is not confirmed to work, since I have no device here to test.
 Let me know if it works!
 
-**Keep in mind that from v1.6 to v1.7 the bit order has changed
-and command and address might be a different value now.**
-
 ### Adding new protocols
 
-Informations about IR protocols can be found [here](http://www.hifi-remote.com/johnsfine/DecodeIR.html)
-(a bit hard to understand but try it if you want to create a new protocol).
-=> Website is offline, see /dev for an offline version of the website
-
-You can also ask me to implement any new protocol, just file it as issue on Github or contact me on my blog.
+You can also ask me to implement any new protocol, just file an issue on Github or contact me directly.
+Or you can just choose the hash option which works very relyable for unknown protocols.
 
 More projects + contact can be found here:
 http://www.NicoHood.de
@@ -109,9 +80,9 @@ How it works
 ============
 
 **The idea is: minimal implementation with maximal recognition.
-You can decode more than one protocol at the same time.**
+You can still decode more than one protocol at the same time.**
 
-The trick is to only check the border between logical zero and one
+The trick is to only check the border between logical zero and logical one
 to terminate space/mark and rely on the lead/length/checksum as error correction.
 Lets say a logical 0 is 500ms and 1 is 1000ms. Then the border would be 750ms
 to get maximum recognition instead of using just 10%.
@@ -140,16 +111,13 @@ but only PIN 3 is usable for sending (an interrupt pin). Bitbang might have prob
 You can turn off interrupts before sending if you like to ensure a proper sending.
 Normal IR devices shouldn't complain about a bit intolerance in the PWM signal. Just try to keep interrupts short.
 
-Check ReceiveNECLed for a minimal implementation example.
-The code itself seems to be a bit organized but I had to implement a lot of functions inline
-to get maximum optimization.
-
 This text should not attack the library from Ken. It's a great library with a lot of work and the most used IR library yet.
 It is just worth a comparison and might be still useful like the old SoftSerial against the new one.
 
 Links
 =====
 
+* https://github.com/z3t0/Arduino-IRremote
 * http://www.mikrocontroller.net/articles/IRMP#Literatur
 * JCV/Panasonic/Japan/KASEIKYO
  * http://www.mikrocontroller.net/attachment/4246/IR-Protokolle_Diplomarbeit.pdf
@@ -183,6 +151,8 @@ Version History
 * Added to Arduino IDE 1.6.x library manager
 * Some other complex library structure changes
 * Made reading interrupt save
+* Improved RawIR
+* Added hash function for unknown protocols
 
 1.7.4 Release (19.04.2015)
 * Updated examples
