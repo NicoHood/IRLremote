@@ -137,8 +137,10 @@ read(void)
 	// to not trigger them with wrong starting values
 	// example: RawIR
 	
-	// TODO this may contain the last IR signal if called without available() first
-	data.protocol = IRLProtocol;
+	// Check if we actually have new data and save the protocol as well
+	auto p = IRLProtocol;
+	if(p &= IR_NEW_PROTOCOL)
+		data.protocol = p;
 	
 	IRLProtocol &= ~IR_NEW_PROTOCOL;
 	
