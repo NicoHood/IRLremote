@@ -78,6 +78,7 @@ public:
 	
 private:
 	static inline uint8_t getSingleFlag(void) __attribute__((always_inline));
+	static inline bool requiresCheckTimeout(void) __attribute__((always_inline));
 	static inline void checkTimeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
@@ -96,6 +97,13 @@ protected:
 
 uint8_t Sony::getSingleFlag(void){
 	return CHANGE; //TODO change to RISING and implement function
+}
+
+
+bool Sony::requiresCheckTimeout(void){
+	// Not used in this protocol
+	// TODO not yet
+	return false;
 }
 
 

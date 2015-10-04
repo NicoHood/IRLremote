@@ -91,10 +91,21 @@ template<typename protocol, typename ...protocols>
 bool CIRLremote<protocol, protocols...>::
 available(void)
 {
-	// Let each protocol check if their timeout expired. Not all protocols use this.
-	protocol::checkTimeout();
-	nop((protocols::checkTimeout(), 0)...);
-
+	// Only add this overhead if we have multiple protocols
+	// Or the protocol requires a timeout check.
+	if(sizeof...(protocols) != 0 || protocol::requiresCheckTimeout()){
+		// Disable interrupts when checking for new input
+		uint8_t oldSREG = SREG;
+		cli();
+	
+		// Let each protocol check if their timeout expired. Not all protocols use this.
+		if(!(IRLProtocol & IR_NEW_PROTOCOL)){
+			protocol::checkTimeout();
+			nop((protocols::checkTimeout(), 0)...);
+		}
+		SREG = oldSREG;
+	}
+	
 	// This if construct saves flash
 	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return true;
@@ -191,7 +202,7 @@ interrupt(void)
 	}
 	
 	// New valid signal, save new time
-	if (available()) {
+	if(IRLProtocol & IR_NEW_PROTOCOL) {
 		IRLLastEvent = IRLLastTime;
 	}
 }
