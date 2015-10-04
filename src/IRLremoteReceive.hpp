@@ -91,6 +91,10 @@ template<typename protocol, typename ...protocols>
 bool CIRLremote<protocol, protocols...>::
 available(void)
 {
+	// Let each protocol check if their timeout expired. Not all protocols use this.
+	protocol::checkTimeout();
+	nop((protocols::checkTimeout(), 0)...);
+
 	// This if construct saves flash
 	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return true;
@@ -164,7 +168,7 @@ void CIRLremote<protocol, protocols...>::
 interrupt(void) 
 { 
 	// Block if the protocol is already recognized
-	if (available())
+	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return;
 
 	// Save the duration between the last reading

@@ -73,6 +73,7 @@ public:
 	
 private:
 	static inline uint8_t getSingleFlag(void) __attribute__((always_inline));
+	static inline void checkTimeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
 
@@ -90,6 +91,11 @@ protected:
 
 uint8_t Panasonic::getSingleFlag(void){
 	return FALLING;
+}
+
+
+void Panasonic::checkTimeout(void){
+	// Not used in this protocol
 }
 
 
