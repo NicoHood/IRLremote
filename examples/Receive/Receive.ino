@@ -20,7 +20,7 @@
   Attiny 13: All pins* are usable
   ATmega644P/ATmega1284P: 10, 11, All pins* are usable
 
-  : PinChangeInterrupts requires a special library which can be downloaded here:
+  *PinChangeInterrupts requires a special library which can be downloaded here:
   https://github.com/NicoHood/PinChangeInterrupt
 */
 
@@ -35,32 +35,32 @@ CIRLremote<Nec, Panasonic, Sony> IRLremote;
 #define pinLed LED_BUILTIN
 
 void setup() {
-  // start serial debug output
+  // Start serial debug output
   while (!Serial);
   Serial.begin(115200);
   Serial.println(F("Startup"));
 
-  // set LED to output
+  // Set LED to output
   pinMode(pinLed, OUTPUT);
 
-  // start reading the remote. PinInterrupt or PinChangeInterrupt* will automatically be selected
+  // Start reading the remote. PinInterrupt or PinChangeInterrupt* will automatically be selected
   if (!IRLremote.begin(pinIR))
     Serial.println(F("You did not choose a valid pin."));
 }
 
 void loop() {
   if (IRLremote.available()) {
-    // light Led
+    // Light Led
     digitalWrite(pinLed, HIGH);
 
-    // get the new data from the remote
+    // Get the new data from the remote
     IR_data_t data = IRLremote.read();
 
-    // print protocol number
+    // Print protocol number
     Serial.println();
     Serial.print(F("Protocol: "));
 
-    // see readme to terminate what number is for each protocol
+    // See readme to terminate what number is for each protocol
     switch (data.protocol) {
       case IR_NEC:
         Serial.println(F("NEC"));
@@ -77,19 +77,22 @@ void loop() {
       case IR_SONY12:
         Serial.println(F("Sony12"));
         break;
+      case IR_RAW:
+        Serial.println(F("RAW"));
+        break;
       default:
         Serial.print(data.protocol);
         Serial.println(F(" Unknown"));
         break;
     }
 
-    // print the protocol data
+    // Print the protocol data
     Serial.print(F("Address: 0x"));
     Serial.println(data.address, HEX);
     Serial.print(F("Command: 0x"));
     Serial.println(data.command, HEX);
 
-    // turn Led off after printing the data
+    // Turn Led off after printing the data
     digitalWrite(pinLed, LOW);
   }
 }
