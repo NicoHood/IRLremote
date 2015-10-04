@@ -58,7 +58,6 @@ private:
 	static inline uint8_t getSingleFlag(void) __attribute__((always_inline));
 	static inline bool requiresCheckTimeout(void) __attribute__((always_inline));
 	static inline void checkTimeout(void) __attribute__((always_inline));
-	static inline bool timeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
 	static inline bool requiresReset(void) __attribute__((always_inline));
@@ -68,7 +67,6 @@ private:
 	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
 	static inline void decode(const uint16_t &duration) __attribute__((always_inline));
 
-//protected:
 public:
 	// Temporary buffer to hold bytes for decoding the protocols
 	// not all of them are compiled, only the used ones
@@ -90,40 +88,16 @@ bool RawIR::requiresCheckTimeout(void){
 
 void RawIR::checkTimeout(void){
 	// This function is executed with interrupts turned off
-	if(timeout()){
-		// Flag a new input if reading timed out
-		IRLProtocol = IR_RAW;
-		IRLLastEvent = IRLLastTime;
-	}
-}
-
-
-bool RawIR::timeout(void){
-	// Check if we have data
-	if (countRawIR) {
-		// Check if buffer is full
-		if (countRawIR == RAWIR_BLOCKS) {
-			return true;
-		}
-
-		// Check if last reading was a timeout.
-		// No problem if count==0 because the above if around prevents this.
-		if (dataRawIR[countRawIR - 1] >= RAWIR_TIMEOUT)
-		{
-			return true;
-		}
-
+	if(countRawIR){
 		// Check if reading timed out and save value.
-		// Saving is needed to abord the check above next time.
-		uint32_t duration = micros() - IRLLastTime;
-		if (duration >= RAWIR_TIMEOUT) {
+		if ((micros() - IRLLastTime) >= RAWIR_TIMEOUT) {
 			dataRawIR[countRawIR++] = RAWIR_TIMEOUT;
-			return true;
+			
+			// Flag a new input if reading timed out
+			IRLProtocol = IR_RAW;
+			IRLLastEvent = IRLLastTime;
 		}
 	}
-
-	// Continue, we can still save into the buffer or the buffer is empty
-	return false;
 }
 
 
@@ -198,10 +172,10 @@ void RawIR::decodeSingle(const uint16_t &duration){
 	dataRawIR[countRawIR++] = duration;
 	
 	// Flag a new input if buffer is full or reading timed out
-	if((countRawIR == RAWIR_BLOCKS) || (duration >= RAWIR_TIMEOUT)){
+	if((countRawIR >= RAWIR_BLOCKS) || (duration >= RAWIR_TIMEOUT)){
 		// Ignore the very first timeout of each reading
 		if(countRawIR == 1){
-			countRawIR = 0;
+			reset();
 		}
 		else{
 			IRLProtocol = IR_RAW;

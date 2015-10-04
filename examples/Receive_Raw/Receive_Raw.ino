@@ -5,10 +5,7 @@
   IRL Receive_Raw
 
   Receives IR signals and prints raw values to the Serial.
-  Hashes the data to an unique number, even for unknown protocols.
-  To get reasonable results you might need to look at the raw data
-  and  adjust the timeout so it cuts off at the right time.
-  Each dump should end with a timeout.
+  Please read the notes below, this example is used for developing/debugging only.
 
   The following pins are usable for PinInterrupt or PinChangeInterrupt*:
   Arduino Uno/Nano/Mini: 2, 3, All pins* are usable
@@ -54,6 +51,16 @@ void loop() {
   if (IRLremote.available()) {
     // Light Led
     digitalWrite(pinLed, HIGH);
+
+    // Important note:
+    // Printing the values might cause you to miss
+    // the first byte of the next sequence.
+    // You might want to increase the buffer size
+    // and the timeout as well in the settings.
+    // You could also copy the buffer, call read()
+    // and print afterwards if enough ram is available.
+    // Do not use RawIR as "all day" protocol.
+    // But you can use the HashIR protocol instead.
 
     // Print a mark
     Serial.println(F("=========="));

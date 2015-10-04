@@ -49,10 +49,10 @@ THE SOFTWARE.
 // Enum as unique number for each protocol
 enum IRType {
 	IR_NO_PROTOCOL = 0x00,
-	// If MSB is not sells the last received protocol is still saved
+	// If MSB is not set the last received protocol is still saved
 	
 	// MSB tells that the protocol was read
-	IR_NEW_PROTOCOL = 0x80,
+	IR_NEW_PROTOCOL = 0x80, // 128 offset
 	IR_USER, // 1
 	IR_ALL, // 2
 	IR_NEC, // ...
