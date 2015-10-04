@@ -63,6 +63,7 @@ enum IRType {
 	IR_SONY12,
 	IR_SONY15,
 	IR_SONY20,
+	IR_RAW,
 	// add new protocols here
 };
 
@@ -135,6 +136,7 @@ protected:
 #include "IRL_Nec.hpp"
 #include "IRL_Panasonic.hpp"
 #include "IRL_Sony.hpp"
+#include "IRL_RawIR.hpp"
 
 //================================================================================
 // Transmit
