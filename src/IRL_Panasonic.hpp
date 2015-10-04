@@ -77,7 +77,9 @@ private:
 	static inline void checkTimeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
-
+	static inline bool requiresReset(void) __attribute__((always_inline));
+	static inline void reset(void) __attribute__((always_inline));
+	
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
 	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
 	static inline void decode(const uint16_t &duration) __attribute__((always_inline));
@@ -123,6 +125,17 @@ void Panasonic::read(IR_data_t* data){
 		data->command = ((uint32_t)dataPanasonic[5] << 24) | ((uint32_t)dataPanasonic[4] << 16)
 						| ((uint32_t)dataPanasonic[3] << 8) | ((uint32_t)dataPanasonic[2]);
 	}
+}
+
+
+bool Panasonic::requiresReset(void){
+	// Not used in this protocol
+	return false;
+}
+
+
+void Panasonic::reset(void){
+	countPanasonic = 0;
 }
 
 

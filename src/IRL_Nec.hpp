@@ -70,6 +70,8 @@ private:
 	static inline void checkTimeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
+	static inline bool requiresReset(void) __attribute__((always_inline));
+	static inline void reset(void) __attribute__((always_inline));
 
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
 	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
@@ -113,6 +115,17 @@ void Nec::read(IR_data_t* data){
 		data->address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
 		data->command = ((uint16_t)dataNec[3] << 8) | ((uint16_t)dataNec[2]);
 	}
+}
+
+
+bool Nec::requiresReset(void){
+	// Not used in this protocol
+	return false;
+}
+
+
+void Nec::reset(void){
+	countNec = 0;
 }
 
 

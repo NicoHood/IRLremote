@@ -114,6 +114,7 @@ public:
 	// User access to the library data
 	static inline bool available(void);
 	static inline IR_data_t read(void);
+	static inline void reset(void);
 	
 	// Time control
 	static inline uint32_t lastEvent(void);

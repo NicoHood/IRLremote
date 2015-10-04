@@ -131,16 +131,15 @@ read(void)
 	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
 	
-	// Reset protocol for new reading
-	// TODO reset all other protocols as well
-	// (if multiple are used and available())
-	// to not trigger them with wrong starting values
-	// example: RawIR
-	
 	// Check if we actually have new data and save the protocol as well
 	auto p = IRLProtocol;
 	if(p &= IR_NEW_PROTOCOL)
 		data.protocol = p;
+
+	// Reset other protocols for new reading
+	if(sizeof...(protocols) != 0 || protocol::requiresReset()){
+		reset();
+	}
 	
 	IRLProtocol &= ~IR_NEW_PROTOCOL;
 	
@@ -148,6 +147,16 @@ read(void)
 	
 	// Return the new protocol information to the user
 	return data;
+}
+
+
+template<typename protocol, typename ...protocols>
+void CIRLremote<protocol, protocols...>::
+reset(void)
+{
+	// Call all protocol reset functions
+	protocol::reset();
+	nop((protocols::reset(), 0)...);
 }
 
 

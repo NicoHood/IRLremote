@@ -53,7 +53,9 @@ private:
 	static inline bool timeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
-
+	static inline bool requiresReset(void) __attribute__((always_inline));
+	static inline void reset(void) __attribute__((always_inline));
+	
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
 	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
 	static inline void decode(const uint16_t &duration) __attribute__((always_inline));
@@ -138,10 +140,19 @@ void RawIR::read(IR_data_t* data){
 		// TODO analyze data and output something that can be used better for unknown remotes
 		data->address = 0;
 		data->command = 0;
-		
-		// Reset protocol for new reading
-		countRawIR = 0;
 	}
+}
+
+
+bool RawIR::requiresReset(void){
+	// Used in this protocol
+	return true;
+}
+
+
+void RawIR::reset(void){
+	// Reset protocol for new reading
+	countRawIR = 0;
 }
 
 

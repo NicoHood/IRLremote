@@ -82,6 +82,8 @@ private:
 	static inline void checkTimeout(void) __attribute__((always_inline));
 	static inline bool available(void) __attribute__((always_inline));
 	static inline void read(IR_data_t* data) __attribute__((always_inline));
+	static inline bool requiresReset(void) __attribute__((always_inline));
+	static inline void reset(void) __attribute__((always_inline));
 
 	// Decode functions for a single protocol/multiprotocol for less/more accuration
 	static inline void decodeSingle(const uint16_t &duration) __attribute__((always_inline));
@@ -134,6 +136,18 @@ void Sony::read(IR_data_t* data){
 		data->address = upper4Bits;
 		data->command = dataSony[0] & 0x7F;
 	}
+}
+
+
+bool Sony::requiresReset(void){
+	// Not used in this protocol
+	// TODO not yet
+	return false;
+}
+
+
+void Sony::reset(void){
+	countSony = 0;
 }
 
 
