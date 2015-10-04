@@ -6,6 +6,8 @@
 
   Receives IR signals and prints raw values to the Serial.
   Hashes the data to an unique number, even for unknown protocols.
+  To get reasonable results you might need to look at the raw data
+  and  adjust the timeout so it cuts off at the right time.
   Each dump should end with a timeout.
 
   The following pins are usable for PinInterrupt or PinChangeInterrupt*:

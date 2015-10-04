@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 //RawIR
 #define RAWIR_BLOCKS 255				// 0-65535
-#define RAWIR_TIMEOUT (0xFFFF/2)		// 65535, max timeout
+#define RAWIR_TIMEOUT (0xFFFF/4)		// 65535, max timeout
 #define RAWIR_TIME_THRESHOLD 10000UL	// 0-32bit
 
 // Determine buffer length datatype
@@ -162,12 +162,12 @@ void RawIR::read(IR_data_t* data){
 
 			// Compare two tick values, returning 0 if newval is shorter,
 			// 1 if newval is equal, and 2 if newval is longer
-			// Use a tolerance of 25%
+			// Use a tolerance of 50%
 			uint8_t value = 1;
-			if (newval < ((oldval * 3) / 4)) {
+			if (newval < (oldval / 2)) {
 				value = 0;
 			}
-			else if (oldval < ((newval * 3) / 4)) {
+			else if (oldval < (newval / 2)) {
 				value = 2;
 			}
 
