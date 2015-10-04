@@ -133,7 +133,6 @@ void Nec::decodeSingle(const uint16_t &duration){
 
 	// No special accuracy set at the moment, no conflict detected yet
 	// due to the checksum we got a good recognition
-	//TODO defines?
 	const uint8_t irLength = NEC_LENGTH / 2;
 	const uint16_t timeoutThreshold = (NEC_TIMEOUT + NEC_MARK_LEAD + NEC_SPACE_LEAD) / 2;
 	const uint16_t leadThreshold = (NEC_MARK_LEAD + NEC_SPACE_LEAD + NEC_MARK_LEAD + NEC_SPACE_HOLDING) / 2;
@@ -200,7 +199,7 @@ void Nec::decodeSingle(const uint16_t &duration){
 			// to make it less complicated it's left out and the user can check the command inverse himself if needed
 			if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
 			{
-				// TODO if normal mode + extended wanted, also add in the 2nd decode function
+				// Differenciate between normal and extended NEC
 				if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
 					IRLProtocol = IR_NEC;
 				else
@@ -262,13 +261,14 @@ void Nec::decode(const uint16_t &duration) {
 			if ((IRLLastTime - IRLLastEvent) >= NEC_TIMEOUT_REPEAT)
 				return;
 			
-			//TODO check last protocol (only for multiple protocol decoding
-			// on wrong reading reset protocol
-			//uint8_t protocol = IRLProtocol | IR_NEW_PROTOCOL;
-
-			// received a Nec Repeat signal
-			// next mark (stop bit) ignored due to detecting techniques
-			IRLProtocol = IR_NEC_REPEAT;
+			// Check if last protocol was also NEC
+			// (only for multiple protocol decoding)
+			uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
+			if(lastProtocol == IR_NEC || lastProtocol == IR_NEC_EXTENDED || lastProtocol == IR_NEC_REPEAT){
+				// Received a Nec Repeat signal
+				// Next mark (stop bit) ignored due to decoding techniques
+				IRLProtocol = IR_NEC_REPEAT;
+			}
 			return;
 		}
 		// else normal Space, next reading
@@ -285,6 +285,7 @@ void Nec::decode(const uint16_t &duration) {
 		// to make it less complicated it's left out and the user can check the command inverse himself if needed
 		if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
 		{
+			// Differenciate between normal and extended NEC
 			if ((uint8_t((dataNec[0] ^ (~dataNec[1]))) == 0x00))
 				IRLProtocol = IR_NEC;
 			else
