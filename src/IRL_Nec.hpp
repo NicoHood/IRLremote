@@ -113,9 +113,6 @@ void Nec::read(IR_data_t* data){
 		data->address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
 		data->command = ((uint16_t)dataNec[3] << 8) | ((uint16_t)dataNec[2]);
 		data->protocol = IRLProtocol;
-		
-		// Reset protocol for new reading
-		IRLProtocol &= ~IR_NEW_PROTOCOL;
 	}
 }
 

@@ -128,6 +128,9 @@ read(void)
 	protocol::read(&data);
 	nop((protocols::read(&data), 0)...);
 	
+	// Reset protocol for new reading
+	IRLProtocol &= ~IR_NEW_PROTOCOL;
+	
 	SREG = oldSREG;
 	
 	// Return the new protocol information to the user
