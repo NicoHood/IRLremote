@@ -29,9 +29,16 @@ THE SOFTWARE.
 //================================================================================
 
 //RawIR
-#define RAWIR_BLOCKS 100				// 0-255
-#define RAWIR_TIMEOUT 0xFFFF			// 65535, max timeout
+#define RAWIR_BLOCKS 255				// 0-65535
+#define RAWIR_TIMEOUT (0xFFFF/2)		// 65535, max timeout
 #define RAWIR_TIME_THRESHOLD 10000UL	// 0-32bit
+
+// Determine buffer length datatype
+#if (RAWIR_BLOCKS > 255)
+#define RAWIR_DATA_T uint16_t
+#else
+#define RAWIR_DATA_T uint8_t
+#endif
 
 //================================================================================
 // Decoding Class
@@ -65,7 +72,7 @@ private:
 public:
 	// Temporary buffer to hold bytes for decoding the protocols
 	// not all of them are compiled, only the used ones
-	static uint8_t countRawIR;
+	static RAWIR_DATA_T countRawIR;
 	static uint16_t dataRawIR[RAWIR_BLOCKS];
 };
 

@@ -56,7 +56,7 @@ void loop() {
     Serial.println(F("=========="));
 
     // Go through the whole buffer and print values
-    for (uint8_t i = 0; i < RawIR::countRawIR; i++) {
+    for (typeof(RawIR::countRawIR) i = 0; i < RawIR::countRawIR; i++) {
       Serial.print(i);
       Serial.print(F(": "));
       Serial.println(RawIR::dataRawIR[i], DEC);
