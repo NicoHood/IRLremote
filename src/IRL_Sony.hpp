@@ -133,7 +133,6 @@ void Sony::read(IR_data_t* data){
 
 		data->address = upper4Bits;
 		data->command = dataSony[0] & 0x7F;
-		data->protocol = IRLProtocol;
 	}
 }
 

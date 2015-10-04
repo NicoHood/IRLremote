@@ -122,6 +122,8 @@ read(void)
 	IR_data_t data = IR_data_t();
 	
 	// Only the received protocol will write data into the struct
+	// TODO disabling ISR needed since the ISR will block unless
+	// we reset the IRLProtocol below.
 	uint8_t oldSREG = SREG;
 	cli();
 	
@@ -129,6 +131,14 @@ read(void)
 	nop((protocols::read(&data), 0)...);
 	
 	// Reset protocol for new reading
+	// TODO reset all other protocols as well
+	// (if multiple are used and available())
+	// to not trigger them with wrong starting values
+	// example: RawIR
+	
+	// TODO this may contain the last IR signal if called without available() first
+	data.protocol = IRLProtocol;
+	
 	IRLProtocol &= ~IR_NEW_PROTOCOL;
 	
 	SREG = oldSREG;
