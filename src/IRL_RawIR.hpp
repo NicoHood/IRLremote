@@ -82,7 +82,7 @@ bool RawIR::requiresCheckTimeout(void){
 
 
 void RawIR::checkTimeout(void){
-	// This function is executed with interrupts tunred off
+	// This function is executed with interrupts turned off
 	if(timeout()){
 		// Flag a new input if reading timed out
 		IRLProtocol = IR_RAW;
@@ -103,11 +103,6 @@ bool RawIR::timeout(void){
 		// No problem if count==0 because the above if around prevents this.
 		if (dataRawIR[countRawIR - 1] >= RAWIR_TIMEOUT)
 		{
-			// Skip the very first timeout that always occurs
-			// TODO check if 100 bytes are enough then (panansonic). Otherwise skip in the reading function
-			if(countRawIR == 1){
-				return false;
-			}
 			return true;
 		}
 
@@ -161,9 +156,15 @@ void RawIR::decodeSingle(const uint16_t &duration){
 	// Save value and increase count
 	dataRawIR[countRawIR++] = duration;
 	
-	// Flag a new input if buffer is full
-	if(countRawIR == RAWIR_BLOCKS){
-		IRLProtocol = IR_RAW;
+	// Flag a new input if buffer is full or reading timed out
+	if((countRawIR == RAWIR_BLOCKS) || (duration >= RAWIR_TIMEOUT)){
+		// Ignore the very first timeout of each reading
+		if(countRawIR == 1){
+			countRawIR = 0;
+		}
+		else{
+			IRLProtocol = IR_RAW;
+		}
 	}
 }
 
