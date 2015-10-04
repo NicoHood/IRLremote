@@ -124,7 +124,7 @@ bool Sony::available(void)
 
 void Sony::read(IR_data_t* data){
 	// Only (over)write new data if this protocol received any data
-	if(available()){
+	if(IRLProtocol == IR_SONY12){
 		//TODO
 		// protocol has no checksum
 		uint8_t upper4Bits = ((dataSony[1] >> 3) & 0x1E);

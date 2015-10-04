@@ -93,7 +93,8 @@ available(void)
 {
 	// Only add this overhead if we have multiple protocols
 	// Or the protocol requires a timeout check.
-	if(sizeof...(protocols) != 0 || protocol::requiresCheckTimeout()){
+	if(sizeof...(protocols) != 0 || protocol::requiresCheckTimeout())
+	{
 		// Disable interrupts when checking for new input
 		uint8_t oldSREG = SREG;
 		cli();
