@@ -29,8 +29,9 @@ THE SOFTWARE.
 //================================================================================
 
 //RawIR
-#define RAWIR_BLOCKS 100		// 0-255
-#define RAWIR_TIMEOUT 0xFFFF	// 65535, max timeout
+#define RAWIR_BLOCKS 100				// 0-255
+#define RAWIR_TIMEOUT 0xFFFF			// 65535, max timeout
+#define RAWIR_TIME_THRESHOLD 10000UL	// 0-32bit
 
 //================================================================================
 // Decoding Class
@@ -157,11 +158,6 @@ void RawIR::reset(void){
 
 
 void RawIR::decodeSingle(const uint16_t &duration){
-	decode(duration);
-}
-
-
-void RawIR::decode(const uint16_t &duration) {
 	// Save value and increase count
 	dataRawIR[countRawIR++] = duration;
 	
@@ -169,4 +165,15 @@ void RawIR::decode(const uint16_t &duration) {
 	if(countRawIR == RAWIR_BLOCKS){
 		IRLProtocol = IR_RAW;
 	}
+}
+
+
+void RawIR::decode(const uint16_t &duration) {
+	// Wait some time after the last protocol.
+	// This way it can finish its (possibly ignored) stop bit.
+	uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
+	if(lastProtocol != IR_RAW && (IRLLastTime - IRLLastEvent < RAWIR_TIME_THRESHOLD))
+		return;
+
+	decodeSingle(duration);
 }
