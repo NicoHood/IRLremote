@@ -123,26 +123,36 @@ read(void)
 	IR_data_t data = IR_data_t();
 	
 	// Only the received protocol will write data into the struct
-	// TODO disabling ISR needed since the ISR will block unless
-	// we reset the IRLProtocol below.
 	uint8_t oldSREG = SREG;
 	cli();
 	
-	protocol::read(&data);
-	nop((protocols::read(&data), 0)...);
-	
-	// Check if we actually have new data and save the protocol as well
-	auto p = IRLProtocol;
-	if(p &= IR_NEW_PROTOCOL)
-		data.protocol = p;
-
-	// Reset other protocols for new reading
-	if(sizeof...(protocols) != 0 || protocol::requiresReset()){
-		reset();
+	// Only add this overhead if we have multiple protocols
+	// Or the protocol requires a timeout check.
+	if(sizeof...(protocols) != 0 || protocol::requiresCheckTimeout())
+	{
+		// Let each protocol check if their timeout expired. Not all protocols use this.
+		if(!(IRLProtocol & IR_NEW_PROTOCOL)){
+			protocol::checkTimeout();
+			nop((protocols::checkTimeout(), 0)...);
+		}
 	}
 	
-	IRLProtocol &= ~IR_NEW_PROTOCOL;
-	
+	// Get new data, if any
+	if(((sizeof...(protocols) == 0) && !protocol::requiresReset()) || IRLProtocol & IR_NEW_PROTOCOL)
+	{
+		// Check if we actually have new data and save the protocol as well
+		protocol::read(&data);
+		nop((protocols::read(&data), 0)...);
+		data.protocol = IRLProtocol;
+
+		// Reset other protocols for new reading
+		if(sizeof...(protocols) != 0 || protocol::requiresReset()){
+			reset();
+		}
+
+		// Remove new protocol flag
+		IRLProtocol &= ~IR_NEW_PROTOCOL;
+	}
 	SREG = oldSREG;
 	
 	// Return the new protocol information to the user
