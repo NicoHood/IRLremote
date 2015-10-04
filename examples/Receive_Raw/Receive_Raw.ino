@@ -53,12 +53,12 @@ void loop() {
     digitalWrite(pinLed, HIGH);
 
     // Print a mark
-    Serial.println("==========");
+    Serial.println(F("=========="));
 
     // Go through the whole buffer and print values
     for (uint8_t i = 0; i < RawIR::countRawIR; i++) {
       Serial.print(i);
-      Serial.print(": ");
+      Serial.print(F(": "));
       Serial.println(RawIR::dataRawIR[i], DEC);
     }
 
