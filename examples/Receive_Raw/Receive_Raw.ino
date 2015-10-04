@@ -5,6 +5,7 @@
   IRL Receive_Raw
 
   Receives IR signals and prints raw values to the Serial.
+  Hashes the data to an unique number, even for unknown protocols.
   Each dump should end with a timeout.
 
   The following pins are usable for PinInterrupt or PinChangeInterrupt*:
@@ -72,8 +73,10 @@ void loop() {
     IR_data_t data = IRLremote.read();
 
     // Print the protocol data
-    Serial.print(F("Address: 0x"));
-    Serial.println(data.address, HEX);
+    // For RawIR this is just an approximate calculation.
+    // You should ignore addresses/length < 6 to avoid noise.
+    Serial.print(F("Buffer length: "));
+    Serial.println(data.address, DEC);
     Serial.print(F("Command: 0x"));
     Serial.println(data.command, HEX);
     Serial.println();

@@ -140,9 +140,43 @@ bool RawIR::available(void)
 void RawIR::read(IR_data_t* data){
 	// Only (over)write new data if this protocol received any data
 	if(IRLProtocol == IR_RAW){
-		// TODO analyze data and output something that can be used better for unknown remotes
-		data->address = 0;
-		data->command = 0;
+		// Converts the raw code values into a 32-bit hash code.
+		// Hopefully this code is unique for each button.
+		// This isn't a "real" decoding, just an arbitrary value.
+		// Code taken from https://github.com/z3t0/Arduino-IRremote
+
+		// Use FNV hash algorithm: http://isthe.com/chongo/tech/comp/fnv/#FNV-param
+#define FNV_PRIME_32 16777619UL
+#define FNV_BASIS_32 2166136261UL
+
+		// Save address as length.
+		// You can check the address/length to prevent triggering on noise
+		data->address = countRawIR;
+
+		// Iterate through all raw values and calculate a hash
+		uint32_t hash = FNV_BASIS_32;
+		for (typeof(countRawIR) i = 1; i < countRawIR; i++) {
+			// Get both values
+			auto oldval = dataRawIR[i - 1];
+			auto newval = dataRawIR[i];
+
+			// Compare two tick values, returning 0 if newval is shorter,
+			// 1 if newval is equal, and 2 if newval is longer
+			// Use a tolerance of 25%
+			uint8_t value = 1;
+			if (newval < ((oldval * 3) / 4)) {
+				value = 0;
+			}
+			else if (oldval < ((newval * 3) / 4)) {
+				value = 2;
+			}
+
+			// Add value into the hash
+			hash = (hash * FNV_PRIME_32) ^ value;
+		}
+
+		// Save calculated hash
+		data->command = hash;
 	}
 }
 
