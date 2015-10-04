@@ -37,8 +37,6 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Add Raw dump sending option
 * Implement Sony 15, 20 properly
 
-[Comment for feedback on my blog post.](http://nicohood.wordpress.com/2014/09/20/new-lightweight-infrared-library-for-arduino/)
-
 Installation/How to use
 =======================
 
