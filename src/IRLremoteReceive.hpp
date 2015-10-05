@@ -160,6 +160,12 @@ read(void)
 
 		// Remove new protocol flag
 		IRLProtocol &= ~IR_NEW_PROTOCOL;
+
+		// Set last ISR to current time.
+		// This is required to not trigger a timeout afterwards
+		// and read corrupted data. This might happen
+		// if the reading loop is too slow.
+		IRLLastTime = micros();
 	}
 	SREG = oldSREG;
 	
