@@ -29,12 +29,12 @@ THE SOFTWARE.
 //================================================================================
 
 //RawIR
-#define RAWIR_BLOCKS 255				// 0-65535
+#define RAWIR_BLOCKS 100				// 0-65535
 #define RAWIR_TIMEOUT (0xFFFF/4)		// 65535, max timeout
 #define RAWIR_TIME_THRESHOLD 10000UL	// 0-32bit
 
 // Determine buffer length datatype
-#if (RAWIR_BLOCKS > 255)
+#if (RAWIR_BLOCKS >= 255)
 #define RAWIR_DATA_T uint16_t
 #else
 #define RAWIR_DATA_T uint8_t
@@ -88,14 +88,21 @@ bool RawIR::requiresCheckTimeout(void){
 
 void RawIR::checkTimeout(void){
 	// This function is executed with interrupts turned off
-	if(countRawIR){
+	if(countRawIR)
+	{
 		// Check if reading timed out and save value.
-		if ((micros() - IRLLastTime) >= RAWIR_TIMEOUT) {
-			dataRawIR[countRawIR++] = RAWIR_TIMEOUT;
-			
+		if ((micros() - IRLLastTime) >= RAWIR_TIMEOUT)
+		{
 			// Flag a new input if reading timed out
-			IRLProtocol = IR_RAW;
-			IRLLastEvent = IRLLastTime;
+			countRawIR--;
+
+			// Ignore the very first timeout.
+			// This should normally never happen, but in any case
+			// try to avoid a timeout only flag with bufferlength 0.
+			if(countRawIR){
+				IRLProtocol = IR_RAW;
+				IRLLastEvent = IRLLastTime;
+			}
 		}
 	}
 }
@@ -129,19 +136,19 @@ void RawIR::read(IR_data_t* data){
 
 		// Iterate through all raw values and calculate a hash
 		uint32_t hash = FNV_BASIS_32;
-		for (typeof(countRawIR) i = 1; i < countRawIR; i++) {
+		for (typeof(countRawIR) i = 0; i < countRawIR; i++) {
 			// Get both values
 			auto oldval = dataRawIR[i - 1];
 			auto newval = dataRawIR[i];
 
 			// Compare two tick values, returning 0 if newval is shorter,
 			// 1 if newval is equal, and 2 if newval is longer
-			// Use a tolerance of 50%
+			// Use a tolerance of 75%
 			uint8_t value = 1;
-			if (newval < (oldval / 2)) {
+			if (newval < (oldval * 3 / 4)) {
 				value = 0;
 			}
-			else if (oldval < (newval / 2)) {
+			else if (oldval < (newval * 3 / 4)) {
 				value = 2;
 			}
 
@@ -168,16 +175,35 @@ void RawIR::reset(void){
 
 
 void RawIR::decodeSingle(const uint16_t &duration){
-	// Save value and increase count
-	dataRawIR[countRawIR++] = duration;
-	
-	// Flag a new input if buffer is full or reading timed out
-	if((countRawIR >= RAWIR_BLOCKS) || (duration >= RAWIR_TIMEOUT)){
-		// Ignore the very first timeout of each reading
+	// Reading timed out
+	if(duration >= RAWIR_TIMEOUT){
+		// Ignore the very first timeout of each reading.
 		if(countRawIR == 1){
-			reset();
+			return;
 		}
+		// Otherwise flag a new input and stop reading.
+		else if(countRawIR){
+			countRawIR--;
+			IRLProtocol = IR_RAW;
+		}
+		// Start a new reading sequence.
 		else{
+			countRawIR++;
+		}
+		return;
+	}
+
+	// Only save data if a sequence is running.
+	// This is required to avoid corrupted data
+	// when starting capturing at the middle of a sequence.
+	if(countRawIR){
+		// Save value and increase count
+		dataRawIR[countRawIR - 1] = duration;
+		countRawIR++;
+
+		// Flag a new input if buffer is full
+		if((countRawIR > RAWIR_BLOCKS)){
+			countRawIR--;
 			IRLProtocol = IR_RAW;
 		}
 	}
@@ -188,8 +214,9 @@ void RawIR::decode(const uint16_t &duration) {
 	// Wait some time after the last protocol.
 	// This way it can finish its (possibly ignored) stop bit.
 	uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
-	if(lastProtocol != IR_RAW && (IRLLastTime - IRLLastEvent < RAWIR_TIME_THRESHOLD))
+	if(lastProtocol != IR_RAW && (IRLLastTime - IRLLastEvent < RAWIR_TIME_THRESHOLD)){
 		return;
+	}
 
 	decodeSingle(duration);
 }
