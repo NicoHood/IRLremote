@@ -34,8 +34,8 @@ uint8_t Panasonic::countPanasonic = 0;
 uint8_t Panasonic::dataPanasonic[PANASONIC_BLOCKS] = { 0 };
 uint8_t Sony::countSony = 0;
 uint8_t Sony::dataSony[SONY_BLOCKS_12] = { 0 };
-RAWIR_DATA_T RawIR::countRawIR = 0;
-uint16_t RawIR::dataRawIR[RAWIR_BLOCKS] = { 0 };
+volatile RAWIR_DATA_T RawIR::countRawIR = 0;
+volatile uint16_t RawIR::dataRawIR[RAWIR_BLOCKS] = { 0 };
 
 volatile uint8_t CIRLData::IRLProtocol = IR_NO_PROTOCOL;
 uint32_t CIRLData::IRLLastTime = 0;

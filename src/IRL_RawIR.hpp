@@ -70,8 +70,8 @@ private:
 public:
 	// Temporary buffer to hold bytes for decoding the protocols
 	// not all of them are compiled, only the used ones
-	static RAWIR_DATA_T countRawIR;
-	static uint16_t dataRawIR[RAWIR_BLOCKS];
+	static volatile RAWIR_DATA_T countRawIR;
+	static volatile uint16_t dataRawIR[RAWIR_BLOCKS];
 };
 
 
