@@ -7,6 +7,11 @@
 #######################################
 
 IRLremote	KEYWORD1
+Nec	KEYWORD1
+Panasonic	KEYWORD1
+Sony	KEYWORD1
+RawIR	KEYWORD1
+HashIR	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -38,6 +43,7 @@ IR_SONY12	LITERAL1
 IR_SONY15	LITERAL1
 IR_SONY20	LITERAL1
 IR_RAW	LITERAL1
+IR_HASH	LITERAL1
 
 IR_ADDRESS_FIRST	LITERAL1
 IR_COMMAND_FIRST	LITERAL1
