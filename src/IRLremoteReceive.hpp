@@ -39,6 +39,11 @@ template<typename protocol, typename ...protocols>
 bool CIRLremote<protocol, protocols...>::
 begin(uint8_t pin)
 {
+	// Get pin ready for reading.
+	// This is normally not required with a static setup
+	// But for dynamic plugging it is.
+	pinMode(pin, INPUT_PULLUP);
+
 	// For single protocols use a different flag
 	uint8_t flag = CHANGE;
 	if(sizeof...(protocols) == 0){
@@ -68,6 +73,9 @@ template<typename protocol, typename ...protocols>
 bool CIRLremote<protocol, protocols...>::
 end(uint8_t pin)
 {
+	// Disable pullup.
+	pinMode(pin, INPUT);
+
 	// Try to detach PinInterrupt first
 	if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
 		detachInterrupt(digitalPinToInterrupt(pin));
