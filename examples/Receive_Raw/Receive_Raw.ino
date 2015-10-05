@@ -61,22 +61,25 @@ void loop() {
     // and print afterwards if enough ram is available.
     // Do not use RawIR as "all day" protocol.
     // But you can use the HashIR protocol instead.
+    const bool printRaw = true;
+    if (printRaw) {
 
-    // Print a mark
-    Serial.println(F("=========="));
+      // Print a mark
+      Serial.println(F("=========="));
 
-    // Go through the whole buffer and print values
-    for (typeof(RawIR::countRawIR) i = 0; i < RawIR::countRawIR; i++) {
-      Serial.print(i);
-      Serial.print(F(": "));
-      Serial.println(RawIR::dataRawIR[i], DEC);
+      // Go through the whole buffer and print values
+      for (typeof(RawIR::countRawIR) i = 0; i < RawIR::countRawIR; i++) {
+        Serial.print(i);
+        Serial.print(F(": "));
+        Serial.println(RawIR::dataRawIR[i], DEC);
+      }
+
+      // Each buffer should end with the timeout value
+      if (RawIR::countRawIR == RAWIR_BLOCKS) {
+        Serial.println(F("Buffer was full!"));
+      }
+      Serial.println();
     }
-
-    // Each buffer should end with the timeout value
-    if (RawIR::countRawIR == RAWIR_BLOCKS) {
-      Serial.println(F("Buffer was full!"));
-    }
-    Serial.println();
 
     // Get the new data from the remote
     IR_data_t data = IRLremote.read();
