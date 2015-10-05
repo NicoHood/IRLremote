@@ -136,7 +136,7 @@ void RawIR::read(IR_data_t* data){
 
 		// Iterate through all raw values and calculate a hash
 		uint32_t hash = FNV_BASIS_32;
-		for (typeof(countRawIR) i = 0; i < countRawIR; i++) {
+		for (typeof(countRawIR) i = 1; i < countRawIR; i++) {
 			// Get both values
 			auto oldval = dataRawIR[i - 1];
 			auto newval = dataRawIR[i];
@@ -214,7 +214,7 @@ void RawIR::decode(const uint16_t &duration) {
 	// Wait some time after the last protocol.
 	// This way it can finish its (possibly ignored) stop bit.
 	uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
-	if(lastProtocol != IR_RAW && (IRLLastTime - IRLLastEvent < RAWIR_TIME_THRESHOLD)){
+	if(lastProtocol != IR_RAW && lastProtocol != IR_NEW_PROTOCOL && (IRLLastTime - IRLLastEvent < RAWIR_TIME_THRESHOLD)){
 		return;
 	}
 
