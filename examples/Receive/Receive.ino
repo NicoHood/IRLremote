@@ -20,7 +20,7 @@
   Attiny 13: All pins* are usable
   ATmega644P/ATmega1284P: 10, 11, All pins* are usable
 
-  *PinChangeInterrupts requires a special library which can be downloaded here:
+  PinChangeInterrupts* requires a special library which can be downloaded here:
   https://github.com/NicoHood/PinChangeInterrupt
 */
 
@@ -30,7 +30,7 @@
 #include "IRLremote.h"
 // choose a valid PinInterrupt or PinChangeInterrupt* pin of your Arduino board
 #define pinIR 2
-CIRLremote<Nec, Panasonic, Sony> IRLremote;
+CIRLremote<Nec, Panasonic, Sony, HashIR> IRLremote;
 
 #define pinLed LED_BUILTIN
 
@@ -77,8 +77,8 @@ void loop() {
       case IR_SONY12:
         Serial.println(F("Sony12"));
         break;
-      case IR_RAW:
-        Serial.println(F("RAW"));
+      case IR_HASH:
+        Serial.println(F("Hash"));
         break;
       default:
         Serial.print(data.protocol);

@@ -19,7 +19,7 @@
   Attiny 13: All pins* are usable
   ATmega644P/ATmega1284P: 10, 11, All pins* are usable
 
-  *PinChangeInterrupts requires a special library which can be downloaded here:
+  PinChangeInterrupts* requires a special library which can be downloaded here:
   https://github.com/NicoHood/PinChangeInterrupt
 */
 
