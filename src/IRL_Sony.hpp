@@ -103,14 +103,23 @@ uint8_t Sony::getSingleFlag(void){
 
 
 bool Sony::requiresCheckTimeout(void){
-	// Not used in this protocol
-	// TODO not yet
-	return false;
+	// Used in this protocol
+	return true;
 }
 
 
 void Sony::checkTimeout(void){
-	// Not used in this protocol
+	// Only check for timeout if the last protocol was Sony
+	uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
+	if(lastProtocol == IR_SONY12)
+	{
+		// Reset if a keypress ended to ensure
+		// the next reading does not trigger
+		// the first and 3rd signal (instead of the 2nd).
+		if ((micros() - IRLLastTime) >= SONY_TIMEOUT) {
+			reset();
+		}
+	}
 }
 
 
@@ -140,14 +149,24 @@ void Sony::read(IR_data_t* data){
 
 
 bool Sony::requiresReset(void){
-	// Not used in this protocol
-	// TODO not yet
-	return false;
+	// Used in this protocol
+	return true;
 }
 
 
 void Sony::reset(void){
 	countSony = 0;
+
+	// Remove last protocol flag
+	// This prevents the remote from triggering again
+	// When the very first of three signals is recived
+	// and the last keypress was already sony.
+	// This also ensures that then 3rd signal is
+	// also ignored. After this every 2nd signal
+	// is recognized correct.
+	if((IRLProtocol | IR_NEW_PROTOCOL) == IR_SONY12){
+		IRLProtocol = IR_NO_PROTOCOL;
+	}
 }
 
 
@@ -216,8 +235,23 @@ void Sony::decode(const uint16_t &duration) {
 					// reset reading
 					countSony = 0;
 
+					uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
+
 					// Sony has no checksum
 					IRLProtocol = IR_SONY12;
+
+					// Trigger only on 2nd press and onwards
+					// Sony normally should trigger 3 times anyways.
+					// Normally it is recommended to check the last received data
+					// and compare them with the 2nd (and 3rd) press.
+					// TODO compare this while decoding (writing)
+					// and remove lastProtocol if its unequal
+					// This is also required to differenciate between Sony 12 and 20.
+					// TODO the reset should then not happen
+					if(lastProtocol != IR_SONY12){
+						IRLProtocol &= (~IR_NEW_PROTOCOL);
+					}
+
 					return;
 				}
 			}
