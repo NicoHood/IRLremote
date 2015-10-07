@@ -224,11 +224,26 @@ void Sony::decode(const uint16_t &duration) {
 				uint8_t length = (countSony / 2) - 1;
 
 				// move bits and write 1 or 0 depending on the duration
-				// 1.7: changed from MSB to LSB. somehow takes a bit more flash but is correct and easier to handle.
+				bool LSB = dataSony[length / 8] & 0x01;
 				dataSony[length / 8] >>= 1;
+
 				// set bit if it's a logical 1. Setting zero not needed due to bitshifting.
-				if (duration >= markThreshold)
+				bool logicBit = duration >= markThreshold;
+				if (logicBit){
 					dataSony[length / 8] |= 0x80;
+				}
+
+				// Compare if new data is equal with last.
+				// If not, remove the pressed flag and mark
+				// the data as corrupted.
+				// A new series is then required.
+				// This is possible with Sony since it sends the
+				// data always 3 times + X holding.
+				if(LSB != logicBit){
+					if((IRLProtocol | IR_NEW_PROTOCOL) == IR_SONY12){
+						IRLProtocol = IR_NO_PROTOCOL;
+					}
+				}
 
 				// check last input (always a mark)
 				if (countSony > irLength) {
