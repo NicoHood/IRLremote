@@ -316,3 +316,162 @@ void Nec::decode(const uint16_t &duration) {
 	// next reading, no errors
 	countNec++;
 }
+
+
+//================================================================================
+// API Class
+//================================================================================
+
+typedef void(*NecEventCallback)(void);
+
+template<const NecEventCallback callback, const uint16_t address = 0>
+class CNecAPI : public CIRLData{
+  private:
+    // Differenciate between timeout types
+    enum TimeoutType : uint8_t
+    {
+      NO_TIMEOUT, 	// Keydown
+      TIMEOUT, 		// Key release with timeout
+      NEXT_BUTTON, 	// Key release, pressed again
+      NEW_BUTTON, 	// Key release, another key is pressed
+    } NecTimeoutType;
+
+    // Keep track which key was pressed/held down how often
+    uint8_t lastCommand = 0;
+    uint8_t lastPressCount = 0;
+    uint8_t lastholdCount = 0;
+
+  public:
+    bool releaseButton (void) {
+      // Triggers when the button is released.
+      // Anything else than a normal press indicates the key was released.
+      // This occurs on a timeout, new button, same button press.
+      // In most cases pressTimeout makes still more sense.
+      if (NecTimeoutType != NO_TIMEOUT) {
+        return true;
+      }
+      return false;
+    }
+
+
+    uint8_t pressTimeout(void) {
+      // Check if a key was released (via timeout or another key got pressed).
+      // Return how often the key was pressed.
+      if (NecTimeoutType == TIMEOUT || NecTimeoutType == NEW_BUTTON) {
+        return lastPressCount;
+      }
+      return 0;
+    }
+
+
+    uint8_t command(void) {
+      return lastCommand;
+    }
+
+
+    uint8_t pressCount(void) {
+      return lastPressCount;
+    }
+
+
+    uint8_t pressDebounce(const uint8_t debounce = 4) {
+      // Only recognize the actual keydown event
+      if (NecTimeoutType == NO_TIMEOUT)
+      {
+        // No debounce desired (avoid zero division)
+        if (!debounce) {
+          return 1 + lastholdCount;
+        }
+
+        // Only recognize every xth event
+        if (!(lastholdCount % debounce)) {
+          return (lastholdCount / debounce) + 1;
+        }
+      }
+      return 0;
+    }
+    
+
+    void reset(void) {
+      // Reset the button press and hold count.
+      // Attention: No release/timeout event will trigger!
+      // This is important if you want to end a chain,
+      // which starts again with the next press.
+      // Differenciate between 1 or 2 presses is a good usecase.
+      lastPressCount = 0;
+      lastholdCount = 0;
+    }
+    
+
+    void read(const IR_data_t data) {
+      // Check if the correct protocol and address (optional) is used
+      if (((data.protocol != IR_NEC) && (data.protocol != IR_NEC_EXTENDED) && (data.protocol != IR_NEC_REPEAT)) || (address && (data.address != address)))
+      {
+        // Call the remote function again once the keypress timed out (or another protocol/address was used)
+        const uint32_t timeoutLimitUs = 500000UL;
+        if (lastPressCount && ((data.protocol != IR_NO_PROTOCOL) || (timeout() > timeoutLimitUs)))
+        {
+          // Flag timeout event, that the key was released and the current chain is over
+          NecTimeoutType = TIMEOUT;
+          callback();
+
+          // Reset the button press and hold count after a timeout
+          lastPressCount = 0;
+          lastholdCount = 0;
+        }
+        return;
+      }
+
+      // Only get the low byte of the command. This saves us a lot of flash.
+      // The high byte just contains the checksum (which is already checked by the IRLRemote).
+      auto newCommand = data.Nec.command8;
+
+      // Count the first button press
+      if ((data.protocol == IR_NEC) || (data.protocol == IR_NEC_EXTENDED))
+      {
+        // Only the same button press inside a short timespawn is recognized as keypress
+        if (newCommand == lastCommand)
+        {
+          // Flag that the last button hold is over, the same key is held down again
+          if (lastPressCount) {
+            NecTimeoutType = NEXT_BUTTON;
+            callback();
+          }
+          // Increase pressing streak
+          if (lastPressCount < 255) {
+            lastPressCount++;
+          }
+        }
+        // Different button than before
+        else
+        {
+          // Flag that the last button hold is over, a differnt key is now held down
+          if (lastPressCount) {
+            NecTimeoutType = NEW_BUTTON;
+            callback();
+          }
+          lastPressCount = 1;
+        }
+
+        // Start a new series of button holding
+        lastholdCount = 0;
+      }
+      // Count the button holding
+      else {
+      	// Abort if no first press was recognized (after reset)
+      	if(!lastPressCount){
+      		return;
+      	}
+      	
+      	// Increment holding count
+        if (lastholdCount < 255) {
+          lastholdCount++;
+        }
+      }
+
+      // Call the remote function and flag that the event was just received
+      lastCommand = newCommand;
+      NecTimeoutType = NO_TIMEOUT;
+      callback();
+    }
+};

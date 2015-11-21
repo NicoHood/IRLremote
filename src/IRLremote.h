@@ -109,19 +109,40 @@ union IR_data_t
 // is a template there is no way to get this data back without passing
 // a pointer. This data class is only accessible by the friend classes themselve.
 class CIRLData{
-public:
-	CIRLData(){
-		// Empty
-	}
-
+// Only access data via inheritage// Only access data via inheritage
 protected:
-
 	// Data that all protocols need for decoding
 	static volatile uint8_t IRLProtocol;
 	
 	// Time values for the last interrupt and the last valid protocol
 	static uint32_t IRLLastTime;
 	static volatile uint32_t IRLLastEvent;
+	
+	uint32_t timeout(void)
+	{
+		// Return time between last event time (in micros)
+		uint8_t oldSREG = SREG;
+		cli();
+	
+		uint32_t timeout = micros() - IRLLastEvent;
+	
+		SREG = oldSREG;
+	
+		return timeout; 
+	}
+	
+	uint32_t lastEvent(void)
+	{
+		// Return last event time (in micros)
+		uint8_t oldSREG = SREG;
+		cli();
+	
+		uint32_t time = IRLLastEvent;
+	
+		SREG = oldSREG;
+	
+		return time; 
+	}
 };
 
 //================================================================================
@@ -142,10 +163,6 @@ public:
 	static inline IR_data_t read(void);
 	static inline void reset(void);
 	
-	// Time control
-	static inline uint32_t lastEvent(void);
-	static inline uint32_t timeout(void);
-
 protected:
 	
 	// Interrupt function that is attached
