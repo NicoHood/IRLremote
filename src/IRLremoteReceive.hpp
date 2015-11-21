@@ -146,7 +146,7 @@ read(void)
 	}
 	
 	// Get new data, if any
-	if(((sizeof...(protocols) == 0) && !protocol::requiresReset()) || IRLProtocol & IR_NEW_PROTOCOL)
+	if(IRLProtocol & IR_NEW_PROTOCOL)
 	{
 		// Check if we actually have new data and save the protocol as well
 		protocol::read(&data);

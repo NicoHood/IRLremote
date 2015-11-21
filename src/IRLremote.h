@@ -24,6 +24,11 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
+// IDE version check
+#if ARDUINO < 10606
+#error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
+#endif
+
 // Software version
 #define IRL_VERSION 190
 
@@ -47,6 +52,7 @@ THE SOFTWARE.
 //================================================================================
 
 // Enum as unique number for each protocol
+//TODO merge into bitfield struct 1/7
 enum IRType {
 	IR_NO_PROTOCOL = 0x00,
 	// If MSB is not set the last received protocol is still saved
@@ -69,13 +75,32 @@ enum IRType {
 };
 
 // Struct that is returned by the read() function
-struct IR_data_t {
+union IR_data_t
+{
 	// Variables to save received data
-	uint8_t protocol;
-	uint16_t address;
-	uint32_t command;
-
-	//TODO add nec struct/panasonic with id, checsum etc
+    struct{
+	    uint8_t protocol;
+	    uint16_t address;
+	    uint32_t command;
+    };
+    
+    // Nec Protocol data sections
+    struct{
+    	uint8_t protocol;
+    	// Address XORed only for not extended nec protocol
+    	uint16_t address;
+    	// 2 byte command: Hi XOR Lo
+    	union{
+    		uint16_t command;
+    		uint8_t command8;
+    		struct{
+    			uint8_t commandLo;
+    			uint8_t commandHi;
+    		};
+    	};
+    } Nec;
+    
+	//TODO add nec struct/panasonic with id, checksum etc
 };
 
 // Class to hold the data for all other classes
