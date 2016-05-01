@@ -1,4 +1,4 @@
-IRLremote 1.9.0
+IRLremote 2.0.0
 ===============
 
 ![Infrared Picture](header.jpg)
@@ -132,7 +132,12 @@ Links
 Version History
 ===============
 ```
-1.9.0 Release (xx.xx.2015)
+2.0.0 Release (xx.xx.2016)
+* Focus on single protocol implementation
+* Added better keycode definitions #11
+* Updated keywords.txt
+
+1.9.0 Release (Never officially released)
 * Added API as class
 * Fixed NEC Timeout value
 * NEC repeat code now integrated
