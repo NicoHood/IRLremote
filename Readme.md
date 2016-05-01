@@ -136,6 +136,7 @@ Version History
 * Focus on single protocol implementation
 * Added better keycode definitions #11
 * Updated keywords.txt
+* Tabs -> Spaces
 
 1.9.0 Release (Never officially released)
 * Added API as class

@@ -30,220 +30,220 @@ THE SOFTWARE.
 
 bool CNec::begin(uint8_t pin)
 {
-	// Get pin ready for reading.
-	pinMode(pin, INPUT_PULLUP);
+    // Get pin ready for reading.
+    pinMode(pin, INPUT_PULLUP);
 
-	// Try to attach PinInterrupt first
-	if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
-		attachInterrupt(digitalPinToInterrupt(pin), interrupt, FALLING);
-		return true;
-	}
+    // Try to attach PinInterrupt first
+    if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
+        attachInterrupt(digitalPinToInterrupt(pin), interrupt, FALLING);
+        return true;
+    }
 
-	// If PinChangeInterrupt library is used, try to attach it
+    // If PinChangeInterrupt library is used, try to attach it
 #ifdef PCINT_VERSION
-	else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
-		attachPCINT(digitalPinToPCINT(pin), interrupt, FALLING);
-		return true;
-	}
+    else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
+        attachPCINT(digitalPinToPCINT(pin), interrupt, FALLING);
+        return true;
+    }
 #endif
 
-	// Return an error if none of them work (pin has no Pin(Change)Interrupt)
-	return false;
+    // Return an error if none of them work (pin has no Pin(Change)Interrupt)
+    return false;
 }
 
 
 bool CNec::end(uint8_t pin)
 {
-	// Disable pullup.
-	pinMode(pin, INPUT);
+    // Disable pullup.
+    pinMode(pin, INPUT);
 
-	// Try to detach PinInterrupt first
-	if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
-		detachInterrupt(digitalPinToInterrupt(pin));
-		return true;
-	}
+    // Try to detach PinInterrupt first
+    if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
+        detachInterrupt(digitalPinToInterrupt(pin));
+        return true;
+    }
 
-	// If PinChangeInterrupt library is used, try to detach it
+    // If PinChangeInterrupt library is used, try to detach it
 #ifdef PCINT_VERSION
-	else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
-		detachPCINT(digitalPinToPCINT(pin));
-		return true;
-	}
+    else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
+        detachPCINT(digitalPinToPCINT(pin));
+        return true;
+    }
 #endif
 
-	// Return an error if none of them work (pin has no Pin(Change)Interrupt)
-	return false;
+    // Return an error if none of them work (pin has no Pin(Change)Interrupt)
+    return false;
 }
 
 
 bool CNec::available(){
-	return protocol;
+    return protocol;
 }
 
 
 Nec_data_t CNec::read()
 {
-	// If nothing was received return an empty struct
-	Nec_data_t data = Nec_data_t();
+    // If nothing was received return an empty struct
+    Nec_data_t data = Nec_data_t();
 
-	// Only the received protocol will write data into the struct
-	uint8_t oldSREG = SREG;
-	cli();
+    // Only the received protocol will write data into the struct
+    uint8_t oldSREG = SREG;
+    cli();
 
-	// Check and get data if we have new. Don't overwrite on repeat.
-	auto newprotocol = protocol;
-	if(newprotocol == IRL_NEC)
-	{
-		data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
-		data.command = dataNec[2];
-	}
+    // Check and get data if we have new. Don't overwrite on repeat.
+    auto newprotocol = protocol;
+    if(newprotocol == IRL_NEC)
+    {
+        data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
+        data.command = dataNec[2];
+    }
 
-	// Set last ISR to current time.
-	// This is required to not trigger a timeout afterwards
-	// and read corrupted data. This might happen
-	// if the reading loop is too slow.
-	if(newprotocol) {
-		mlastTime = micros();
+    // Set last ISR to current time.
+    // This is required to not trigger a timeout afterwards
+    // and read corrupted data. This might happen
+    // if the reading loop is too slow.
+    if(newprotocol) {
+        mlastTime = micros();
 
-		// Save and remove new protocol flag
-		data.protocol = protocol;
-		protocol = IRL_NEC_NO_PROTOCOL;
-	}
+        // Save and remove new protocol flag
+        data.protocol = protocol;
+        protocol = IRL_NEC_NO_PROTOCOL;
+    }
 
-	// Enable interrupt again, after we saved a copy of the variables
-	SREG = oldSREG;
+    // Enable interrupt again, after we saved a copy of the variables
+    SREG = oldSREG;
 
-	// Return the new protocol information to the user
-	return data;
+    // Return the new protocol information to the user
+    return data;
 }
 
 
 uint32_t CNec::timeout(void)
 {
-	// Return time between last event time (in micros)
-	uint8_t oldSREG = SREG;
-	cli();
+    // Return time between last event time (in micros)
+    uint8_t oldSREG = SREG;
+    cli();
 
-	uint32_t timeout = micros() - mlastEvent;
+    uint32_t timeout = micros() - mlastEvent;
 
-	SREG = oldSREG;
+    SREG = oldSREG;
 
-	return timeout;
+    return timeout;
 }
 
 
 uint32_t CNec::lastEvent(void)
 {
-	// Return last event time (in micros)
-	uint8_t oldSREG = SREG;
-	cli();
+    // Return last event time (in micros)
+    uint8_t oldSREG = SREG;
+    cli();
 
-	uint32_t time = mlastEvent;
+    uint32_t time = mlastEvent;
 
-	SREG = oldSREG;
+    SREG = oldSREG;
 
-	return time;
+    return time;
 }
 
 
 void CNec::interrupt(void)
 {
-	// Block if the protocol is already recognized
-	if (protocol) {
-		return;
-	}
+    // Block if the protocol is already recognized
+    if (protocol) {
+        return;
+    }
 
-	// Save the duration between the last reading
-	uint32_t time = micros();
-	uint32_t duration_32 = time - mlastTime;
-	mlastTime = time;
+    // Save the duration between the last reading
+    uint32_t time = micros();
+    uint32_t duration_32 = time - mlastTime;
+    mlastTime = time;
 
-	// Calculate 16 bit duration. On overflow sets duration to a clear timeout
-	uint16_t duration = duration_32;
-	if (duration_32 > 0xFFFF) {
-		duration = 0xFFFF;
-	}
+    // Calculate 16 bit duration. On overflow sets duration to a clear timeout
+    uint16_t duration = duration_32;
+    if (duration_32 > 0xFFFF) {
+        duration = 0xFFFF;
+    }
 
-	// On a timeout abort pending readings and start next possible reading
-	if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {
-		countNec = 1;
-	}
+    // On a timeout abort pending readings and start next possible reading
+    if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {
+        countNec = 1;
+    }
 
-	// On a reset (error in decoding) wait for a timeout to start a new reading
-	// This is to not conflict with other protocols while they are sending 0/1
-	// which might be similar to a lead in this protocol
-	else if (countNec == 0) {
-		return;
-	}
+    // On a reset (error in decoding) wait for a timeout to start a new reading
+    // This is to not conflict with other protocols while they are sending 0/1
+    // which might be similar to a lead in this protocol
+    else if (countNec == 0) {
+        return;
+    }
 
-	// Check Mark Lead (requires a timeout)
-	else if (countNec == 1)
-	{
-		// Wrong lead
-		if (duration < ((NEC_LOGICAL_HOLDING + NEC_LOGICAL_ONE) / 2))
-		{
-			countNec = 0;
-			return;
-		}
-		// Check for a "button holding" lead
-		else if (duration < ((NEC_LOGICAL_LEAD + NEC_LOGICAL_HOLDING) / 2))
-		{
-			// Abort if last valid button press is too long ago
-			if ((mlastTime - mlastEvent) >= NEC_TIMEOUT_REPEAT)
-			{
-				// Reset reading
-				countNec = 0;
-				return;
-			}
+    // Check Mark Lead (requires a timeout)
+    else if (countNec == 1)
+    {
+        // Wrong lead
+        if (duration < ((NEC_LOGICAL_HOLDING + NEC_LOGICAL_ONE) / 2))
+        {
+            countNec = 0;
+            return;
+        }
+        // Check for a "button holding" lead
+        else if (duration < ((NEC_LOGICAL_LEAD + NEC_LOGICAL_HOLDING) / 2))
+        {
+            // Abort if last valid button press is too long ago
+            if ((mlastTime - mlastEvent) >= NEC_TIMEOUT_REPEAT)
+            {
+                // Reset reading
+                countNec = 0;
+                return;
+            }
 
-			// Received a Nec Repeat signal
-			// Next mark (stop bit) ignored due to detecting techniques
-			protocol = IRL_NEC_REPEAT;
-			mlastEvent = mlastTime;
+            // Received a Nec Repeat signal
+            // Next mark (stop bit) ignored due to detecting techniques
+            protocol = IRL_NEC_REPEAT;
+            mlastEvent = mlastTime;
 
-			// Reset reading
-			countNec = 0;
-			return;
-		}
-		else {
-			// Next reading, no errors
-			countNec++;
-		}
-	}
+            // Reset reading
+            countNec = 0;
+            return;
+        }
+        else {
+            // Next reading, no errors
+            countNec++;
+        }
+    }
 
-	// Check different logical space pulses (mark + space)
-	else
-	{
-		// Get number of the Bits (starting from zero)
-		// Substract the first lead pulse
-		uint8_t length = countNec - 2;
+    // Check different logical space pulses (mark + space)
+    else
+    {
+        // Get number of the Bits (starting from zero)
+        // Substract the first lead pulse
+        uint8_t length = countNec - 2;
 
-		// Move bits (MSB is zero)
-		dataNec[length / 8] >>= 1;
+        // Move bits (MSB is zero)
+        dataNec[length / 8] >>= 1;
 
-		// Set MSB if it's a logical one
-		if (duration >= ((NEC_LOGICAL_ONE + NEC_LOGICAL_ZERO) / 2)) {
-			dataNec[length / 8] |= 0x80;
-		}
+        // Set MSB if it's a logical one
+        if (duration >= ((NEC_LOGICAL_ONE + NEC_LOGICAL_ZERO) / 2)) {
+            dataNec[length / 8] |= 0x80;
+        }
 
-		// Last bit (stop bit)
-		if (countNec >= (NEC_LENGTH / 2))
-		{
-			// Check if the protcol's command checksum is correct
-			if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
-			{
-				protocol = IRL_NEC;
-				mlastEvent = mlastTime;
-			}
+        // Last bit (stop bit)
+        if (countNec >= (NEC_LENGTH / 2))
+        {
+            // Check if the protcol's command checksum is correct
+            if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
+            {
+                protocol = IRL_NEC;
+                mlastEvent = mlastTime;
+            }
 
-			// Reset reading
-			countNec = 0;
-			return;
-		}
+            // Reset reading
+            countNec = 0;
+            return;
+        }
 
-		// Next reading, no errors
-		countNec++;
-	}
+        // Next reading, no errors
+        countNec++;
+    }
 }
 
 
@@ -259,67 +259,67 @@ void CNecAPI<callback, address>::read(void) {
   // Check if the correct protocol and address (optional) is used
   if ((data.protocol == IRL_NEC_NO_PROTOCOL) || (address && data.protocol == IRL_NEC && (data.address != address)))
   {
-	// Call the remote function again once the keypress timed out
-	const uint32_t timeoutLimitUs = 500UL * 1000UL;
-	if (lastPressCount && (timeout() > timeoutLimitUs))
-	{
-	  // Flag timeout event, key was released and the current chain is over
-	  NecTimeoutType = TIMEOUT;
-	  callback();
+    // Call the remote function again once the keypress timed out
+    const uint32_t timeoutLimitUs = 500UL * 1000UL;
+    if (lastPressCount && (timeout() > timeoutLimitUs))
+    {
+      // Flag timeout event, key was released and the current chain is over
+      NecTimeoutType = TIMEOUT;
+      callback();
 
-	  // Reset the button press and hold count after a timeout
-	  lastPressCount = 0;
-	  lastHoldCount = 0;
-	}
-	return;
+      // Reset the button press and hold count after a timeout
+      lastPressCount = 0;
+      lastHoldCount = 0;
+    }
+    return;
   }
 
   // Count the first button press
   if (data.protocol == IRL_NEC)
   {
-	// The same button was pressed twice in a short timespawn (500ms)
-	if (data.command == lastCommand)
-	{
-	  // Flag that the last button hold is over, the same key is held down again
-	  if (lastPressCount) {
-		NecTimeoutType = NEXT_BUTTON;
-		callback();
-	  }
+    // The same button was pressed twice in a short timespawn (500ms)
+    if (data.command == lastCommand)
+    {
+      // Flag that the last button hold is over, the same key is held down again
+      if (lastPressCount) {
+        NecTimeoutType = NEXT_BUTTON;
+        callback();
+      }
 
-	  // Increase pressing streak
-	  if (lastPressCount < 255) {
-		lastPressCount++;
-	  }
-	}
-	// Different button than before
-	else
-	{
-	  // Flag that the last button hold is over, a differnt key is now held down
-	  if (lastPressCount) {
-		NecTimeoutType = NEW_BUTTON;
-		callback();
-	  }
-	  lastPressCount = 1;
-	}
+      // Increase pressing streak
+      if (lastPressCount < 255) {
+        lastPressCount++;
+      }
+    }
+    // Different button than before
+    else
+    {
+      // Flag that the last button hold is over, a differnt key is now held down
+      if (lastPressCount) {
+        NecTimeoutType = NEW_BUTTON;
+        callback();
+      }
+      lastPressCount = 1;
+    }
 
-	// Start a new series of button holding
-	lastHoldCount = 0;
+    // Start a new series of button holding
+    lastHoldCount = 0;
 
-	// Save the new command. On a repeat (below) don't safe it.
-	lastCommand = data.command;
+    // Save the new command. On a repeat (below) don't safe it.
+    lastCommand = data.command;
   }
   // Count the button holding
   else
   {
-	// Abort if no first press was recognized (after reset)
-	if(!lastPressCount){
-		return;
-	}
+    // Abort if no first press was recognized (after reset)
+    if(!lastPressCount){
+        return;
+    }
 
-	// Increment holding count
-	if (lastHoldCount < 255) {
-	  lastHoldCount++;
-	}
+    // Increment holding count
+    if (lastHoldCount < 255) {
+      lastHoldCount++;
+    }
   }
 
   // Call the remote function and flag that the event was just received
@@ -352,15 +352,15 @@ uint8_t CNecAPI<callback, address>::holdCount(const uint8_t debounce )
   // Only recognize the actual keydown event
   if (NecTimeoutType == NO_TIMEOUT)
   {
-	// No debounce desired (avoid zero division)
-	if (!debounce) {
-	  return 1 + lastHoldCount;
-	}
+    // No debounce desired (avoid zero division)
+    if (!debounce) {
+      return 1 + lastHoldCount;
+    }
 
-	// Only recognize every xth event
-	if (!(lastHoldCount % debounce)) {
-	  return (lastHoldCount / debounce) + 1;
-	}
+    // Only recognize every xth event
+    if (!(lastHoldCount % debounce)) {
+      return (lastHoldCount / debounce) + 1;
+    }
   }
   return 0;
 }
@@ -372,7 +372,7 @@ template<const NecEventCallback callback, const uint16_t address>
 uint8_t CNecAPI<callback, address>::pressTimeout(void)
 {
   if (NecTimeoutType == TIMEOUT || NecTimeoutType == NEW_BUTTON) {
-	return lastPressCount;
+    return lastPressCount;
   }
   return 0;
 }
@@ -386,7 +386,7 @@ template<const NecEventCallback callback, const uint16_t address>
 bool CNecAPI<callback, address>::releaseButton(void)
 {
   if (NecTimeoutType != NO_TIMEOUT) {
-	return true;
+    return true;
   }
   return false;
 }
