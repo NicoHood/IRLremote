@@ -222,7 +222,7 @@ void CPanasonic::interrupt(void)
             {
                 // Check vendor nibble checksum (optional)
                 //uint8_t XOR2 = dataPanasonic[0] ^ dataPanasonic[1];
-                //if(!((XOR2 & 0x0F) ^ (XOR2 >> 4)))
+                //if(((XOR2 & 0x0F) ^ (XOR2 >> 4)) == (dataPanasonic[2] & 0x0F))
                 //{
                     protocol = IRL_PANASONIC;
                     mlastEvent = mlastTime;

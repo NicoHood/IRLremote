@@ -83,8 +83,28 @@ enum Panasonic_type_t : uint8_t {
 struct Panasonic_data_t
 {
     Panasonic_type_t protocol;
-    uint16_t address;
-    uint32_t command;
+    union {
+        uint16_t address;
+        uint16_t manufacturer;
+    };
+    union {
+        uint32_t command;
+        struct {
+            uint32_t parity : 4;
+            uint32_t system : 4;
+            uint32_t product : 8;
+            uint32_t function : 8;
+            uint32_t checksum : 8;
+        } japan;
+        struct {
+            uint32_t parity : 4;
+            uint32_t genre1 : 4;
+            uint32_t genre2 : 4;
+            uint32_t data : 10;
+            uint32_t id : 2;
+            uint32_t checksum : 8;
+        } denon;
+    };
 };
 
 
