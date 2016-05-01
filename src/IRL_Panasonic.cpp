@@ -21,25 +21,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-// Include guard
-#pragma once
-
-// IDE version check
-#if ARDUINO < 10606
-#error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
-#endif
-
-// Software version
-#define IRL_VERSION 200
-
-// Include PinChangeInterrupt library if available
-#ifdef PCINT_VERSION
-#include "PinChangeInterrupt.h"
-#endif
-
-// Include pre recorded IR codes from IR remotes
-#include "IRL_Keycodes.h"
-
-// Include all protocol implementations
-#include "IRL_Nec.h"
 #include "IRL_Panasonic.h"
+
+//==============================================================================
+// Static Data
+//==============================================================================
+
+// Protocol temporary data
+uint8_t CPanasonic::countPanasonic = 0;
+uint8_t CPanasonic::dataPanasonic[PANASONIC_BLOCKS] = { 0 };
+volatile Panasonic_type_t CPanasonic::protocol = IRL_PANASONIC_NO_PROTOCOL;
+uint32_t CPanasonic::mlastTime = 0;
+volatile uint32_t CPanasonic::mlastEvent = 0;
+
+// CPanasonic instance
+CPanasonic Panasonic;
