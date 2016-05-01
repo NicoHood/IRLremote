@@ -9,16 +9,16 @@
   You can choose a custom debounce time to not trigger a button two times in a row too fast.
 
   The following pins are usable for PinInterrupt or PinChangeInterrupt*:
-  Arduino Uno/Nano/Mini: 2, 3, All pins* are usable
-  Arduino Mega: 2, 3, 18, 19, 20, 21,
-               10*, 11*, 12*, 13*, 50*, 51*, 52*, 53*, A8 (62)*, A9 (63)*, A10 (64)*,
-               A11 (65)*, A12 (66)*, A13 (67)*, A14 (68)*, A15 (69)*
-  Arduino Leonardo/Micro: 0, 1, 2, 3, 7, 8*, 9*, 10*, 11*, 14 (MISO)*, 15 (SCK)*, 16 (MOSI)*
-  HoodLoader2: All (broken out 1-7*) pins are usable
-  Attiny 24/44/84: 8, All pins* are usable
-  Attiny 25/45/85: 2, All pins* are usable
-  Attiny 13: All pins* are usable
-  ATmega644P/ATmega1284P: 10, 11, All pins* are usable
+  Arduino Uno/Nano/Mini: All pins are usable
+  Arduino Mega: 10, 11, 12, 13, 50, 51, 52, 53, A8 (62), A9 (63), A10 (64),
+              A11 (65), A12 (66), A13 (67), A14 (68), A15 (69)
+  Arduino Leonardo/Micro: 8, 9, 10, 11, 14 (MISO), 15 (SCK), 16 (MOSI)
+  HoodLoader2: All (broken out 1-7) pins are usable
+  Attiny 24/44/84: All pins are usable
+  Attiny 25/45/85: All pins are usable
+  Attiny 13: All pins are usable
+  Attiny 441/841: All pins are usable
+  ATmega644P/ATmega1284P: All pins are usable
 
   PinChangeInterrupts* requires a special library which can be downloaded here:
   https://github.com/NicoHood/PinChangeInterrupt
@@ -28,9 +28,15 @@
 //#include "PinChangeInterrupt.h"
 
 #include "IRLremote.h"
-// choose a valid PinInterrupt or PinChangeInterrupt* pin of your Arduino board
+
+// Choose a valid PinInterrupt or PinChangeInterrupt* pin of your Arduino board
 #define pinIR 2
-CIRLremote<Nec, Panasonic, Sony, HashIR> IRLremote;
+
+// Choose the IR protocol of your remote. See the other example for this.
+#define protocolIR Nec
+//#define protocolIR Panasonic
+//#define protocolIR Sony12
+//#define protocolIR HashIR
 
 #define pinLed LED_BUILTIN
 
@@ -44,49 +50,26 @@ void setup() {
   pinMode(pinLed, OUTPUT);
 
   // Start reading the remote. PinInterrupt or PinChangeInterrupt* will automatically be selected
-  if (!IRLremote.begin(pinIR))
+  if (!protocolIR.begin(pinIR))
     Serial.println(F("You did not choose a valid pin."));
 }
 
 void loop() {
-  if (IRLremote.available()) {
+  if (protocolIR.available())
+  {
     // Light Led
     digitalWrite(pinLed, HIGH);
 
     // Get the new data from the remote
-    IR_data_t data = IRLremote.read();
+    auto data = protocolIR.read();
 
     // Print protocol number
     Serial.println();
     Serial.print(F("Protocol: "));
 
-    // See readme to terminate what number is for each protocol
-    switch (data.protocol) {
-      case IR_NEC:
-        Serial.println(F("NEC"));
-        break;
-      case IR_NEC_EXTENDED:
-        Serial.println(F("NEC Extended"));
-        break;
-      case IR_NEC_REPEAT:
-        Serial.println(F("NEC Repeat"));
-        break;
-      case IR_PANASONIC:
-        Serial.println(F("Panasonic"));
-        break;
-      case IR_SONY12:
-        Serial.println(F("Sony12"));
-        break;
-      case IR_HASH:
-        Serial.println(F("Hash"));
-        break;
-      default:
-        Serial.print(data.protocol);
-        Serial.println(F(" Unknown"));
-        break;
-    }
-
     // Print the protocol data
+    Serial.print(F("Protocol: 0x"));
+    Serial.println(data.protocol, HEX);
     Serial.print(F("Address: 0x"));
     Serial.println(data.address, HEX);
     Serial.print(F("Command: 0x"));
