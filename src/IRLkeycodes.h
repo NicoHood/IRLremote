@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2015 NicoHood
+Copyright (c) 2014-2016 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,69 +21,74 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-// include guard
+// Include guard
 #pragma once
 
 //================================================================================
 // Protek 9700 Series
 //================================================================================
 
-#define IRL_PROTEK_PROTOCOL		IR_NEC_EXTENDED
-#define IRL_PROTEK_REPEAT		IR_NEC_REPEAT
-#define IRL_PROTEK_ADDRESS		0x2222
+namespace IRL_Protek_Remote{
 
-#define IRL_PROTEK_POWER		0xFD02
-#define IRL_PROTEK_MUTE			0xE916
+    // Protocol: NEC_EXTENDED
+    static const uint16_t IRL_ADDRESS = 0x2222;
 
-#define IRL_PROTEK_SCREEN		0xD42B
-#define IRL_PROTEK_SATELLITE	0xD32C
-#define IRL_PROTEK_TV_RADIO		0xD22D
-#define IRL_PROTEK_TV_MUSIC		0xD12E
+    enum IRL_Keycode : uint8_t
+    {
+        IRL_KEYCODE_POWER           = 0x02,
+        IRL_KEYCODE_MUTE            = 0x16,
 
-#define IRL_PROTEK_1			0xEC13
-#define IRL_PROTEK_2			0xEB14
-#define IRL_PROTEK_3			0xEA15
-#define IRL_PROTEK_4			0xE817
-#define IRL_PROTEK_5			0xE718
-#define IRL_PROTEK_6			0xE619
-#define IRL_PROTEK_7			0xE41B
-#define IRL_PROTEK_8			0xE31C
-#define IRL_PROTEK_9			0xE21D
-#define IRL_PROTEK_BACK			0xF10E
-#define IRL_PROTEK_0			0xF30C
-#define IRL_PROTEK_FAVORITE		0xFB04
+        IRL_KEYCODE_SCREEN          = 0x2B,
+        IRL_KEYCODE_SATELLITE       = 0x2C,
+        IRL_KEYCODE_TV_RADIO        = 0x2D,
+        IRL_KEYCODE_TV_MUSIC        = 0x2E,
 
-#define IRL_PROTEK_VOL_UP		0xDF20
-#define IRL_PROTEK_VOL_DOWN		0xDE21
-#define IRL_PROTEK_EPG			0xF708
-#define IRL_PROTEK_INFO			0xED12
-#define IRL_PROTEK_CHANNEL_UP	0xDD22
-#define IRL_PROTEK_CHANNEL_DOWN	0xDC23
+        IRL_KEYCODE_1               = 0x13,
+        IRL_KEYCODE_2               = 0x14,
+        IRL_KEYCODE_3               = 0x15,
+        IRL_KEYCODE_4               = 0x17,
+        IRL_KEYCODE_5               = 0x18,
+        IRL_KEYCODE_6               = 0x19,
+        IRL_KEYCODE_7               = 0x1B,
+        IRL_KEYCODE_8               = 0x1C,
+        IRL_KEYCODE_9               = 0x1D,
+        IRL_KEYCODE_BACK            = 0x0E,
+        IRL_KEYCODE_0               = 0x0C,
+        IRL_KEYCODE_FAVORITE        = 0x04,
 
-#define IRL_PROTEK_UP			0xF609
-#define IRL_PROTEK_DOWN			0xF807
-#define IRL_PROTEK_LEFT			0xF50A
-#define IRL_PROTEK_RIGHT		0xF906
-#define IRL_PROTEK_OK			0xEE11
+        IRL_KEYCODE_VOL_UP          = 0x20,
+        IRL_KEYCODE_VOL_DOWN        = 0x21,
+        IRL_KEYCODE_EPG             = 0x08,
+        IRL_KEYCODE_INFO            = 0x12,
+        IRL_KEYCODE_CHANNEL_UP      = 0x22,
+        IRL_KEYCODE_CHANNEL_DOWN    = 0x23,
 
-#define IRL_PROTEK_EXIT			0xEF10
-#define IRL_PROTEK_MENU			0xF00F
+        IRL_KEYCODE_UP              = 0x09,
+        IRL_KEYCODE_DOWN            = 0x07,
+        IRL_KEYCODE_LEFT            = 0x0A,
+        IRL_KEYCODE_RIGHT           = 0x06,
+        IRL_KEYCODE_OK              = 0x11,
 
-#define IRL_PROTEK_I_II			0xF20D
-#define IRL_PROTEK_TELETEXT		0xE01F
-#define IRL_PROTEK_SUBTITLE		0xFE01
-#define IRL_PROTEK_ADD			0xD02F
+        IRL_KEYCODE_EXIT            = 0x10,
+        IRL_KEYCODE_MENU            = 0x0F,
 
-#define IRL_PROTEK_RED			0xD827
-#define IRL_PROTEK_GREEN		0xD728
-#define IRL_PROTEK_YELLOW		0xD629
-#define IRL_PROTEK_BLUE			0xD52A
+        IRL_KEYCODE_I_II            = 0x0D,
+        IRL_KEYCODE_TELETEXT        = 0x1F,
+        IRL_KEYCODE_SUBTITLE        = 0x01,
+        IRL_KEYCODE_ADD             = 0x2F,
 
-#define IRL_PROTEK_PREV			0xCF30
-#define IRL_PROTEK_PLAY			0xCE31
-#define IRL_PROTEK_STOP			0xCD32
-#define IRL_PROTEK_NEXT			0xCC33
-#define IRL_PROTEK_USB			0xCB34
-#define IRL_PROTEK_PAUSE		0xCA35
-#define IRL_PROTEK_REC			0xC936
-#define IRL_PROTEK_LIVE			0xC837
+        IRL_KEYCODE_RED             = 0x27,
+        IRL_KEYCODE_GREEN           = 0x28,
+        IRL_KEYCODE_YELLOW          = 0x29,
+        IRL_KEYCODE_BLUE            = 0x2A,
+
+        IRL_KEYCODE_PREV            = 0x30,
+        IRL_KEYCODE_PLAY            = 0x31,
+        IRL_KEYCODE_STOP            = 0x32,
+        IRL_KEYCODE_NEXT            = 0x33,
+        IRL_KEYCODE_USB             = 0x34,
+        IRL_KEYCODE_PAUSE           = 0x35,
+        IRL_KEYCODE_REC             = 0x36,
+        IRL_KEYCODE_LIVE            = 0x37,
+    };
+}
