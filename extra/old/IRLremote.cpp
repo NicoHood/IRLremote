@@ -30,6 +30,11 @@ THE SOFTWARE.
 // Protocol temporary data
 uint8_t Nec::countNec = 0;
 uint8_t Nec::dataNec[NEC_BLOCKS] = { 0 };
+volatile uint8_t Nec::protocol = IR_NO_PROTOCOL;
+uint32_t Nec::lastTime = 0;
+volatile uint32_t Nec::lastEvent = 0;
+
+
 uint8_t Panasonic::countPanasonic = 0;
 uint8_t Panasonic::dataPanasonic[PANASONIC_BLOCKS] = { 0 };
 uint8_t Sony::countSony = 0;

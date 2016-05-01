@@ -106,7 +106,7 @@ available(void)
 		// Disable interrupts when checking for new input
 		uint8_t oldSREG = SREG;
 		cli();
-	
+
 		// Let each protocol check if their timeout expired. Not all protocols use this.
 		if(!(IRLProtocol & IR_NEW_PROTOCOL)){
 			protocol::checkTimeout();
@@ -114,11 +114,11 @@ available(void)
 		}
 		SREG = oldSREG;
 	}
-	
+
 	// This if construct saves flash
 	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return true;
-	else 
+	else
 		return false;
 }
 
@@ -129,34 +129,18 @@ read(void)
 {
 	// If nothing was received return an empty struct
 	IR_data_t data = IR_data_t();
-	
+
 	// Only the received protocol will write data into the struct
 	uint8_t oldSREG = SREG;
 	cli();
-	
-	// Only add this overhead if we have multiple protocols
-	// Or the protocol requires a timeout check.
-	if(sizeof...(protocols) != 0 || protocol::requiresCheckTimeout())
-	{
-		// Let each protocol check if their timeout expired. Not all protocols use this.
-		if(!(IRLProtocol & IR_NEW_PROTOCOL)){
-			protocol::checkTimeout();
-			nop((protocols::checkTimeout(), 0)...);
-		}
-	}
-	
+
 	// Get new data, if any
 	if(IRLProtocol & IR_NEW_PROTOCOL)
 	{
 		// Check if we actually have new data and save the protocol as well
-		protocol::read(&data);
-		nop((protocols::read(&data), 0)...);
+		data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
+		data.command = ((uint16_t)dataNec[3] << 8) | ((uint16_t)dataNec[2]);
 		data.protocol = IRLProtocol;
-
-		// Reset other protocols for new reading
-		if(sizeof...(protocols) != 0 || protocol::requiresReset()){
-			reset();
-		}
 
 		// Remove new protocol flag
 		IRLProtocol &= ~IR_NEW_PROTOCOL;
@@ -168,7 +152,9 @@ read(void)
 		IRLLastTime = micros();
 	}
 	SREG = oldSREG;
-	
+
+	// Process API TODO
+
 	// Return the new protocol information to the user
 	return data;
 }
@@ -190,8 +176,8 @@ reset(void)
 
 template<typename protocol, typename ...protocols>
 void CIRLremote<protocol, protocols...>::
-interrupt(void) 
-{ 
+interrupt(void)
+{
 	// Block if the protocol is already recognized
 	if(IRLProtocol & IR_NEW_PROTOCOL)
 		return;
@@ -205,19 +191,11 @@ interrupt(void)
 	uint16_t duration = 0xFFFF;
 	if (duration_32 <= 0xFFFF)
 		duration = duration_32;
-	
-	// Call the decoding functions(s).
-	if(sizeof...(protocols) == 0){
+
 		// For a single protocol use a simpler decode function
 		// to get maximum speed + recognition and minimum flash size
 		protocol::decodeSingle(duration);
-	}
-	else{
-		// Try to call all protocols decode functions
-		protocol::decode(duration);
-		nop((protocols::decode(duration), 0)...);
-	}
-	
+
 	// New valid signal, save new time
 	if(IRLProtocol & IR_NEW_PROTOCOL) {
 		IRLLastEvent = IRLLastTime;
