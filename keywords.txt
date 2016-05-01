@@ -7,6 +7,8 @@
 #######################################
 
 IRLremote	KEYWORD1
+NecAPI	KEYWORD1
+
 Nec	KEYWORD1
 Panasonic	KEYWORD1
 Sony	KEYWORD1
@@ -17,7 +19,9 @@ HashIR	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-IR_data_t   KEYWORD2
+IR_data_t	KEYWORD2
+CIRLremote	KEYWORD2
+CNecAPI	KEYWORD2
 begin	KEYWORD2
 end	KEYWORD2
 available	KEYWORD2

@@ -57,13 +57,13 @@ THE SOFTWARE.
 class Nec : public CIRLData{
 public:
 	Nec(void){
-		// Empty	
+		// Empty
 	}
-	
+
 	// Hide anything that is inside this class so the user dont accidently uses this class
 	template<typename protocol, typename ...protocols>
 	friend class CIRLremote;
-	
+
 private:
 	static inline uint8_t getSingleFlag(void) __attribute__((always_inline));
 	static inline bool requiresCheckTimeout(void) __attribute__((always_inline));
@@ -105,7 +105,7 @@ bool Nec::available(void)
 	if(IRLProtocol == IR_NEC || IRLProtocol == IR_NEC_EXTENDED || IRLProtocol == IR_NEC_REPEAT)
 		return true;
 	else
-		return false;	
+		return false;
 }
 
 
@@ -164,7 +164,7 @@ void Nec::decodeSingle(const uint16_t &duration){
 			// to not trigger wrong buttons (1 Nec signal timespawn)
 			if ((IRLLastTime - IRLLastEvent) >= NEC_TIMEOUT_REPEAT)
 				return;
-			
+
 			// received a Nec Repeat signal
 			// next mark (stop bit) ignored due to detecting techniques
 			IRLProtocol = IR_NEC_REPEAT;
@@ -260,7 +260,7 @@ void Nec::decode(const uint16_t &duration) {
 			// to not trigger wrong buttons (1 Nec signal timespawn)
 			if ((IRLLastTime - IRLLastEvent) >= NEC_TIMEOUT_REPEAT)
 				return;
-			
+
 			// Check if last protocol was also NEC
 			// (only for multiple protocol decoding)
 			uint8_t lastProtocol = IRLProtocol | IR_NEW_PROTOCOL;
@@ -342,21 +342,22 @@ class CNecAPI : public CIRLData{
     uint8_t lastholdCount = 0;
 
   public:
-    bool releaseButton (void) {
-      // Triggers when the button is released.
-      // Anything else than a normal press indicates the key was released.
-      // This occurs on a timeout, new button, same button press.
-      // In most cases pressTimeout makes still more sense.
-      if (NecTimeoutType != NO_TIMEOUT) {
-        return true;
-      }
-      return false;
-    }
+	// Triggers when the button is released.
+	// Anything else than a normal press indicates the key was released.
+	// This occurs on a timeout, new button, same button press.
+	// In most cases pressTimeout makes more sense.
+	bool releaseButton (void) {
+	  if (NecTimeoutType != NO_TIMEOUT) {
+	    return true;
+	  }
+	  return false;
+	}
 
 
-    uint8_t pressTimeout(void) {
-      // Check if a key was released (via timeout or another key got pressed).
-      // Return how often the key was pressed.
+	// Check if a key was released (via timeout or another key got pressed).
+	// Return how often the key was pressed.
+    uint8_t pressTimeout(void)
+	{
       if (NecTimeoutType == TIMEOUT || NecTimeoutType == NEW_BUTTON) {
         return lastPressCount;
       }
@@ -369,12 +370,17 @@ class CNecAPI : public CIRLData{
     }
 
 
+	// Returns the current button press streak.
+	// How many times have you pressed again the same button?
     uint8_t pressCount(void) {
       return lastPressCount;
     }
 
 
-    uint8_t pressDebounce(const uint8_t debounce = 4) {
+	// Counts how long a button press streak has been holding down.
+	// A debounce input param can be used to only count every Xth time.
+    uint8_t holdDebounce(const uint8_t debounce = 4)
+	{
       // Only recognize the actual keydown event
       if (NecTimeoutType == NO_TIMEOUT)
       {
@@ -390,18 +396,22 @@ class CNecAPI : public CIRLData{
       }
       return 0;
     }
-    
 
-    void reset(void) {
-      // Reset the button press and hold count.
-      // Attention: No release/timeout event will trigger!
-      // This is important if you want to end a chain,
-      // which starts again with the next press.
-      // Differenciate between 1 or 2 presses is a good usecase.
+
+	// Reset the button press and hold count.
+	// Attention: No release/timeout event will trigger!
+	// This is important if you want to end a chain,
+	// which starts again with the next press.
+	// Differenciate between 1 or 2 presses is a good usecase.
+	// Hold a button -> event A triggers
+	// Hold the button again -> event B triggers
+	// If A (with a longer hold count) was already triggered, reset the API
+    void reset(void)
+	{
       lastPressCount = 0;
       lastholdCount = 0;
     }
-    
+
 
     void read(const IR_data_t data) {
       // Check if the correct protocol and address (optional) is used
@@ -462,7 +472,7 @@ class CNecAPI : public CIRLData{
       	if(!lastPressCount){
       		return;
       	}
-      	
+
       	// Increment holding count
         if (lastholdCount < 255) {
           lastholdCount++;
