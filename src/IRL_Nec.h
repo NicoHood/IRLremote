@@ -25,7 +25,6 @@ THE SOFTWARE.
 #pragma once
 
 #include <Arduino.h>
-#include <inttypes.h>
 
 // Delay_basic is only for avrs. With ARM sending is currently not possible
 // TODO implement sending
@@ -77,8 +76,8 @@ enum Nec_type_t : uint8_t {
 struct Nec_data_t
 {
 	Nec_type_t protocol;
-	uint8_t command;
 	uint16_t address;
+	uint8_t command;
 };
 
 //==============================================================================

@@ -40,7 +40,8 @@
 
 #define pinLed LED_BUILTIN
 
-void setup() {
+void setup()
+{
   // Start serial debug output
   while (!Serial);
   Serial.begin(115200);
@@ -54,7 +55,9 @@ void setup() {
     Serial.println(F("You did not choose a valid pin."));
 }
 
-void loop() {
+void loop()
+{
+  // Check if new IR protocol data is available
   if (protocolIR.available())
   {
     // Light Led

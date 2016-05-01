@@ -165,7 +165,7 @@ void CNec::interrupt(void)
 	}
 
 	// On a timeout abort pending readings and start next possible reading
-	if (duration >= ((NEC_TIMEOUT + NEC_MARK_LEAD + NEC_SPACE_LEAD) / 2)) {
+	if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {
 		countNec = 1;
 	}
 

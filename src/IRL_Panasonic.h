@@ -44,7 +44,8 @@ THE SOFTWARE.
 #define PANASONIC_PULSE				432UL
 #define PANASONIC_ADDRESS_LENGTH	16
 #define PANASONIC_COMMAND_LENGTH	32
-#define PANASONIC_DATA_LENGTH		(PANASONIC_ADDRESS_LENGTH + PANASONIC_COMMAND_LENGTH)
+#define PANASONIC_DATA_LENGTH		(PANASONIC_ADDRESS_LENGTH + \
+									PANASONIC_COMMAND_LENGTH)
 #define PANASONIC_BLOCKS			(PANASONIC_DATA_LENGTH / 8)
 // 2 for lead + space, each block has mark and space
 #define PANASONIC_LENGTH			(2 + PANASONIC_DATA_LENGTH * 2)
@@ -63,11 +64,11 @@ THE SOFTWARE.
 /*
 Panasonic pulse demonstration:
 
-*---------|                        |------------|   |---------|   |---|   ... -|   |---------
-*         |                        |            |   |         |   |   |   ...  |   |
-*         |                        |            |   |         |   |   |   ...  |   |
-*         |------------------------|            |---|         |---|   |-  ...  |---|
-*         |       Lead Mark        | Lead Space |  Logical 1  | Log 0 |  Data  |End|
+*---|                        |------------|   |---------|   |---|   ... -|   |--
+*   |                        |            |   |         |   |   |   ...  |   |
+*   |                        |            |   |         |   |   |   ...  |   |
+*   |------------------------|            |---|         |---|   |-  ...  |---|
+*   |       Lead Mark        | Lead Space |  Logical 1  | Log 0 |  Data  |End|
 */
 
 
