@@ -121,12 +121,16 @@ Nec_data_t CNec::read()
 uint32_t CNec::timeout(void)
 {
     // Return time between last event time (in micros)
+    uint32_t time = micros();
+
     uint8_t oldSREG = SREG;
     cli();
 
-    uint32_t timeout = micros() - mlastEvent;
+    uint32_t timeout = mlastEvent;
 
     SREG = oldSREG;
+
+    timeout = time - timeout;
 
     return timeout;
 }
@@ -144,6 +148,23 @@ uint32_t CNec::lastEvent(void)
 
     return time;
 }
+
+
+uint32_t CNec::nextEvent(void)
+{
+    // Return when the next event can be expected.
+    // Zero means at any time.
+    // Attention! This value is a little bit too high in general.
+    // Also for the first press it is even higher than it should.
+    uint32_t time = timeout();
+
+    if(time >= NEC_TIMESPAN_HOLDING) {
+        return 0;
+    }
+
+    return NEC_TIMESPAN_HOLDING - time;
+}
+
 
 
 void CNec::interrupt(void)
@@ -260,8 +281,7 @@ void CNecAPI<callback, address>::read(void) {
   if ((data.protocol == IRL_NEC_NO_PROTOCOL) || (address && data.protocol == IRL_NEC && (data.address != address)))
   {
     // Call the remote function again once the keypress timed out
-    const uint32_t timeoutLimitUs = 500UL * 1000UL;
-    if (lastPressCount && (timeout() > timeoutLimitUs))
+    if (lastPressCount && (timeout() > getTimeout()))
     {
       // Flag timeout event, key was released and the current chain is over
       NecTimeoutType = TIMEOUT;
@@ -366,6 +386,12 @@ uint8_t CNecAPI<callback, address>::holdCount(const uint8_t debounce )
 }
 
 
+template<const NecEventCallback callback, const uint16_t address>
+constexpr uint32_t CNecAPI<callback, address>::getTimeout(void) {
+    return NEC_API_PRESS_TIMEOUT;
+}
+
+
 // Check if a key was released (via timeout or another key got pressed).
 // Return how often the key was pressed.
 template<const NecEventCallback callback, const uint16_t address>
@@ -376,6 +402,22 @@ uint8_t CNecAPI<callback, address>::pressTimeout(void)
   }
   return 0;
 }
+
+
+// Return when the next timeout triggers.
+// Zero means it already timed out.
+template<const NecEventCallback callback, const uint16_t address>
+uint32_t CNecAPI<callback, address>::nextTimeout(void)
+{
+    uint32_t time = timeout();
+
+    if(time >= getTimeout()) {
+        return 0;
+    }
+
+    return getTimeout() - time;
+}
+
 
 
 // Triggers when the button is released.

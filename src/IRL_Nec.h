@@ -50,9 +50,8 @@ THE SOFTWARE.
 #define NEC_LENGTH            (2 + NEC_DATA_LENGTH * 2)
 #define NEC_TIMEOUT           (NEC_PULSE * 78UL)
 #define NEC_TIMEOUT_HOLDING   (NEC_PULSE * 173UL)
-#define NEC_TIMEOUT_REPEAT    (NEC_TIMEOUT + NEC_LOGICAL_LEAD + \
-                              NEC_LOGICAL_ZERO * (NEC_DATA_LENGTH / 2) + \
-                              NEC_LOGICAL_ONE * (NEC_DATA_LENGTH / 2))
+#define NEC_TIMESPAN_HOLDING  (NEC_TIMEOUT_HOLDING + NEC_LOGICAL_HOLDING)
+#define NEC_TIMEOUT_REPEAT    (NEC_TIMESPAN_HOLDING * 3 / 2)
 #define NEC_MARK_LEAD         (NEC_PULSE * 16UL)
 #define NEC_SPACE_LEAD        (NEC_PULSE * 8UL)
 #define NEC_SPACE_HOLDING     (NEC_PULSE * 4UL)
@@ -96,6 +95,7 @@ public:
     inline Nec_data_t read(void);
     inline uint32_t timeout(void);
     inline uint32_t lastEvent(void);
+    inline uint32_t nextEvent(void);
 
 protected:
     // Enum as unique number for each protocol
@@ -123,6 +123,7 @@ extern CNec Nec;
 //==============================================================================
 
 typedef void(*NecEventCallback)(void);
+#define NEC_API_PRESS_TIMEOUT (500UL * 1000UL)
 
 template<const NecEventCallback callback, const uint16_t address = 0x0000>
 class CNecAPI : public CNec
@@ -133,7 +134,9 @@ public:
     inline uint8_t command(void);
     inline uint8_t pressCount(void);
     inline uint8_t holdCount(const uint8_t debounce = 0);
+    inline constexpr uint32_t getTimeout(void);
     inline uint8_t pressTimeout(void);
+    inline uint32_t nextTimeout(void);
     inline bool releaseButton (void);
     inline void reset(void);
 

@@ -28,12 +28,15 @@ available	KEYWORD2
 read	KEYWORD2
 timeout	KEYWORD2
 lastEvent	KEYWORD2
+nextEvent	KEYWORD2
 
 read	KEYWORD2
 command	KEYWORD2
 pressCount	KEYWORD2
 holdCount	KEYWORD2
+getTimeout	KEYWORD2
 pressTimeout	KEYWORD2
+nextTimeout	KEYWORD2
 releaseButton	KEYWORD2
 reset	KEYWORD2
 
