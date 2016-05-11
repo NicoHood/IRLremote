@@ -77,7 +77,7 @@ bool CNec::end(uint8_t pin)
 
 
 bool CNec::available(){
-    return protocol;
+    return countNec > (NEC_LENGTH / 2);
 }
 
 
@@ -91,23 +91,19 @@ Nec_data_t CNec::read()
     cli();
 
     // Check and get data if we have new. Don't overwrite on repeat.
-    auto newprotocol = protocol;
-    if(newprotocol == IRL_NEC)
+    if (available())
     {
-        data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
-        data.command = dataNec[2];
-    }
-
-    // Set last ISR to current time.
-    // This is required to not trigger a timeout afterwards
-    // and read corrupted data. This might happen
-    // if the reading loop is too slow.
-    if(newprotocol) {
+        // Set last ISR to current time.
+        // This is required to not trigger a timeout afterwards
+        // and read corrupted data. This might happen
+        // if the reading loop is too slow.
         mlastTime = micros();
 
-        // Save and remove new protocol flag
-        data.protocol = protocol;
-        protocol = IRL_NEC_NO_PROTOCOL;
+        data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
+        data.command = dataNec[2];
+
+        // Reset reading
+        countNec = 0;
     }
 
     // Enable interrupt again, after we saved a copy of the variables
@@ -166,11 +162,11 @@ uint32_t CNec::nextEvent(void)
 }
 
 
-
 void CNec::interrupt(void)
 {
     // Block if the protocol is already recognized
-    if (protocol) {
+    uint8_t count = countNec;
+    if (count > (NEC_LENGTH / 2)) {
         return;
     }
 
@@ -187,18 +183,18 @@ void CNec::interrupt(void)
 
     // On a timeout abort pending readings and start next possible reading
     if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {
-        countNec = 1;
+        countNec = 0;
     }
 
     // On a reset (error in decoding) wait for a timeout to start a new reading
     // This is to not conflict with other protocols while they are sending 0/1
     // which might be similar to a lead in this protocol
-    else if (countNec == 0) {
+    else if (count == 0) {
         return;
     }
 
     // Check Mark Lead (requires a timeout)
-    else if (countNec == 1)
+    else if (count == 1)
     {
         // Wrong lead
         if (duration < ((NEC_LOGICAL_HOLDING + NEC_LOGICAL_ONE) / 2))
@@ -212,23 +208,19 @@ void CNec::interrupt(void)
             // Abort if last valid button press is too long ago
             if ((mlastTime - mlastEvent) >= NEC_TIMEOUT_REPEAT)
             {
-                // Reset reading
                 countNec = 0;
                 return;
             }
 
+            // Flag repeat signal via "invalid" address and empty command
+            dataNec[0] = 0xFF;
+            dataNec[1] = 0xFF;
+            dataNec[2] = 0x00;
+
             // Received a Nec Repeat signal
             // Next mark (stop bit) ignored due to detecting techniques
-            protocol = IRL_NEC_REPEAT;
+            countNec = (NEC_LENGTH / 2);
             mlastEvent = mlastTime;
-
-            // Reset reading
-            countNec = 0;
-            return;
-        }
-        else {
-            // Next reading, no errors
-            countNec++;
         }
     }
 
@@ -237,7 +229,7 @@ void CNec::interrupt(void)
     {
         // Get number of the Bits (starting from zero)
         // Substract the first lead pulse
-        uint8_t length = countNec - 2;
+        uint8_t length = count - 2;
 
         // Move bits (MSB is zero)
         dataNec[length / 8] >>= 1;
@@ -247,24 +239,22 @@ void CNec::interrupt(void)
             dataNec[length / 8] |= 0x80;
         }
 
-        // Last bit (stop bit)
-        if (countNec >= (NEC_LENGTH / 2))
+        // Last bit (stop bit following)
+        if (count >= (NEC_LENGTH / 2))
         {
             // Check if the protcol's command checksum is correct
-            if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00)
-            {
-                protocol = IRL_NEC;
+            if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00) {
                 mlastEvent = mlastTime;
             }
-
-            // Reset reading
-            countNec = 0;
-            return;
+            else {
+                countNec = 0;
+                return;
+            }
         }
-
-        // Next reading, no errors
-        countNec++;
     }
+
+    // Next reading, no errors
+    countNec++;
 }
 
 
@@ -278,7 +268,8 @@ void CNecAPI<callback, address>::read(void) {
   auto data = CNec::read();
 
   // Check if the correct protocol and address (optional) is used
-  if ((data.protocol == IRL_NEC_NO_PROTOCOL) || (address && data.protocol == IRL_NEC && (data.address != address)))
+  bool firstCommand = data.address != 0xFFFF;
+  if ((data.address == 0) || (address && firstCommand && (data.address != address)))
   {
     // Call the remote function again once the keypress timed out
     if (lastPressCount && (timeout() > getTimeout()))
@@ -295,7 +286,7 @@ void CNecAPI<callback, address>::read(void) {
   }
 
   // Count the first button press
-  if (data.protocol == IRL_NEC)
+  if (firstCommand)
   {
     // The same button was pressed twice in a short timespawn (500ms)
     if (data.command == lastCommand)

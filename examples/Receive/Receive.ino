@@ -71,8 +71,6 @@ void loop()
     Serial.print(F("Protocol: "));
 
     // Print the protocol data
-    Serial.print(F("Protocol: 0x"));
-    Serial.println(data.protocol, HEX);
     Serial.print(F("Address: 0x"));
     Serial.println(data.address, HEX);
     Serial.print(F("Command: 0x"));

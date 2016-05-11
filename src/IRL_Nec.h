@@ -64,17 +64,9 @@ THE SOFTWARE.
 #define NEC_LOGICAL_ZERO      (NEC_MARK_ZERO + NEC_SPACE_ZERO)
 #define NEC_LOGICAL_ONE       (NEC_MARK_ONE + NEC_SPACE_ONE)
 
-// Enum as unique number for each protocol
-enum Nec_type_t : uint8_t {
-    IRL_NEC_NO_PROTOCOL = 0x00,
-    IRL_NEC,
-    IRL_NEC_REPEAT,
-};
-
 // Struct that is returned by the read() function
 struct Nec_data_t
 {
-    Nec_type_t protocol;
     uint16_t address;
     uint8_t command;
 };
@@ -98,15 +90,9 @@ public:
     inline uint32_t nextEvent(void);
 
 protected:
-    // Enum as unique number for each protocol
-    static volatile Nec_type_t protocol;
-
     // Temporary buffer to hold bytes for decoding the protocol
-    static uint8_t countNec;
+    static volatile uint8_t countNec;
     static uint8_t dataNec[NEC_BLOCKS];
-
-    // Data that all protocols need for decoding
-    static volatile uint8_t IRLProtocol;
 
     // Time values for the last interrupt and the last valid protocol
     static uint32_t mlastTime;
