@@ -50,6 +50,12 @@ THE SOFTWARE.
 // 2 for lead + space, each block has mark and space
 #define PANASONIC_LENGTH            (2 + PANASONIC_DATA_LENGTH * 2)
 #define PANASONIC_TIMEOUT           (PANASONIC_PULSE * 173UL)
+#define PANASONIC_TIMESPAN_HOLDING  (PANASONIC_TIMEOUT + \
+                                    PANASONIC_LOGICAL_LEAD + \
+                                    (PANASONIC_DATA_LENGTH / 2) * \
+                                    PANASONIC_LOGICAL_ONE + \
+                                    (PANASONIC_DATA_LENGTH / 2) * \
+                                    PANASONIC_LOGICAL_ZERO)
 #define PANASONIC_MARK_LEAD         (PANASONIC_PULSE * 8UL)
 #define PANASONIC_SPACE_LEAD        (PANASONIC_PULSE * 4UL)
 #define PANASONIC_LOGICAL_LEAD      (PANASONIC_MARK_LEAD + PANASONIC_SPACE_LEAD)
@@ -126,6 +132,7 @@ public:
     inline Panasonic_data_t read(void);
     inline uint32_t timeout(void);
     inline uint32_t lastEvent(void);
+    inline uint32_t nextEvent(void);
 
 protected:
     // Temporary buffer to hold bytes for decoding the protocol

@@ -146,6 +146,21 @@ uint32_t CPanasonic::lastEvent(void)
 }
 
 
+uint32_t CPanasonic::nextEvent(void)
+{
+    // Return when the next event can be expected.
+    // Zero means at any time.
+    // Attention! This value is a little bit too high in general.
+    uint32_t time = timeout();
+
+    if(time >= PANASONIC_TIMESPAN_HOLDING) {
+        return 0;
+    }
+
+    return PANASONIC_TIMESPAN_HOLDING - time;
+}
+
+
 void CPanasonic::interrupt(void)
 {
     // Block if the protocol is already recognized
