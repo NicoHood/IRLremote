@@ -24,6 +24,8 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
+#include "IRLremote.h"
+
 //==============================================================================
 // Protek 9700 Series
 //==============================================================================
@@ -31,6 +33,9 @@ THE SOFTWARE.
 namespace IRL_Protek_Remote{
 
     // Protocol: (Extended) NEC
+    typedef Nec_address_t IRL_address_t;
+    typedef Nec_command_t IRL_command_t;
+    typedef Nec_data_t IRL_data_t;
     static const uint16_t IRL_ADDRESS = 0x2222;
 
     enum IRL_Keycode : uint8_t

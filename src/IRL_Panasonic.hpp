@@ -77,7 +77,7 @@ bool CPanasonic::end(uint8_t pin)
 
 
 bool CPanasonic::available(){
-    return protocol;
+    return countPanasonic > (PANASONIC_LENGTH / 2);
 }
 
 
@@ -90,28 +90,24 @@ Panasonic_data_t CPanasonic::read()
     uint8_t oldSREG = SREG;
     cli();
 
-    // Check and get data if we have new. Don't overwrite on repeat.
-    auto newprotocol = protocol;
-    if(newprotocol == IRL_PANASONIC)
+    // Check and get data if we have new
+    if (available())
     {
+        // Set last ISR to current time.
+        // This is required to not trigger a timeout afterwards
+        // and read corrupted data. This might happen
+        // if the reading loop is too slow.
+        mlastTime = micros();
+
         data.address = ((uint16_t)dataPanasonic[1] << 8) |
                        ((uint16_t)dataPanasonic[0]);
         data.command = ((uint32_t)dataPanasonic[5] << 24) |
                        ((uint32_t)dataPanasonic[4] << 16) |
                        ((uint32_t)dataPanasonic[3] << 8)  |
                        ((uint32_t)dataPanasonic[2]);
-    }
 
-    // Set last ISR to current time.
-    // This is required to not trigger a timeout afterwards
-    // and read corrupted data. This might happen
-    // if the reading loop is too slow.
-    if(newprotocol) {
-        mlastTime = micros();
-
-        // Save and remove new protocol flag
-        data.protocol = protocol;
-        protocol = IRL_PANASONIC_NO_PROTOCOL;
+       // Reset reading
+       countPanasonic = 0;
     }
 
     // Enable interrupt again, after we saved a copy of the variables
@@ -153,7 +149,8 @@ uint32_t CPanasonic::lastEvent(void)
 void CPanasonic::interrupt(void)
 {
     // Block if the protocol is already recognized
-    if (protocol) {
+    uint8_t count = countPanasonic;
+    if (count > (PANASONIC_LENGTH / 2)) {
         return;
     }
 
@@ -170,28 +167,24 @@ void CPanasonic::interrupt(void)
 
     // On a timeout abort pending readings and start next possible reading
     if (duration >= ((PANASONIC_TIMEOUT + PANASONIC_LOGICAL_LEAD) / 2)) {
-        countPanasonic = 1;
+        countPanasonic = 0;
     }
 
     // On a reset (error in decoding) wait for a timeout to start a new reading
     // This is to not conflict with other protocols while they are sending 0/1
     // which might be similar to a lead in this protocol
-    else if (countPanasonic == 0) {
+    else if (count == 0) {
         return;
     }
 
     // Check Mark Lead (requires a timeout)
-    else if (countPanasonic == 1)
+    else if (count == 1)
     {
         // Wrong lead
         if (duration < ((PANASONIC_LOGICAL_LEAD + PANASONIC_LOGICAL_ONE) / 2))
         {
             countPanasonic = 0;
             return;
-        }
-        else {
-            // Next reading, no errors
-            countPanasonic++;
         }
     }
 
@@ -200,7 +193,7 @@ void CPanasonic::interrupt(void)
     {
         // Get number of the Bits (starting from zero)
         // Substract the first lead pulse
-        uint8_t length = countPanasonic - 2;
+        uint8_t length = count - 2;
 
         // Move bits (MSB is zero)
         dataPanasonic[length / 8] >>= 1;
@@ -212,7 +205,7 @@ void CPanasonic::interrupt(void)
         }
 
         // Last bit (stop bit)
-        if (countPanasonic >= (PANASONIC_LENGTH / 2))
+        if (count >= (PANASONIC_LENGTH / 2))
         {
             // Check if the protcol's checksum is correct
             uint8_t XOR1 = dataPanasonic[2] ^
@@ -224,17 +217,17 @@ void CPanasonic::interrupt(void)
                 //uint8_t XOR2 = dataPanasonic[0] ^ dataPanasonic[1];
                 //if(((XOR2 & 0x0F) ^ (XOR2 >> 4)) == (dataPanasonic[2] & 0x0F))
                 //{
-                    protocol = IRL_PANASONIC;
                     mlastEvent = mlastTime;
                 //}
             }
-
-            // Reset reading
-            countPanasonic = 0;
-            return;
+            else {
+                // Reset reading
+                countPanasonic = 0;
+                return;
+            }
         }
-
-        // Next reading, no errors
-        countPanasonic++;
     }
+
+    // Next reading, no errors
+    countPanasonic++;
 }

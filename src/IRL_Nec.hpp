@@ -90,7 +90,7 @@ Nec_data_t CNec::read()
     uint8_t oldSREG = SREG;
     cli();
 
-    // Check and get data if we have new. Don't overwrite on repeat.
+    // Check and get data if we have new.
     if (available())
     {
         // Set last ISR to current time.

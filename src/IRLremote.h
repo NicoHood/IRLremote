@@ -37,9 +37,9 @@ THE SOFTWARE.
 #include "PinChangeInterrupt.h"
 #endif
 
-// Include pre recorded IR codes from IR remotes
-#include "IRL_Keycodes.h"
-
 // Include all protocol implementations
 #include "IRL_Nec.h"
 #include "IRL_Panasonic.h"
+
+// Include pre recorded IR codes from IR remotes
+#include "IRL_Keycodes.h"

@@ -28,9 +28,8 @@ THE SOFTWARE.
 //==============================================================================
 
 // Protocol temporary data
-uint8_t CPanasonic::countPanasonic = 0;
+volatile uint8_t CPanasonic::countPanasonic = 0;
 uint8_t CPanasonic::dataPanasonic[PANASONIC_BLOCKS] = { 0 };
-volatile Panasonic_type_t CPanasonic::protocol = IRL_PANASONIC_NO_PROTOCOL;
 uint32_t CPanasonic::mlastTime = 0;
 volatile uint32_t CPanasonic::mlastEvent = 0;
 

@@ -71,40 +71,42 @@ Panasonic pulse demonstration:
 *   |       Lead Mark        | Lead Space |  Logical 1  | Log 0 |  Data  |End|
 */
 
-
-// Enum as unique number for each protocol
-enum Panasonic_type_t : uint8_t {
-    IRL_PANASONIC_NO_PROTOCOL = 0x00,
-    IRL_PANASONIC,
-};
-
+typedef uint16_t Panasonic_address_t;
+typedef uint32_t Panasonic_command_t;
 
 // Struct that is returned by the read() function
-struct Panasonic_data_t
+union Panasonic_data_t
 {
-    Panasonic_type_t protocol;
-    union {
-        uint16_t address;
-        uint16_t manufacturer;
+    struct{
+        union {
+            Panasonic_address_t address;
+            uint16_t manufacturer;
+        };
+        Panasonic_command_t command;
     };
-    union {
-        uint32_t command;
-        struct {
-            uint32_t parity : 4;
-            uint32_t system : 4;
-            uint32_t product : 8;
-            uint32_t function : 8;
-            uint32_t checksum : 8;
-        } japan;
-        struct {
-            uint32_t parity : 4;
-            uint32_t genre1 : 4;
-            uint32_t genre2 : 4;
-            uint32_t data : 10;
-            uint32_t id : 2;
-            uint32_t checksum : 8;
-        } denon;
-    };
+    struct {
+        union {
+            uint16_t address;
+            uint16_t manufacturer;
+        };
+        uint32_t parity : 4;
+        uint32_t system : 4;
+        uint32_t product : 8;
+        uint32_t function : 8;
+        uint32_t checksum : 8;
+    } japan;
+    struct {
+        union {
+            uint16_t address;
+            uint16_t manufacturer;
+        };
+        uint32_t parity : 4;
+        uint32_t genre1 : 4;
+        uint32_t genre2 : 4;
+        uint32_t data : 10;
+        uint32_t id : 2;
+        uint32_t checksum : 8;
+    } denon;
 };
 
 
@@ -126,15 +128,9 @@ public:
     inline uint32_t lastEvent(void);
 
 protected:
-    // Enum as unique number for each protocol
-    static volatile Panasonic_type_t protocol;
-
     // Temporary buffer to hold bytes for decoding the protocol
-    static uint8_t countPanasonic;
+    static volatile uint8_t countPanasonic;
     static uint8_t dataPanasonic[PANASONIC_BLOCKS];
-
-    // Data that all protocols need for decoding
-    static volatile uint8_t IRLProtocol;
 
     // Time values for the last interrupt and the last valid protocol
     static uint32_t mlastTime;

@@ -64,11 +64,14 @@ THE SOFTWARE.
 #define NEC_LOGICAL_ZERO      (NEC_MARK_ZERO + NEC_SPACE_ZERO)
 #define NEC_LOGICAL_ONE       (NEC_MARK_ONE + NEC_SPACE_ONE)
 
+typedef uint16_t Nec_address_t;
+typedef uint8_t Nec_command_t;
+
 // Struct that is returned by the read() function
 struct Nec_data_t
 {
-    uint16_t address;
-    uint8_t command;
+    Nec_address_t address;
+    Nec_command_t command;
 };
 
 //==============================================================================

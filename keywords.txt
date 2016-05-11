@@ -6,6 +6,8 @@
 # Datatypes (KEYWORD1)
 #######################################
 
+IRLremote	KEYWORD1
+
 Nec	KEYWORD1
 NecAPI	KEYWORD1
 
