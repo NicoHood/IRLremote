@@ -26,12 +26,6 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
-// Delay_basic is only for avrs. With ARM sending is currently not possible
-// TODO implement sending
-#ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
-#endif
-
 //==============================================================================
 // Protocol Definitions
 //==============================================================================
@@ -148,41 +142,6 @@ protected:
 };
 
 extern CPanasonic Panasonic;
-
-//==============================================================================
-// API Class
-//==============================================================================
-
-typedef void(*PanasonicEventCallback)(void);
-
-template<const PanasonicEventCallback callback, const uint16_t address = 0x0000>
-class CPanasonicAPI : public CPanasonic
-{
-public:
-    // User API to access library data
-    inline void read(void);
-    inline uint8_t command(void);
-    inline uint8_t pressCount(void);
-    inline uint8_t holdCount(const uint8_t debounce = 0);
-    inline uint8_t pressTimeout(void);
-    inline bool releaseButton (void);
-    inline void reset(void);
-
-protected:
-    // Differenciate between timeout types
-    enum TimeoutType : uint8_t
-    {
-        NO_TIMEOUT,     // Keydown
-        TIMEOUT,         // Key release with timeout
-        NEXT_BUTTON,     // Key release, pressed again
-        NEW_BUTTON,     // Key release, another key is pressed
-    } PanasonicTimeoutType;
-
-    // Keep track which key was pressed/held down how often
-    uint8_t lastCommand = 0;
-    uint8_t lastPressCount = 0;
-    uint8_t lastHoldCount = 0;
-};
 
 // Include protocol implementation
 #include "IRL_Panasonic.hpp"

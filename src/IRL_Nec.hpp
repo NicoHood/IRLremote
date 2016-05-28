@@ -410,7 +410,6 @@ uint32_t CNecAPI<callback, address>::nextTimeout(void)
 }
 
 
-
 // Triggers when the button is released.
 // Anything else than a normal press indicates the key was released.
 // This occurs on a timeout, new button, same button press.

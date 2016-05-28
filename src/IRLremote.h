@@ -37,6 +37,12 @@ THE SOFTWARE.
 #include "PinChangeInterrupt.h"
 #endif
 
+// Delay_basic is only for avrs. With ARM sending is currently not possible
+// TODO implement sending
+#ifdef ARDUINO_ARCH_AVR
+#include <util/delay_basic.h>
+#endif
+
 // Include all protocol implementations
 #include "IRL_Nec.h"
 #include "IRL_Panasonic.h"
