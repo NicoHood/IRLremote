@@ -40,7 +40,7 @@ public:
     inline uint32_t nextEvent(void);
 
     // Interface that is required to be implemented
-    //inline constexpr uint32_t timespanEvent(void);
+    //static const uint32_t timespanEvent = VALUE;
 
 protected:
     // Time mangement functions
@@ -124,7 +124,7 @@ uint32_t CIRL_Time<T>::nextEvent(void)
     // Attention! This value is a little bit too high in general.
     // Also for the first press it is even higher than it should.
     auto time = timeout();
-    auto timespan = static_cast<T*>(this)->timespanEvent();
+    auto timespan = static_cast<T*>(this)->timespanEvent;
 
     if(time >= timespan) {
         return 0;

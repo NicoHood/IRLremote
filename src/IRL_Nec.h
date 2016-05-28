@@ -81,7 +81,7 @@ class CNec : public CIRL_Receive<CNec>,
 public:
     // User API to access library data
     inline bool available(void);
-    inline constexpr uint32_t timespanEvent(void);
+    static constexpr uint32_t timespanEvent = NEC_TIMESPAN_HOLDING;
 
 protected:
     friend CIRL_Receive<CNec>;

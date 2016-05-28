@@ -33,11 +33,6 @@ bool CNec::available(void){
 }
 
 
-constexpr uint32_t CNec::timespanEvent(void) {
-    return NEC_TIMESPAN_HOLDING;
-}
-
-
 Nec_data_t CNec::getData(void){
     Nec_data_t data;
     data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);

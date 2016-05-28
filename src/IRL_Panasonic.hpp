@@ -51,11 +51,6 @@ void CPanasonic::resetReading(void){
 }
 
 
-constexpr uint32_t CPanasonic::timespanEvent(void) {
-    return PANASONIC_TIMESPAN_HOLDING;
-}
-
-
 void CPanasonic::interrupt(void)
 {
     // Block if the protocol is already recognized

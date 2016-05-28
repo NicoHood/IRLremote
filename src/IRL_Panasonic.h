@@ -123,7 +123,7 @@ class CPanasonic : public CIRL_Receive<CPanasonic>,
 public:
     // User API to access library data
     inline bool available(void);
-    inline constexpr uint32_t timespanEvent(void);
+    static constexpr uint32_t timespanEvent = PANASONIC_TIMESPAN_HOLDING;
 
 protected:
     friend CIRL_Receive<CPanasonic>;
