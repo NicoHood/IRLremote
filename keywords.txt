@@ -31,6 +31,7 @@ read	KEYWORD2
 timeout	KEYWORD2
 lastEvent	KEYWORD2
 nextEvent	KEYWORD2
+timespanEvent	KEYWORD2
 
 read	KEYWORD2
 command	KEYWORD2
