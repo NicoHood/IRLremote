@@ -137,6 +137,7 @@ Version History
 * Added better keycode definitions #11
 * Updated keywords.txt
 * Tabs -> Spaces
+* Added receive and time interface templates
 
 1.9.0 Release (Never officially released)
 * Added API as class
