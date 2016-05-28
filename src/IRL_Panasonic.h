@@ -24,6 +24,7 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
+#include <Arduino.h>
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
 #include "IRL_Protocol.h"
@@ -124,6 +125,7 @@ public:
     // User API to access library data
     inline bool available(void);
     static constexpr uint32_t timespanEvent = PANASONIC_TIMESPAN_HOLDING;
+    static constexpr uint8_t interruptMode = FALLING;
 
 protected:
     friend CIRL_Receive<CPanasonic>;

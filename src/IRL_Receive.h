@@ -55,14 +55,14 @@ bool CIRL_Receive<T>::begin(uint8_t pin)
 
     // Try to attach PinInterrupt first
     if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
-        attachInterrupt(digitalPinToInterrupt(pin), T::interrupt, FALLING);
+        attachInterrupt(digitalPinToInterrupt(pin), T::interrupt, T::interruptMode);
         return true;
     }
 
     // If PinChangeInterrupt library is used, try to attach it
 #ifdef PCINT_VERSION
     else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
-        attachPCINT(digitalPinToPCINT(pin), T::interrupt, FALLING);
+        attachPCINT(digitalPinToPCINT(pin), T::interrupt, T::interruptMode);
         return true;
     }
 #endif
