@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include <Arduino.h>
+#include "IRL_Receive.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -114,13 +115,9 @@ union Panasonic_data_t
 // Panasonic Decoding Class
 //==============================================================================
 
-class CPanasonic
+class CPanasonic : public CIRL_Receive<CPanasonic>
 {
 public:
-    // Attach the interrupt so IR signals are detected
-    inline bool begin(uint8_t pin);
-    inline bool end(uint8_t pin);
-
     // User API to access library data
     inline bool available(void);
     inline Panasonic_data_t read(void);
@@ -129,6 +126,8 @@ public:
     inline uint32_t nextEvent(void);
 
 protected:
+    friend CIRL_Receive<CPanasonic>;
+
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countPanasonic;
     static uint8_t dataPanasonic[PANASONIC_BLOCKS];

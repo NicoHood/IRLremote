@@ -25,12 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include <Arduino.h>
-
-// Delay_basic is only for avrs. With ARM sending is currently not possible
-// TODO implement sending
-#ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
-#endif
+#include "IRL_Receive.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -78,13 +73,9 @@ struct Nec_data_t
 // Nec Decoding Class
 //==============================================================================
 
-class CNec
+class CNec : public CIRL_Receive<CNec>
 {
 public:
-    // Attach the interrupt so IR signals are detected
-    inline bool begin(uint8_t pin);
-    inline bool end(uint8_t pin);
-
     // User API to access library data
     inline bool available(void);
     inline Nec_data_t read(void);
@@ -93,6 +84,8 @@ public:
     inline uint32_t nextEvent(void);
 
 protected:
+    friend CIRL_Receive<CNec>;
+
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countNec;
     static uint8_t dataNec[NEC_BLOCKS];

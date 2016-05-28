@@ -28,54 +28,6 @@ THE SOFTWARE.
 // Nec Decoding Implementation
 //==============================================================================
 
-bool CNec::begin(uint8_t pin)
-{
-    // Get pin ready for reading.
-    pinMode(pin, INPUT_PULLUP);
-
-    // Try to attach PinInterrupt first
-    if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
-        attachInterrupt(digitalPinToInterrupt(pin), interrupt, FALLING);
-        return true;
-    }
-
-    // If PinChangeInterrupt library is used, try to attach it
-#ifdef PCINT_VERSION
-    else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
-        attachPCINT(digitalPinToPCINT(pin), interrupt, FALLING);
-        return true;
-    }
-#endif
-
-    // Return an error if none of them work (pin has no Pin(Change)Interrupt)
-    return false;
-}
-
-
-bool CNec::end(uint8_t pin)
-{
-    // Disable pullup.
-    pinMode(pin, INPUT);
-
-    // Try to detach PinInterrupt first
-    if (digitalPinToInterrupt(pin) != NOT_AN_INTERRUPT){
-        detachInterrupt(digitalPinToInterrupt(pin));
-        return true;
-    }
-
-    // If PinChangeInterrupt library is used, try to detach it
-#ifdef PCINT_VERSION
-    else if (digitalPinToPCINT(pin) != NOT_AN_INTERRUPT){
-        detachPCINT(digitalPinToPCINT(pin));
-        return true;
-    }
-#endif
-
-    // Return an error if none of them work (pin has no Pin(Change)Interrupt)
-    return false;
-}
-
-
 bool CNec::available(){
     return countNec > (NEC_LENGTH / 2);
 }
