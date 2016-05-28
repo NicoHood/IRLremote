@@ -24,9 +24,9 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <util/atomic.h>
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
+#include "IRL_Protocol.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -116,20 +116,26 @@ union Panasonic_data_t
 // Panasonic Decoding Class
 //==============================================================================
 
-class CPanasonic : public CIRL_Receive<CPanasonic>, public CIRL_Time<CPanasonic>
+class CPanasonic : public CIRL_Receive<CPanasonic>,
+                   public CIRL_Time<CPanasonic>,
+                   public CIRL_Protocol<CPanasonic, Panasonic_data_t>
 {
 public:
     // User API to access library data
     inline bool available(void);
-    inline Panasonic_data_t read(void);
-    inline constexpr uint32_t timespanEvent(void) final;
+    inline constexpr uint32_t timespanEvent(void);
 
 protected:
     friend CIRL_Receive<CPanasonic>;
+    friend CIRL_Protocol<CPanasonic, Panasonic_data_t>;
 
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countPanasonic;
     static uint8_t dataPanasonic[PANASONIC_BLOCKS];
+
+    // Protocol interface functions
+    inline Panasonic_data_t getData(void);
+    inline void resetReading(void);
 
     // Interrupt function that is attached
     static inline void interrupt(void);

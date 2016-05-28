@@ -33,37 +33,21 @@ bool CPanasonic::available(){
 }
 
 
-Panasonic_data_t CPanasonic::read()
-{
-    // If nothing was received return an empty struct
-    Panasonic_data_t data = Panasonic_data_t();
-
-    // Disable interrupts while accessing volatile data
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        // Check and get data if we have new
-        if (available())
-        {
-            // Set last ISR to current time.
-            // This is required to not trigger a timeout afterwards
-            // and read corrupted data. This might happen
-            // if the reading loop is too slow.
-            mlastTime = micros();
-
-            data.address = ((uint16_t)dataPanasonic[1] << 8) |
-                           ((uint16_t)dataPanasonic[0]);
-            data.command = ((uint32_t)dataPanasonic[5] << 24) |
-                           ((uint32_t)dataPanasonic[4] << 16) |
-                           ((uint32_t)dataPanasonic[3] << 8)  |
-                           ((uint32_t)dataPanasonic[2]);
-
-           // Reset reading
-           countPanasonic = 0;
-        }
-    }
-
-    // Return the new protocol information to the user
+Panasonic_data_t CPanasonic::getData(void){
+    Panasonic_data_t data;
+    data.address = ((uint16_t)dataPanasonic[1] << 8) |
+                   ((uint16_t)dataPanasonic[0]);
+    data.command = ((uint32_t)dataPanasonic[5] << 24) |
+                   ((uint32_t)dataPanasonic[4] << 16) |
+                   ((uint32_t)dataPanasonic[3] << 8)  |
+                   ((uint32_t)dataPanasonic[2]);
     return data;
+}
+
+
+void CPanasonic::resetReading(void){
+    // Reset reading
+    countPanasonic = 0;
 }
 
 

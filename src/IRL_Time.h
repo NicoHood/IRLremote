@@ -40,7 +40,7 @@ public:
     inline uint32_t nextEvent(void);
 
     // Interface that is required to be implemented
-    virtual inline constexpr uint32_t timespanEvent(void) = 0;
+    //inline constexpr uint32_t timespanEvent(void);
 
 protected:
     // Time mangement functions

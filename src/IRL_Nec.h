@@ -24,9 +24,9 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <util/atomic.h>
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
+#include "IRL_Protocol.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -74,20 +74,26 @@ struct Nec_data_t
 // Nec Decoding Class
 //==============================================================================
 
-class CNec : public CIRL_Receive<CNec>, public CIRL_Time<CNec>
+class CNec : public CIRL_Receive<CNec>,
+             public CIRL_Time<CNec>,
+             public CIRL_Protocol<CNec, Nec_data_t>
 {
 public:
     // User API to access library data
     inline bool available(void);
-    inline Nec_data_t read(void);
-    inline constexpr uint32_t timespanEvent(void) final;
+    inline constexpr uint32_t timespanEvent(void);
 
 protected:
     friend CIRL_Receive<CNec>;
+    friend CIRL_Protocol<CNec, Nec_data_t>;
 
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countNec;
     static uint8_t dataNec[NEC_BLOCKS];
+
+    // Protocol interface functions
+    inline Nec_data_t getData(void);
+    inline void resetReading(void);
 
     // Interrupt function that is attached
     static inline void interrupt(void);

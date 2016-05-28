@@ -28,43 +28,27 @@ THE SOFTWARE.
 // Nec Decoding Implementation
 //==============================================================================
 
-bool CNec::available(){
+bool CNec::available(void){
     return countNec > (NEC_LENGTH / 2);
-}
-
-
-Nec_data_t CNec::read()
-{
-    // If nothing was received return an empty struct
-    Nec_data_t data = Nec_data_t();
-
-    // Disable interrupts while accessing volatile data
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        // Check and get data if we have new.
-        if (available())
-        {
-            // Set last ISR to current time.
-            // This is required to not trigger a timeout afterwards
-            // and read corrupted data. This might happen
-            // if the reading loop is too slow.
-            mlastTime = micros();
-
-            data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
-            data.command = dataNec[2];
-
-            // Reset reading
-            countNec = 0;
-        }
-    }
-
-    // Return the new protocol information to the user
-    return data;
 }
 
 
 constexpr uint32_t CNec::timespanEvent(void) {
     return NEC_TIMESPAN_HOLDING;
+}
+
+
+Nec_data_t CNec::getData(void){
+    Nec_data_t data;
+    data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
+    data.command = dataNec[2];
+    return data;
+}
+
+
+void CNec::resetReading(void){
+    // Reset reading
+    countNec = 0;
 }
 
 

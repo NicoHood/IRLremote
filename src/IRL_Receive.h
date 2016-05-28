@@ -38,8 +38,8 @@ public:
     inline bool begin(uint8_t pin);
     inline bool end(uint8_t pin);
 
-    // Interrupt function that is attached
-    // (static) implementation required!
+protected:
+    // Interface that is required to be implemented
     //static inline void interrupt(void);
 };
 
