@@ -30,8 +30,6 @@ THE SOFTWARE.
 // Protocol temporary data
 volatile uint8_t CPanasonic::countPanasonic = 0;
 uint8_t CPanasonic::dataPanasonic[PANASONIC_BLOCKS] = { 0 };
-uint32_t CPanasonic::mlastTime = 0;
-volatile uint32_t CPanasonic::mlastEvent = 0;
 
 // CPanasonic instance
 CPanasonic Panasonic;

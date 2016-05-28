@@ -24,8 +24,9 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <Arduino.h>
+#include <util/atomic.h>
 #include "IRL_Receive.h"
+#include "IRL_Time.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -115,15 +116,13 @@ union Panasonic_data_t
 // Panasonic Decoding Class
 //==============================================================================
 
-class CPanasonic : public CIRL_Receive<CPanasonic>
+class CPanasonic : public CIRL_Receive<CPanasonic>, public CIRL_Time<CPanasonic>
 {
 public:
     // User API to access library data
     inline bool available(void);
     inline Panasonic_data_t read(void);
-    inline uint32_t timeout(void);
-    inline uint32_t lastEvent(void);
-    inline uint32_t nextEvent(void);
+    inline constexpr uint32_t timespanEvent(void) final;
 
 protected:
     friend CIRL_Receive<CPanasonic>;
@@ -131,10 +130,6 @@ protected:
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countPanasonic;
     static uint8_t dataPanasonic[PANASONIC_BLOCKS];
-
-    // Time values for the last interrupt and the last valid protocol
-    static uint32_t mlastTime;
-    static volatile uint32_t mlastEvent;
 
     // Interrupt function that is attached
     static inline void interrupt(void);

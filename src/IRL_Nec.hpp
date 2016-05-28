@@ -38,79 +38,33 @@ Nec_data_t CNec::read()
     // If nothing was received return an empty struct
     Nec_data_t data = Nec_data_t();
 
-    // Only the received protocol will write data into the struct
-    uint8_t oldSREG = SREG;
-    cli();
-
-    // Check and get data if we have new.
-    if (available())
+    // Disable interrupts while accessing volatile data
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        // Set last ISR to current time.
-        // This is required to not trigger a timeout afterwards
-        // and read corrupted data. This might happen
-        // if the reading loop is too slow.
-        mlastTime = micros();
+        // Check and get data if we have new.
+        if (available())
+        {
+            // Set last ISR to current time.
+            // This is required to not trigger a timeout afterwards
+            // and read corrupted data. This might happen
+            // if the reading loop is too slow.
+            mlastTime = micros();
 
-        data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
-        data.command = dataNec[2];
+            data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
+            data.command = dataNec[2];
 
-        // Reset reading
-        countNec = 0;
+            // Reset reading
+            countNec = 0;
+        }
     }
-
-    // Enable interrupt again, after we saved a copy of the variables
-    SREG = oldSREG;
 
     // Return the new protocol information to the user
     return data;
 }
 
 
-uint32_t CNec::timeout(void)
-{
-    // Return time between last event time (in micros)
-    uint32_t time = micros();
-
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t timeout = mlastEvent;
-
-    SREG = oldSREG;
-
-    timeout = time - timeout;
-
-    return timeout;
-}
-
-
-uint32_t CNec::lastEvent(void)
-{
-    // Return last event time (in micros)
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t time = mlastEvent;
-
-    SREG = oldSREG;
-
-    return time;
-}
-
-
-uint32_t CNec::nextEvent(void)
-{
-    // Return when the next event can be expected.
-    // Zero means at any time.
-    // Attention! This value is a little bit too high in general.
-    // Also for the first press it is even higher than it should.
-    uint32_t time = timeout();
-
-    if(time >= NEC_TIMESPAN_HOLDING) {
-        return 0;
-    }
-
-    return NEC_TIMESPAN_HOLDING - time;
+constexpr uint32_t CNec::timespanEvent(void) {
+    return NEC_TIMESPAN_HOLDING;
 }
 
 
@@ -122,16 +76,8 @@ void CNec::interrupt(void)
         return;
     }
 
-    // Save the duration between the last reading
-    uint32_t time = micros();
-    uint32_t duration_32 = time - mlastTime;
-    mlastTime = time;
-
-    // Calculate 16 bit duration. On overflow sets duration to a clear timeout
-    uint16_t duration = duration_32;
-    if (duration_32 > 0xFFFF) {
-        duration = 0xFFFF;
-    }
+    // Get time between previous call
+    auto duration = nextTime();
 
     // On a timeout abort pending readings and start next possible reading
     if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {

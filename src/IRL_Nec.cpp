@@ -30,8 +30,6 @@ THE SOFTWARE.
 // Protocol temporary data
 volatile uint8_t CNec::countNec = 0;
 uint8_t CNec::dataNec[NEC_BLOCKS] = { 0 };
-uint32_t CNec::mlastTime = 0;
-volatile uint32_t CNec::mlastEvent = 0;
 
 // CNec instance
 CNec Nec;

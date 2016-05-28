@@ -38,78 +38,37 @@ Panasonic_data_t CPanasonic::read()
     // If nothing was received return an empty struct
     Panasonic_data_t data = Panasonic_data_t();
 
-    // Only the received protocol will write data into the struct
-    uint8_t oldSREG = SREG;
-    cli();
-
-    // Check and get data if we have new
-    if (available())
+    // Disable interrupts while accessing volatile data
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        // Set last ISR to current time.
-        // This is required to not trigger a timeout afterwards
-        // and read corrupted data. This might happen
-        // if the reading loop is too slow.
-        mlastTime = micros();
+        // Check and get data if we have new
+        if (available())
+        {
+            // Set last ISR to current time.
+            // This is required to not trigger a timeout afterwards
+            // and read corrupted data. This might happen
+            // if the reading loop is too slow.
+            mlastTime = micros();
 
-        data.address = ((uint16_t)dataPanasonic[1] << 8) |
-                       ((uint16_t)dataPanasonic[0]);
-        data.command = ((uint32_t)dataPanasonic[5] << 24) |
-                       ((uint32_t)dataPanasonic[4] << 16) |
-                       ((uint32_t)dataPanasonic[3] << 8)  |
-                       ((uint32_t)dataPanasonic[2]);
+            data.address = ((uint16_t)dataPanasonic[1] << 8) |
+                           ((uint16_t)dataPanasonic[0]);
+            data.command = ((uint32_t)dataPanasonic[5] << 24) |
+                           ((uint32_t)dataPanasonic[4] << 16) |
+                           ((uint32_t)dataPanasonic[3] << 8)  |
+                           ((uint32_t)dataPanasonic[2]);
 
-       // Reset reading
-       countPanasonic = 0;
+           // Reset reading
+           countPanasonic = 0;
+        }
     }
-
-    // Enable interrupt again, after we saved a copy of the variables
-    SREG = oldSREG;
 
     // Return the new protocol information to the user
     return data;
 }
 
 
-uint32_t CPanasonic::timeout(void)
-{
-    // Return time between last event time (in micros)
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t timeout = micros() - mlastEvent;
-
-    SREG = oldSREG;
-
-    return timeout;
-}
-
-
-uint32_t CPanasonic::lastEvent(void)
-{
-    // Return last event time (in micros)
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t time = mlastEvent;
-
-    SREG = oldSREG;
-
-    return time;
-}
-
-
-uint32_t CPanasonic::nextEvent(void)
-{
-    // Return when the next event can be expected.
-    // Zero means at any time.
-    // Attention! This value is a little bit too high in general.
-    uint32_t time = timeout();
-
-    if(time >= PANASONIC_TIMESPAN_HOLDING) {
-        return 0;
-    }
-
-    return PANASONIC_TIMESPAN_HOLDING - time;
+constexpr uint32_t CPanasonic::timespanEvent(void) {
+    return PANASONIC_TIMESPAN_HOLDING;
 }
 
 
@@ -121,16 +80,8 @@ void CPanasonic::interrupt(void)
         return;
     }
 
-    // Save the duration between the last reading
-    uint32_t time = micros();
-    uint32_t duration_32 = time - mlastTime;
-    mlastTime = time;
-
-    // Calculate 16 bit duration. On overflow sets duration to a clear timeout
-    uint16_t duration = duration_32;
-    if (duration_32 > 0xFFFF) {
-        duration = 0xFFFF;
-    }
+    // Get time between previous call
+    auto duration = nextTime();
 
     // On a timeout abort pending readings and start next possible reading
     if (duration >= ((PANASONIC_TIMEOUT + PANASONIC_LOGICAL_LEAD) / 2)) {

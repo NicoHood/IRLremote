@@ -24,8 +24,9 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <Arduino.h>
+#include <util/atomic.h>
 #include "IRL_Receive.h"
+#include "IRL_Time.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -73,15 +74,13 @@ struct Nec_data_t
 // Nec Decoding Class
 //==============================================================================
 
-class CNec : public CIRL_Receive<CNec>
+class CNec : public CIRL_Receive<CNec>, public CIRL_Time<CNec>
 {
 public:
     // User API to access library data
     inline bool available(void);
     inline Nec_data_t read(void);
-    inline uint32_t timeout(void);
-    inline uint32_t lastEvent(void);
-    inline uint32_t nextEvent(void);
+    inline constexpr uint32_t timespanEvent(void) final;
 
 protected:
     friend CIRL_Receive<CNec>;
@@ -89,10 +88,6 @@ protected:
     // Temporary buffer to hold bytes for decoding the protocol
     static volatile uint8_t countNec;
     static uint8_t dataNec[NEC_BLOCKS];
-
-    // Time values for the last interrupt and the last valid protocol
-    static uint32_t mlastTime;
-    static volatile uint32_t mlastEvent;
 
     // Interrupt function that is attached
     static inline void interrupt(void);
