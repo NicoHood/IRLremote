@@ -24,6 +24,7 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
+#include <Arduino.h>
 #include <util/atomic.h>
 
 //==============================================================================
@@ -55,11 +56,8 @@ Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
     Protocol_data_t retdata = Protocol_data_t();
 
     // Disable interrupts while accessing volatile data
-    // TODO why is old SREG method smaller?
-    uint8_t oldSREG = SREG;
-    cli();
-    //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    //{
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
         // Check and get data if we have new.
         if (static_cast<T*>(this)->available())
         {
@@ -75,9 +73,7 @@ Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
             // Reset reading
             static_cast<T*>(this)->resetReading();
         }
-    //}
-    // Enable interrupt again, after we saved a copy of the variables
-    SREG = oldSREG;
+    }
 
     // Return the new protocol information to the user
     return retdata;

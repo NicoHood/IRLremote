@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include <Arduino.h>
+#include <util/atomic.h>
 
 //==============================================================================
 // IRL_Time Class
@@ -94,13 +95,12 @@ template<class T>
 uint32_t CIRL_Time<T>::timeout(void)
 {
     uint32_t time = micros();
+    uint32_t timeout;
 
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t timeout = mlastEvent;
-
-    SREG = oldSREG;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        timeout = mlastEvent;
+    }
 
     timeout = time - timeout;
 
@@ -114,15 +114,15 @@ uint32_t CIRL_Time<T>::timeout(void)
 template<class T>
 uint32_t CIRL_Time<T>::lastEvent(void)
 {
-    uint8_t oldSREG = SREG;
-    cli();
-
-    uint32_t time = mlastEvent;
-
-    SREG = oldSREG;
+    uint32_t time;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        time = mlastEvent;
+    }
 
     return time;
 }
+
 
 /*
  * Return when the next event can be expected.

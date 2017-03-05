@@ -43,6 +43,10 @@ THE SOFTWARE.
 #include <util/delay_basic.h>
 #endif
 
+// Include external libraries
+#include <Arduino.h>
+#include <util/atomic.h>
+
 // Include all protocol implementations
 #include "IRL_Nec.h"
 #include "IRL_Panasonic.h"
