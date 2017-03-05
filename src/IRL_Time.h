@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -40,7 +40,8 @@ public:
     inline uint32_t nextEvent(void);
 
     // Interface that is required to be implemented
-    //static const uint32_t timespanEvent = VALUE;
+    //static constexpr uint32_t timespanEvent = VALUE;
+    //static constexpr uint32_t limitTimeout = VALUE;
 
 protected:
     // Time mangement functions
@@ -65,6 +66,10 @@ template<class T> volatile uint32_t CIRL_Time<T>::mlastEvent = 0;
 // CIRL_Time Implementation
 //==============================================================================
 
+/*
+ * Returns duration between last interrupt and current time.
+ * This will safe the last interrupt time to the current time.
+ */
 template<class T>
 uint16_t CIRL_Time<T>::nextTime(void){
     // Save the duration between the last reading
@@ -82,10 +87,12 @@ uint16_t CIRL_Time<T>::nextTime(void){
 }
 
 
+/*
+ * Return relativ time between last event time (in micros)
+ */
 template<class T>
 uint32_t CIRL_Time<T>::timeout(void)
 {
-    // Return time between last event time (in micros)
     uint32_t time = micros();
 
     uint8_t oldSREG = SREG;
@@ -101,10 +108,12 @@ uint32_t CIRL_Time<T>::timeout(void)
 }
 
 
+/*
+ * Return absolut last event time (in micros)
+ */
 template<class T>
 uint32_t CIRL_Time<T>::lastEvent(void)
 {
-    // Return last event time (in micros)
     uint8_t oldSREG = SREG;
     cli();
 
@@ -115,14 +124,15 @@ uint32_t CIRL_Time<T>::lastEvent(void)
     return time;
 }
 
-
+/*
+ * Return when the next event can be expected.
+ * Zero means at any time.
+ * Attention! This value is a little bit too high in general.
+ * Also for the first press it is even higher than it should.
+ */
 template<class T>
 uint32_t CIRL_Time<T>::nextEvent(void)
 {
-    // Return when the next event can be expected.
-    // Zero means at any time.
-    // Attention! This value is a little bit too high in general.
-    // Also for the first press it is even higher than it should.
     auto time = timeout();
     auto timespan = static_cast<T*>(this)->timespanEvent;
 

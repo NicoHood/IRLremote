@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,6 +41,7 @@ public:
 protected:
     // Interface that is required to be implemented
     //static inline void interrupt(void);
+    //static constexpr uint8_t interruptMode = FALLING|RISING|CHANGE;
 };
 
 //==============================================================================

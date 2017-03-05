@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,110 +28,24 @@ THE SOFTWARE.
 // Nec Decoding Implementation
 //==============================================================================
 
-bool CNec::available(void){
-    return countNec > (NEC_LENGTH / 2);
-}
-
-
 Nec_data_t CNec::getData(void){
-    Nec_data_t data;
-    data.address = ((uint16_t)dataNec[1] << 8) | ((uint16_t)dataNec[0]);
-    data.command = dataNec[2];
-    return data;
+    Nec_data_t retdata;
+    retdata.address = ((uint16_t)data[1] << 8) | ((uint16_t)data[0]);
+    retdata.command = data[2];
+    return retdata;
 }
 
 
-void CNec::resetReading(void){
-    // Reset reading
-    countNec = 0;
+bool CNec::checksum(void) {
+    return uint8_t((data[2] ^ (~data[3]))) == 0x00;
 }
 
 
-void CNec::interrupt(void)
-{
-    // Block if the protocol is already recognized
-    uint8_t count = countNec;
-    if (count > (NEC_LENGTH / 2)) {
-        return;
-    }
-
-    // Get time between previous call
-    auto duration = nextTime();
-
-    // On a timeout abort pending readings and start next possible reading
-    if (duration >= ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)) {
-        countNec = 0;
-    }
-
-    // On a reset (error in decoding) wait for a timeout to start a new reading
-    // This is to not conflict with other protocols while they are sending 0/1
-    // which might be similar to a lead in this protocol
-    else if (count == 0) {
-        return;
-    }
-
-    // Check Mark Lead (requires a timeout)
-    else if (count == 1)
-    {
-        // Wrong lead
-        if (duration < ((NEC_LOGICAL_HOLDING + NEC_LOGICAL_ONE) / 2))
-        {
-            countNec = 0;
-            return;
-        }
-        // Check for a "button holding" lead
-        else if (duration < ((NEC_LOGICAL_LEAD + NEC_LOGICAL_HOLDING) / 2))
-        {
-            // Abort if last valid button press is too long ago
-            if ((mlastTime - mlastEvent) >= NEC_TIMEOUT_REPEAT)
-            {
-                countNec = 0;
-                return;
-            }
-
-            // Flag repeat signal via "invalid" address and empty command
-            dataNec[0] = 0xFF;
-            dataNec[1] = 0xFF;
-            dataNec[2] = 0x00;
-
-            // Received a Nec Repeat signal
-            // Next mark (stop bit) ignored due to detecting techniques
-            countNec = (NEC_LENGTH / 2);
-            mlastEvent = mlastTime;
-        }
-    }
-
-    // Check different logical space pulses (mark + space)
-    else
-    {
-        // Get number of the Bits (starting from zero)
-        // Substract the first lead pulse
-        uint8_t length = count - 2;
-
-        // Move bits (MSB is zero)
-        dataNec[length / 8] >>= 1;
-
-        // Set MSB if it's a logical one
-        if (duration >= ((NEC_LOGICAL_ONE + NEC_LOGICAL_ZERO) / 2)) {
-            dataNec[length / 8] |= 0x80;
-        }
-
-        // Last bit (stop bit following)
-        if (count >= (NEC_LENGTH / 2))
-        {
-            // Check if the protcol's command checksum is correct
-            if (uint8_t((dataNec[2] ^ (~dataNec[3]))) == 0x00) {
-                mlastEvent = mlastTime;
-            }
-            else {
-                countNec = 0;
-                return;
-            }
-        }
-    }
-
-    // Next reading, no errors
-    countNec++;
+void CNec::holding(void) {
+    // Flag repeat signal via "invalid" address and empty command
+    data[0] = 0xFF;
+    data[1] = 0xFF;
+    data[2] = 0x00;
 }
 
 

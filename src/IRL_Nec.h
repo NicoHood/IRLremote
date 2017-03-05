@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
 #include "IRL_Protocol.h"
+#include "IRL_Decode.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -48,8 +49,8 @@ THE SOFTWARE.
 #define NEC_TIMEOUT           (NEC_PULSE * 78UL)
 #define NEC_TIMEOUT_HOLDING   (NEC_PULSE * 173UL)
 #define NEC_TIMESPAN_HOLDING  (NEC_TIMEOUT_HOLDING + NEC_LOGICAL_HOLDING)
-#define NEC_TIMEOUT_REPEAT    (NEC_TIMESPAN_HOLDING * 3 / 2)
 #define NEC_MARK_LEAD         (NEC_PULSE * 16UL)
+#define NEC_MARK_HOLDING      (NEC_PULSE * 16UL)
 #define NEC_SPACE_LEAD        (NEC_PULSE * 8UL)
 #define NEC_SPACE_HOLDING     (NEC_PULSE * 4UL)
 #define NEC_LOGICAL_LEAD      (NEC_MARK_LEAD + NEC_SPACE_LEAD)
@@ -60,6 +61,40 @@ THE SOFTWARE.
 #define NEC_SPACE_ONE         (NEC_PULSE * 3UL)
 #define NEC_LOGICAL_ZERO      (NEC_MARK_ZERO + NEC_SPACE_ZERO)
 #define NEC_LOGICAL_ONE       (NEC_MARK_ONE + NEC_SPACE_ONE)
+
+// Decoding limits
+#define NEC_LIMIT_LOGIC       ((NEC_LOGICAL_ONE + NEC_LOGICAL_ZERO) / 2)
+#define NEC_LIMIT_HOLDING     ((NEC_LOGICAL_HOLDING + NEC_LOGICAL_ONE) / 2)
+#define NEC_LIMIT_LEAD        ((NEC_LOGICAL_LEAD + NEC_LOGICAL_HOLDING) / 2)
+#define NEC_LIMIT_TIMEOUT     ((NEC_TIMEOUT + NEC_LOGICAL_LEAD) / 2)
+#define NEC_LIMIT_REPEAT      (NEC_TIMESPAN_HOLDING * 3 / 2)
+
+/*
+ * Nec pulse demonstration:
+ *
+ *---|                |--------| |---| |-|   ... -| |----------/ ~ /----------|
+ *   |                |        | |   | | |   ...  | |                         |
+ *   |                |        | |   | | |   ...  | |                         |
+ *   |----------------|        |-|   |-| |-  ...  |-|                         |
+ *   |          Lead           |Log 1|Lg0|  Data  |E|         Timeout         |-
+
+ *---|                |----| |---------------------/ ~ /----------------------|
+ *   |                |    | |                                                |
+ *   |                |    | |                                                |
+ *   |----------------|    |-|                                                |
+ *   |      Holding        |E|                Timeout Holding                 |-
+ *   |                            Timespan Holding                            |
+ *
+ *  2 Pulses: |-+-| Logical 0
+ *  3 Pulses: |----| limitLogic
+ *  4 Pulses: |-+---| Logical 1
+ * 12 Pulses: |-------------| limitHolding
+ * 20 Pulses: |----------------+----| Holding
+ * 22 Pulses: |-----------------------| limitLead
+ * 24 Pulses: |----------------+--------| Lead
+ * 51 Pulses: |-----------------/ ~ /-----------------| limitTimeout
+ * 78 Pulses: |-------------------------/ ~ /-------------------------| Timeout
+ */
 
 typedef uint16_t Nec_address_t;
 typedef uint8_t Nec_command_t;
@@ -77,28 +112,27 @@ struct Nec_data_t
 
 class CNec : public CIRL_Receive<CNec>,
              public CIRL_Time<CNec>,
-             public CIRL_Protocol<CNec, Nec_data_t>
+             public CIRL_Protocol<CNec, Nec_data_t>,
+             public CIRL_DecodeSpaces<CNec, NEC_BLOCKS>
 {
-public:
-    // User API to access library data
-    inline bool available(void);
+protected:
     static constexpr uint32_t timespanEvent = NEC_TIMESPAN_HOLDING;
+    static constexpr uint32_t limitTimeout = NEC_LIMIT_TIMEOUT;
+    static constexpr uint32_t limitLead = NEC_LIMIT_LEAD;
+    static constexpr uint32_t limitHolding = NEC_LIMIT_HOLDING;
+    static constexpr uint32_t limitLogic = NEC_LIMIT_LOGIC;
+    static constexpr uint32_t limitRepeat = NEC_LIMIT_REPEAT;
+    static constexpr uint8_t irLength = NEC_LENGTH;
     static constexpr uint8_t interruptMode = FALLING;
 
-protected:
     friend CIRL_Receive<CNec>;
     friend CIRL_Protocol<CNec, Nec_data_t>;
-
-    // Temporary buffer to hold bytes for decoding the protocol
-    static volatile uint8_t countNec;
-    static uint8_t dataNec[NEC_BLOCKS];
+    friend CIRL_DecodeSpaces<CNec, NEC_BLOCKS>;
 
     // Protocol interface functions
     inline Nec_data_t getData(void);
-    inline void resetReading(void);
-
-    // Interrupt function that is attached
-    static inline void interrupt(void);
+    static inline bool checksum(void);
+    static inline void holding(void);
 };
 
 extern CNec Nec;

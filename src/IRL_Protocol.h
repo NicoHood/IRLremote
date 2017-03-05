@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -52,7 +52,7 @@ template<class T, class Protocol_data_t>
 Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
 {
     // If nothing was received return an empty struct
-    Protocol_data_t data = Protocol_data_t();
+    Protocol_data_t retdata = Protocol_data_t();
 
     // Disable interrupts while accessing volatile data
     // TODO why is old SREG method smaller?
@@ -70,7 +70,7 @@ Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
             static_cast<T*>(this)->mlastTime = micros();
 
             // Save the protocol data
-            data = static_cast<T*>(this)->getData();
+            retdata = static_cast<T*>(this)->getData();
 
             // Reset reading
             static_cast<T*>(this)->resetReading();
@@ -80,5 +80,5 @@ Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
     SREG = oldSREG;
 
     // Return the new protocol information to the user
-    return data;
+    return retdata;
 }

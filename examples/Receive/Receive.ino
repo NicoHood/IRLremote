@@ -57,6 +57,11 @@ void setup()
 
 void loop()
 {
+  // Check if we are currently receiving data
+  //if (!IRLremote.receiving()) {
+    // Run code that disables interrupts, such as some led strips
+  //}
+
   // Check if new IR protocol data is available
   if (IRLremote.available())
   {

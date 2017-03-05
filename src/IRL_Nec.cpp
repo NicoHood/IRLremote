@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,10 +26,6 @@ THE SOFTWARE.
 //==============================================================================
 // Static Data
 //==============================================================================
-
-// Protocol temporary data
-volatile uint8_t CNec::countNec = 0;
-uint8_t CNec::dataNec[NEC_BLOCKS] = { 0 };
 
 // CNec instance
 CNec Nec;
