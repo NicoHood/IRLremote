@@ -22,7 +22,9 @@ HashIR	KEYWORD1
 
 CNec	KEYWORD2
 CNecAPI	KEYWORD2
+CPanasonic KEYWORD2
 Nec_data_t	KEYWORD2
+Panasonic_data_t	KEYWORD2
 
 begin	KEYWORD2
 end	KEYWORD2

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
 #include "IRL_Protocol.h"
+#include "IRL_Decode.h"
 
 //==============================================================================
 // Protocol Definitions
@@ -63,6 +64,13 @@ THE SOFTWARE.
 #define PANASONIC_SPACE_ONE         (PANASONIC_PULSE * 3UL)
 #define PANASONIC_LOGICAL_ZERO      (PANASONIC_MARK_ZERO + PANASONIC_SPACE_ZERO)
 #define PANASONIC_LOGICAL_ONE       (PANASONIC_MARK_ONE + PANASONIC_SPACE_ONE)
+
+// Decoding limits
+#define PANASONIC_LIMIT_LOGIC       ((PANASONIC_LOGICAL_ONE + PANASONIC_LOGICAL_ZERO) / 2)
+#define PANASONIC_LIMIT_HOLDING     ((PANASONIC_LOGICAL_LEAD + PANASONIC_LOGICAL_ONE) / 2)
+#define PANASONIC_LIMIT_LEAD        0
+#define PANASONIC_LIMIT_TIMEOUT     ((PANASONIC_TIMEOUT + PANASONIC_LOGICAL_LEAD) / 2)
+#define PANASONIC_LIMIT_REPEAT      (PANASONIC_TIMESPAN_HOLDING * 3 / 2)
 
 /*
 Panasonic pulse demonstration:
@@ -118,32 +126,65 @@ union Panasonic_data_t
 //==============================================================================
 
 class CPanasonic : public CIRL_Receive<CPanasonic>,
-                   public CIRL_Time<CPanasonic>,
-                   public CIRL_Protocol<CPanasonic, Panasonic_data_t>
+             public CIRL_Time<CPanasonic>,
+             public CIRL_Protocol<CPanasonic, Panasonic_data_t>,
+             public CIRL_DecodeSpaces<CPanasonic, PANASONIC_BLOCKS>
 {
-public:
-    // User API to access library data
-    inline bool available(void);
-    static constexpr uint32_t timespanEvent = PANASONIC_TIMESPAN_HOLDING;
-    static constexpr uint8_t interruptMode = FALLING;
-
 protected:
+    static constexpr uint32_t timespanEvent = PANASONIC_TIMESPAN_HOLDING;
+    static constexpr uint32_t limitTimeout = PANASONIC_LIMIT_TIMEOUT;
+    static constexpr uint32_t limitLead = PANASONIC_LIMIT_LEAD;
+    static constexpr uint32_t limitHolding = PANASONIC_LIMIT_HOLDING;
+    static constexpr uint32_t limitLogic = PANASONIC_LIMIT_LOGIC;
+    static constexpr uint32_t limitRepeat = PANASONIC_LIMIT_REPEAT;
+    static constexpr uint8_t irLength = PANASONIC_LENGTH;
+
     friend CIRL_Receive<CPanasonic>;
     friend CIRL_Protocol<CPanasonic, Panasonic_data_t>;
-
-    // Temporary buffer to hold bytes for decoding the protocol
-    static volatile uint8_t countPanasonic;
-    static uint8_t dataPanasonic[PANASONIC_BLOCKS];
+    friend CIRL_DecodeSpaces<CPanasonic, PANASONIC_BLOCKS>;
 
     // Protocol interface functions
     inline Panasonic_data_t getData(void);
-    inline void resetReading(void);
-
-    // Interrupt function that is attached
-    static inline void interrupt(void);
+    static inline bool checksum(void);
+    static inline void holding(void);
 };
 
-extern CPanasonic Panasonic;
 
-// Include protocol implementation
-#include "IRL_Panasonic.hpp"
+//==============================================================================
+// Panasonic Decoding Implementation
+//==============================================================================
+
+Panasonic_data_t CPanasonic::getData(void) {
+    Panasonic_data_t retdata;
+    retdata.address = ((uint16_t)data[1] << 8) |
+                      ((uint16_t)data[0]);
+    retdata.command = ((uint32_t)data[5] << 24) |
+                      ((uint32_t)data[4] << 16) |
+                      ((uint32_t)data[3] << 8)  |
+                      ((uint32_t)data[2]);
+    return retdata;
+}
+
+
+bool CPanasonic::checksum(void) {
+    // Check if the protcol's checksum is correct
+    uint8_t XOR1 = data[2] ^
+                   data[3] ^
+                   data[4];
+    if (XOR1 == data[5])
+    {
+        // Check vendor nibble checksum (optional)
+        //uint8_t XOR2 = data[0] ^ data[1];
+        //if(((XOR2 & 0x0F) ^ (XOR2 >> 4)) == (data[2] & 0x0F))
+        //{
+            return true;
+        //}
+    }
+    return false;
+}
+
+
+void CPanasonic::holding(void) {
+    // Holding not available for Panasonic protocol
+    return;
+}

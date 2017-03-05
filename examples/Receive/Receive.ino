@@ -33,8 +33,8 @@
 #define pinIR 2
 
 // Choose the IR protocol of your remote. See the other example for this.
-#define IRLremote Nec
-//#define IRLremote Panasonic
+CNec IRLremote;
+//CPanasonic IRLremote;
 //#define IRLremote Sony12
 //#define IRLremote HashIR
 

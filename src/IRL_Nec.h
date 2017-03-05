@@ -123,7 +123,6 @@ protected:
     static constexpr uint32_t limitLogic = NEC_LIMIT_LOGIC;
     static constexpr uint32_t limitRepeat = NEC_LIMIT_REPEAT;
     static constexpr uint8_t irLength = NEC_LENGTH;
-    static constexpr uint8_t interruptMode = FALLING;
 
     friend CIRL_Receive<CNec>;
     friend CIRL_Protocol<CNec, Nec_data_t>;

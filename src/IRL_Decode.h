@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <util/atomic.h>
 
 //==============================================================================
-// IRL_Decode Class
+// CIRL_DecodeSpaces Class
 //==============================================================================
 
 template<class T, int blocks>
@@ -47,6 +47,7 @@ protected:
     // Interrupt function that is attached
     inline void resetReading(void);
     static void interrupt(void);
+    static constexpr uint8_t interruptMode = FALLING;
 
     // Interface that is required to be implemented
     //static inline bool checksum(void);
@@ -72,7 +73,7 @@ uint8_t CIRL_DecodeSpaces<T, blocks>::data[blocks] = { 0 };
 
 
 //==============================================================================
-// CIRL_Protocol Implementation
+// CIRL_DecodeSpaces Implementation
 //==============================================================================
 
 template<class T, int blocks>
