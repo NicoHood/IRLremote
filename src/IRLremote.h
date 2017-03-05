@@ -49,6 +49,7 @@ THE SOFTWARE.
 
 // Include all protocol implementations
 #include "IRL_Nec.h"
+#include "IRL_NecAPI.h"
 #include "IRL_Panasonic.h"
 
 // Include pre recorded IR codes from IR remotes

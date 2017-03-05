@@ -24,33 +24,48 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-//==============================================================================
-// Nec Decoding Implementation
-//==============================================================================
-
-Nec_data_t CNec::getData(void){
-    Nec_data_t retdata;
-    retdata.address = ((uint16_t)data[1] << 8) | ((uint16_t)data[0]);
-    retdata.command = data[2];
-    return retdata;
-}
-
-
-bool CNec::checksum(void) {
-    return uint8_t((data[2] ^ (~data[3]))) == 0x00;
-}
-
-
-void CNec::holding(void) {
-    // Flag repeat signal via "invalid" address and empty command
-    data[0] = 0xFF;
-    data[1] = 0xFF;
-    data[2] = 0x00;
-}
-
+#include "IRL_Nec.h"
 
 //==============================================================================
 // API Class
+//==============================================================================
+
+typedef void(*NecEventCallback)(void);
+#define NEC_API_PRESS_TIMEOUT (500UL * 1000UL)
+
+template<const NecEventCallback callback, const uint16_t address = 0x0000>
+class CNecAPI : public CNec
+{
+public:
+    // User API to access library data
+    inline void read(void);
+    inline uint8_t command(void);
+    inline uint8_t pressCount(void);
+    inline uint8_t holdCount(const uint8_t debounce = 0);
+    inline constexpr uint32_t getTimeout(void);
+    inline uint8_t pressTimeout(void);
+    inline uint32_t nextTimeout(void);
+    inline bool releaseButton (void);
+    inline void reset(void);
+
+protected:
+    // Differenciate between timeout types
+    enum TimeoutType : uint8_t
+    {
+        NO_TIMEOUT,     // Keydown
+        TIMEOUT,         // Key release with timeout
+        NEXT_BUTTON,     // Key release, pressed again
+        NEW_BUTTON,     // Key release, another key is pressed
+    } NecTimeoutType;
+
+    // Keep track which key was pressed/held down how often
+    uint8_t lastCommand = 0;
+    uint8_t lastPressCount = 0;
+    uint8_t lastHoldCount = 0;
+};
+
+//==============================================================================
+// API Class Implementation
 //==============================================================================
 
 // Reads data from the nec protocol (if available) and processes it.
