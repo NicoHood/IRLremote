@@ -187,14 +187,14 @@ bool CIRL_DecodeSpaces<T, blocks>::receiving(void)
     }
 
     // Get receiving pulse timeout (not event)
-    uint32_t time = micros();
     uint32_t timeout;
-
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         timeout = T::mlastTime;
     }
 
+    // Calculate difference between last interrupt and now
+    uint32_t time = micros();
     timeout = time - timeout;
 
     // Check for a new timeout

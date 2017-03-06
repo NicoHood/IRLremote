@@ -94,7 +94,6 @@ uint16_t CIRL_Time<T>::nextTime(void){
 template<class T>
 uint32_t CIRL_Time<T>::timeout(void)
 {
-    uint32_t time = micros();
     uint32_t timeout;
 
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
@@ -102,6 +101,7 @@ uint32_t CIRL_Time<T>::timeout(void)
         timeout = mlastEvent;
     }
 
+    uint32_t time = micros();
     timeout = time - timeout;
 
     return timeout;
