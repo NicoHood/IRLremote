@@ -181,28 +181,33 @@ void CIRL_DecodeSpaces<T, blocks>::interrupt(void)
 template<class T, int blocks>
 bool CIRL_DecodeSpaces<T, blocks>::receiving(void)
 {
-    // Check if we already recognized a timed out
-    if (count == 0) {
-        return false;
-    }
+    bool ret = false;
 
-    // Get receiving pulse timeout (not event)
-    uint32_t timeout;
+    // Provess with interrupts disabled to avoid any conflicts
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        timeout = T::mlastTime;
+        // Check if we already recognized a timed out
+        if (count == 0) {
+            ret = false;
+        }
+        else
+        {
+            // Calculate difference between last interrupt and now
+            uint32_t timeout = T::mlastTime;
+            uint32_t time = micros();
+            timeout = time - timeout;
+
+            // Check for a new timeout
+            if (timeout >= T::limitTimeout) {
+                count = 0;
+                ret = false;
+            }
+            // We are currently receiving
+            else {
+                ret = true;
+            }
+        }
     }
 
-    // Calculate difference between last interrupt and now
-    uint32_t time = micros();
-    timeout = time - timeout;
-
-    // Check for a new timeout
-    if (timeout >= T::limitTimeout) {
-        count = 0;
-        return false;
-    }
-
-    // We are currently receiving
-    return true;
+    return ret;
 }
