@@ -1,5 +1,4 @@
-IRLremote 2.0.0
-===============
+# IRLremote 2.0.0
 
 ![Infrared Picture](header.jpg)
 
@@ -7,6 +6,22 @@ New lightweight IR library with different, smarter implementation.
 
 This library is way more efficient than the "standard" IR library from Ken Shirriff.
 
+# Table of Contents
+1. [Overview](#overview)
+2. [Library Installation](#library-installation)
+3. [API Documentation](#api-documentation)
+  * [Receive Protocols](#receive-protocols)
+  * [Setup Receiving](#setup-receiving)
+  * [Read IRLremote](#read-irlremote)
+  * [Time Functions](#time-functions)
+  * [Sending](#sending)
+  * [Adding new protocols](#adding-new-protocols)
+4. [How it works](#how-it-works)
+5. [Links](#links)
+6. [Version History](#version-history)
+7. [License and Copyright](#license-and-copyright)
+
+## Overview
 **The main improvements are:**
 * Faster decoding (on the fly)
 * Huge Ram improvements (13 bytes ram to decode NEC)
@@ -63,7 +78,7 @@ CNec IRLremote;
 //CHashIR IRLremote;
 ```
 
-### De-/Initialize Receiving
+### Setup Receiving
 To use the receiving you have to choose a **[PinInterrupt](http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt)**
 or **[PinChangeInterrupt](https://github.com/NicoHood/PinChangeInterrupt)** pin.
 They work a bit different under the hood but the result for IR is the same.
