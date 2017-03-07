@@ -37,29 +37,144 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 * Add Raw dump sending option
 * Implement Sony 15, 20 properly
 
-Installation/How to use
-=======================
+## Library Installation
+Install the library as you are used to.
+More information can be found [here](http://arduino.cc/en/guide/libraries).
 
-Download the zip, extract and remove the "-master" of the folder.
-Install the library [as described here](http://arduino.cc/en/pmwiki.php?n=Guide/Libraries).
+## API Documentation
+For a very fast library example see the
+[Receiving example](/examples/Receive/Receive.ino).
 
-### Receiving
+### Receive Protocols
+You can choice between multiple protocols. All protocols are optimized in a way
+that the recognition of the selected protocol is set to a maximum. This means
+you can only decode a single protocol at a time but with best recognition.
 
+##### Supported Protocols:
+* NEC
+* Panasonic
+* IRHash
+
+##### Examples:
+```cpp
+// Choose the IR protocol of your remote
+CNec IRLremote;
+//CPanasonic IRLremote;
+//CHashIR IRLremote;
+```
+
+### De-/Initialize Receiving
 To use the receiving you have to choose a **[PinInterrupt](http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt)**
 or **[PinChangeInterrupt](https://github.com/NicoHood/PinChangeInterrupt)** pin.
 They work a bit different under the hood but the result for IR is the same.
 In order to use PinChangeInterrupts you also have to [install the library](https://github.com/NicoHood/PinChangeInterrupt).
 
-**Try the examples to see how the API works.**
+You can also terminate the receiver. This sets pins to input again to safely
+remove connections. This is **normally not required**.
 
-**You can save a lot of ram/flash/performance by using a fixed protocol** like NEC instead of all together.
-If you choose a single protocol, keep in mind that accuracy
-is then set to get **maximal recognition, more speed and less code size**.
+##### Function Prototype:
+```cpp
+bool begin(uint8_t pin);
+bool end(uint8_t pin);
+```
+
+##### Examples:
+```cpp
+// Choose a valid PinInterrupt or PinChangeInterrupt pin of your Arduino board
+#define pinIR 2
+
+// Start reading the remote
+// PinInterrupt or PinChangeInterrupt will automatically be selected
+// False indicates a wrong selected interrupt pin
+if (!IRLremote.begin(pinIR))
+    Serial.println(F("You did not choose a valid pin."));
+
+// End reading the remote
+IRLremote.end(pinIR);
+```
+
+### Read IRLremote
+If there is input available you can read the data of the remote. It will return
+the received data and automatically continue reading afterwards. Check if the
+remote is available before, otherwise you will get an empty structure back.
+
+The returned data type will differ with the selected protocol. Each protocol has
+an address and a command member, but their size may differ. See the protocol
+section for more information.
+
+##### Function Prototype:
+```cpp
+bool available(void);
+
+// Valid datatypes depending on the selected protocol:
+Nec_data_t read(void);
+Panasonic_data_t read(void);
+HashIR_data_t read(void);
+```
+
+##### Examples:
+```cpp
+// Check if new IR protocol data is available
+if (IRLremote.available())
+{
+    // Get the new data from the remote
+    auto data = IRLremote.read();
+
+    // Print the protocol data
+    Serial.print(F("Address: 0x"));
+    Serial.println(data.address, HEX);
+    Serial.print(F("Command: 0x"));
+    Serial.println(data.command, HEX);
+    Serial.println();
+}
+```
+
+### Time Functions
+The API provides a few interfaces to check some timings between the last Event
+or if the remote is currently still receiving. This is especially useful when
+you want to build higher level APIs around the remote or when you have other
+interrupt sensitive code that disables interrupts which affects the IR reading
+quality.
+
+##### Function Prototype:
+```cpp
+bool receiving(void);
+uint32_t timeout(void);
+uint32_t lastEvent(void);
+uint32_t nextEvent(void);
+```
+
+##### Examples:
+```cpp
+// Check if we are currently receiving data
+if (!IRLremote.receiving()) {
+  FastLED.show();
+}
+
+// Return relativ time between last event time (in micros)
+if (IRLremote.timeout() > 1000000UL) {
+    // Reading timed out 1s, release button from debouncing
+    digitalWrite(BUILTIN_LED, LOW);
+}
+
+// Return absolute last event time (in micros)
+Serial.println(IRLremote.lastEvent, HEX);
+Serial.println(micros(), HEX);
+
+// Return when the next event can be expected.
+// Zero means at any time.
+// Attention! This value is a little bit too high in general.
+// Also for the first press it is even higher than it should.
+if (IRLremote.nextEvent() == 0) {
+    // We timed out, this is the last event in this series of reading
+    digitalWrite(BUILTIN_LED, LOW);
+}
+```
 
 ### Sending
 
 **For sending see the SendSerial/Button examples.**
-Sending is currently **beta**. The library focusses more on decoding, rather than sending.
+Sending is currently **beta**. The library focuses more on decoding, rather than sending.
 You first have to read the codes of your remote with one of the receiving examples.
 Choose your protocol in the sending sketch and use your address and command if choice.
 
@@ -69,7 +184,7 @@ Let me know if it works!
 ### Adding new protocols
 
 You can also ask me to implement any new protocol, just file an issue on Github or contact me directly.
-Or you can just choose the hash option which works very relyable for unknown protocols.
+Or you can just choose the hash option which works very reliable for unknown protocols.
 
 More projects + contact can be found here:
 http://www.NicoHood.de
