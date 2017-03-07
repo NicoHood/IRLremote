@@ -12,7 +12,7 @@ void setup() {
   // Serial setup
   while (!Serial);
   Serial.begin(115200);
-  Serial.println("Startup");
+  Serial.println(F("Startup"));
 
   // add your old code here
   uint32_t oldcode[] = {
@@ -31,7 +31,7 @@ void setup() {
 
     // print old code
     Serial.print(oldcode[i], HEX);
-    Serial.print(" --> 0x");
+    Serial.print(F(" --> 0x"));
 
     // LSB to MSB
     for (uint8_t j = 0; j < 32; j++) {
@@ -47,7 +47,7 @@ void setup() {
     // print new code
     //Serial.print(newcode, HEX);
     Serial.print(address, HEX);
-    Serial.print(", 0x");
+    Serial.print(F(", 0x"));
     Serial.println(command, HEX);
   }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2015 NicoHood
+Copyright (c) 2014-2017 NicoHood
 See the readme for credit to other people.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,22 +21,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "IRLremote.h"
+// Include guard
+#pragma once
 
-//================================================================================
-// User function helper
-//================================================================================
+// IDE version check
+#if ARDUINO < 10606
+#error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
+#endif
 
-uint32_t IRL_LastTime = 0;
+// Software version
+#define IRL_VERSION 200
 
-void IREvent(uint8_t protocol, uint16_t address, uint32_t command) {
-	// Called when directly received correct IR Signal
-	// Do not use Serial inside, it can crash your Arduino!
-	// Should be overwritten by the user.
-}
+// Include PinChangeInterrupt library if available
+#ifdef PCINT_VERSION
+#include "PinChangeInterrupt.h"
+#endif
 
-void decodeIR(const uint16_t duration){
-	// add your own protocols here or create your own decoding function
-	// you can overwrite this function in your .ino file
-	decodeAll(duration);
-}
+// Delay_basic is only for avrs. With ARM sending is currently not possible
+// TODO implement sending
+#ifdef ARDUINO_ARCH_AVR
+#include <util/delay_basic.h>
+#endif
+
+// Include external libraries
+#include <Arduino.h>
+#include <util/atomic.h>
+
+// Include all protocol implementations
+#include "IRL_Nec.h"
+#include "IRL_NecAPI.h"
+#include "IRL_Panasonic.h"
+#include "IRL_Hash.h"
+
+// Include pre recorded IR codes from IR remotes
+#include "IRL_Keycodes.h"
