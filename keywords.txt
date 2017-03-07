@@ -8,14 +8,6 @@
 
 IRLremote	KEYWORD1
 
-Nec	KEYWORD1
-NecAPI	KEYWORD1
-
-Panasonic	KEYWORD1
-Sony	KEYWORD1
-RawIR	KEYWORD1
-HashIR	KEYWORD1
-
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
@@ -23,8 +15,10 @@ HashIR	KEYWORD1
 CNec	KEYWORD2
 CNecAPI	KEYWORD2
 CPanasonic KEYWORD2
+CHashIR	KEYWORD2
 Nec_data_t	KEYWORD2
 Panasonic_data_t	KEYWORD2
+Hash_data_t	KEYWORD2
 
 begin	KEYWORD2
 end	KEYWORD2

@@ -21,37 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-// Include guard
-#pragma once
+#include "IRLremote.h"
 
-// IDE version check
-#if ARDUINO < 10606
-#error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
-#endif
+//==============================================================================
+// Static Data
+//==============================================================================
 
-// Software version
-#define IRL_VERSION 200
-
-// Include PinChangeInterrupt library if available
-#ifdef PCINT_VERSION
-#include "PinChangeInterrupt.h"
-#endif
-
-// Delay_basic is only for avrs. With ARM sending is currently not possible
-// TODO implement sending
-#ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
-#endif
-
-// Include external libraries
-#include <Arduino.h>
-#include <util/atomic.h>
-
-// Include all protocol implementations
-#include "IRL_Nec.h"
-#include "IRL_NecAPI.h"
-#include "IRL_Panasonic.h"
-#include "IRL_Hash.h"
-
-// Include pre recorded IR codes from IR remotes
-#include "IRL_Keycodes.h"
+// Protocol temporary data
+volatile uint8_t CHashIR::count = 0;
+uint32_t CHashIR::hash = FNV_BASIS_32;
+volatile uint16_t CHashIR::lastDuration = 0xFFFF;
