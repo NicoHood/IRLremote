@@ -25,9 +25,9 @@ This library is way more efficient than the "standard" IR library from Ken Shirr
 **Supported Protocols**
 * NEC
 * Panasonic
-* Sony 12
+* ~~Sony 12~~ (TODO)
 * Hash (For any unknown protocol)
-* RawIR (For dumping the raw data)
+* ~~RawIR (For dumping the raw data)~~ (TODO)
 * Ask me for more
 
 **Planned features:**
@@ -132,7 +132,7 @@ Links
 Version History
 ===============
 ```
-2.0.0 Release (xx.xx.2016)
+2.0.0 Release (07.03.2017)
 * Focus on single protocol implementation
 * Added better keycode definitions #11
 * Updated keywords.txt
