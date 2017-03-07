@@ -37,21 +37,21 @@ THE SOFTWARE.
 //HashIR
 #define HASHIR_BLOCKS 255				// 0-65535 (maximum input length)
 #define HASHIR_TIMEOUT (0xFFFF/4)		// 65535, max timeout
-#define HASH_TIMESPAN (HASHIR_TIMEOUT * 3)
+#define HashIR_TIMESPAN (HASHIR_TIMEOUT * 3)
 #define HASHIR_TIME_THRESHOLD 10000UL	// 0-32bit
 
 // Use FNV hash algorithm: http://isthe.com/chongo/tech/comp/fnv/#FNV-param
 #define FNV_PRIME_32 16777619UL
 #define FNV_BASIS_32 2166136261UL
 
-typedef uint8_t Hash_address_t;
-typedef uint32_t Hash_command_t;
+typedef uint8_t HashIR_address_t;
+typedef uint32_t HashIR_command_t;
 
 // Struct that is returned by the read() function
-struct Hash_data_t
+struct HashIR_data_t
 {
-    Hash_address_t address;
-    Hash_command_t command;
+    HashIR_address_t address;
+    HashIR_command_t command;
 };
 
 //==============================================================================
@@ -60,7 +60,7 @@ struct Hash_data_t
 
 class CHashIR : public CIRL_Receive<CHashIR>,
              public CIRL_Time<CHashIR>,
-             public CIRL_Protocol<CHashIR, Hash_data_t>
+             public CIRL_Protocol<CHashIR, HashIR_data_t>
 {
 public:
     // User API to access library data
@@ -68,10 +68,10 @@ public:
     inline bool receiving(void);
 
 protected:
-    static constexpr uint32_t timespanEvent = HASH_TIMESPAN;
+    static constexpr uint32_t timespanEvent = HashIR_TIMESPAN;
 
     friend CIRL_Receive<CHashIR>;
-    friend CIRL_Protocol<CHashIR, Hash_data_t>;
+    friend CIRL_Protocol<CHashIR, HashIR_data_t>;
 
     // Interrupt function that is attached
     inline void resetReading(void);
@@ -79,7 +79,7 @@ protected:
     static constexpr uint8_t interruptMode = CHANGE;
 
     // Protocol interface functions
-    inline Hash_data_t getData(void);
+    inline HashIR_data_t getData(void);
     static inline bool checksum(void);
     static inline void holding(void);
 
@@ -94,10 +94,10 @@ protected:
 // Hash Decoding Implementation
 //==============================================================================
 
-Hash_data_t CHashIR::getData(void){
+HashIR_data_t CHashIR::getData(void){
     // Save address as length.
     // You can check the address/length to prevent triggering on noise
-    Hash_data_t retdata;
+    HashIR_data_t retdata;
     retdata.address = count;
     retdata.command = hash;
     return retdata;

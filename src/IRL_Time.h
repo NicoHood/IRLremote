@@ -109,7 +109,7 @@ uint32_t CIRL_Time<T>::timeout(void)
 
 
 /*
- * Return absolut last event time (in micros)
+ * Return absolute last event time (in micros)
  */
 template<class T>
 uint32_t CIRL_Time<T>::lastEvent(void)
