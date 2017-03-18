@@ -206,13 +206,14 @@ uint8_t CNecAPI<callback, address>::pressTimeout(void)
 template<const NecEventCallback callback, const uint16_t address>
 uint32_t CNecAPI<callback, address>::nextTimeout(void)
 {
-    uint32_t time = timeout();
+    auto time = timeout();
+    auto timeout = getTimeout();
 
-    if(time >= getTimeout()) {
+    if(time >= timeout) {
         return 0;
     }
 
-    return getTimeout() - time;
+    return timeout - time;
 }
 
 
