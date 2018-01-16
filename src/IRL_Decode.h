@@ -24,7 +24,9 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <Arduino.h>
+#ifdef ARDUINO
+#include <Arduino.h> // micros()
+#endif
 #include <util/atomic.h>
 
 //==============================================================================

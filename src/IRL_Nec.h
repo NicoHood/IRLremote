@@ -24,7 +24,6 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#include <Arduino.h>
 #include "IRL_Receive.h"
 #include "IRL_Time.h"
 #include "IRL_Protocol.h"

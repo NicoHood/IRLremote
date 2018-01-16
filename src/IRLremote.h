@@ -25,17 +25,12 @@ THE SOFTWARE.
 #pragma once
 
 // IDE version check
-#if ARDUINO < 10606
+#if defined(ARDUINO) && ARDUINO < 10606
 #error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
 #endif
 
 // Software version
 #define IRL_VERSION 200
-
-// Include PinChangeInterrupt library if available
-#ifdef PCINT_VERSION
-#include "PinChangeInterrupt.h"
-#endif
 
 // Delay_basic is only for avrs. With ARM sending is currently not possible
 // TODO implement sending
@@ -44,7 +39,9 @@ THE SOFTWARE.
 #endif
 
 // Include external libraries
+#ifdef ARDUINO
 #include <Arduino.h>
+#endif
 #include <util/atomic.h>
 
 // Include all protocol implementations
