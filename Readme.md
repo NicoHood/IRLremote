@@ -1,4 +1,4 @@
-# IRLremote 2.0.0
+# IRLremote 2.0.1
 
 ![Infrared Picture](header.jpg)
 
@@ -262,6 +262,9 @@ Links
 Version History
 ===============
 ```
+2.0.1 Release (16.01.2018)
+* Fix makefile compilation
+
 2.0.0 Release (07.03.2017)
 * Focus on single protocol implementation
 * Added better keycode definitions #11
