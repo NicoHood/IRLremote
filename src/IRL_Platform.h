@@ -24,27 +24,40 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-// IDE version check
-#if defined(ARDUINO) && ARDUINO < 10606
-#error IRLremote requires Arduino IDE 1.6.6 or greater. Please update your IDE.
+#ifdef ARDUINO
+#include <Arduino.h> // micros()
 #endif
 
-// Software version
-#define IRL_VERSION 201
+#if defined(ARDUINO_ARCH_AVR)
+    #include <util/atomic.h>
+#elif defined(ARDUINO_ARCH_ESP8266) ||  defined(ESP8266)
+    // copied from https://github.com/wizard97/SimplyAtomic/blob/master/esp8266.h
 
-// Delay_basic is only for avrs. With ARM sending is currently not possible
-// TODO implement sending
-#ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
+    #ifndef __STRINGIFY
+    #define __STRINGIFY(a) #a
+    #endif
+
+    #ifndef xt_rsil
+        #define xt_rsil(level) (__extension__({uint32_t state; __asm__ __volatile__("rsil %0," __STRINGIFY(level) : "=a" (state)); state;}))
+    #endif
+
+    #ifndef xt_wsr_ps
+        #define xt_wsr_ps(state)  __asm__ __volatile__("wsr %0,ps; isync" :: "a" (state) : "memory")
+    #endif
+
+    static __inline__ void SA_iRestore(const  uint32_t *__s)
+    {
+        xt_wsr_ps(*__s);
+    }
+
+    // Note value can be 0-15, 0 = Enable all interrupts, 15 = no interrupts
+    #define SA_ATOMIC_RESTORESTATE uint32_t _sa_saved   \
+        __attribute__((__cleanup__(SA_iRestore))) = xt_rsil(15)
+
+    #define ATOMIC_RESTORESTATE
+    #define ATOMIC_BLOCK(A) \
+        for ( SA_ATOMIC_RESTORESTATE, _sa_done =  1;    \
+            _sa_done; _sa_done = 0 )
+#else
+    #error "This library supports only AVR and ESP8266 Boards."
 #endif
-
-#include "IRL_Platform.h"
-
-// Include all protocol implementations
-#include "IRL_Nec.h"
-#include "IRL_NecAPI.h"
-#include "IRL_Panasonic.h"
-#include "IRL_Hash.h"
-
-// Include pre recorded IR codes from IR remotes
-#include "IRL_Keycodes.h"

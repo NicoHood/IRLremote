@@ -24,10 +24,7 @@ THE SOFTWARE.
 // Include guard
 #pragma once
 
-#ifdef ARDUINO
-#include <Arduino.h> // micros()
-#endif
-#include <util/atomic.h>
+#include "IRL_Platform.h"
 
 //==============================================================================
 // IRL_Protocol Class
