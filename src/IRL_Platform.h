@@ -28,9 +28,9 @@ THE SOFTWARE.
 #include <Arduino.h> // micros()
 #endif
 
-#if defined(ARDUINO_ARCH_AVR)
+#if defined(ARDUINO_ARCH_AVR) || defined(DMBS_ARCH_AVR8)
     #include <util/atomic.h>
-#elif defined(ARDUINO_ARCH_ESP8266) ||  defined(ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266) || defined(ESP8266)
     // copied from https://github.com/wizard97/SimplyAtomic/blob/master/esp8266.h
 
     #ifndef __STRINGIFY
