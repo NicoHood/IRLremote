@@ -1,4 +1,4 @@
-# IRLremote 2.0.1
+# IRLremote 2.0.2
 
 ![Infrared Picture](header.jpg)
 
@@ -262,6 +262,9 @@ Links
 Version History
 ===============
 ```
+2.0.2 Release (08.04.2018)
+* Added ESP8266 #20
+
 2.0.1 Release (16.01.2018)
 * Fix makefile compilation
 

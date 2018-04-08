@@ -30,7 +30,7 @@ THE SOFTWARE.
 #endif
 
 // Software version
-#define IRL_VERSION 201
+#define IRL_VERSION 202
 
 // Delay_basic is only for avrs. With ARM sending is currently not possible
 // TODO implement sending
