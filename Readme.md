@@ -6,6 +6,8 @@ New lightweight IR library with different, smarter implementation.
 
 This library is way more efficient than the "standard" IR library from Ken Shirriff.
 
+<a href="https://www.buymeacoffee.com/Mnwg9NrCK" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+
 # Table of Contents
 1. [Overview](#overview)
 2. [Library Installation](#library-installation)
