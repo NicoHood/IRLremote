@@ -95,11 +95,13 @@ uint32_t CIRL_Time<T>::timeout(void)
 {
     uint32_t timeout;
 
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+// changed to support arm controllers and esp32 see also: https://github.com/wizard97/SimplyAtomic
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         timeout = mlastEvent;
     }
-
+    
     uint32_t time = micros();
     timeout = time - timeout;
 
@@ -114,11 +116,12 @@ template<class T>
 uint32_t CIRL_Time<T>::lastEvent(void)
 {
     uint32_t time;
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         time = mlastEvent;
     }
-
+    
     return time;
 }
 

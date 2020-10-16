@@ -183,7 +183,8 @@ bool CIRL_DecodeSpaces<T, blocks>::receiving(void)
     bool ret = false;
 
     // Provess with interrupts disabled to avoid any conflicts
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         // Check if we already recognized a timed out
         if (count == 0) {

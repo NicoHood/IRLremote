@@ -110,7 +110,8 @@ bool CHashIR::available(void){
     // First look for a timeout
     receiving();
     bool ret;
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         ret = lastDuration == 0;
     }
@@ -131,7 +132,8 @@ bool CHashIR::receiving(void)
     bool ret = false;
 
     // Provess with interrupts disabled to avoid any conflicts
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         // Check if we already recognized a timed out
         if (count == 0) {
