@@ -35,7 +35,8 @@ THE SOFTWARE.
 // Delay_basic is only for avrs. With ARM sending is currently not possible
 // TODO implement sending
 #ifdef ARDUINO_ARCH_AVR
-#include <util/delay_basic.h>
+// #include <util/delay_basic.h>
+#include <util/delay.h>
 #endif
 
 #include "IRL_Platform.h"

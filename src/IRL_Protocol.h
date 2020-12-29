@@ -55,7 +55,8 @@ Protocol_data_t CIRL_Protocol<T, Protocol_data_t>::read(void)
     Protocol_data_t retdata = Protocol_data_t();
 
     // Disable interrupts while accessing volatile data
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+//    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    ATOMIC()
     {
         // Check and get data if we have new.
         if (static_cast<T*>(this)->available())

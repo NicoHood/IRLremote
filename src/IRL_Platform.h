@@ -27,7 +27,8 @@ THE SOFTWARE.
 #ifdef ARDUINO
 #include <Arduino.h> // micros()
 #endif
-
+#include "SimplyAtomic.h" // atomic blocks for arm controllers
+/*
 #if defined(ARDUINO_ARCH_AVR) || defined(DMBS_ARCH_AVR8)
     #include <util/atomic.h>
 #elif defined(ARDUINO_ARCH_ESP8266) || defined(ESP8266)
@@ -59,5 +60,7 @@ THE SOFTWARE.
         for ( SA_ATOMIC_RESTORESTATE, _sa_done =  1;    \
             _sa_done; _sa_done = 0 )
 #else
-    #error "This library supports only AVR and ESP8266 Boards."
+   // #error "This library supports only AVR and ESP8266 Boards."
+   // #warning "This library supports only AVR and ESP8266 Boards."
 #endif
+*/
